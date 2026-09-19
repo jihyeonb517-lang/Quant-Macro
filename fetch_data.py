@@ -44,6 +44,7 @@ SPECS = [
     ('claims', 'economy', '신규 실업수당 청구', '천 건', ['ICSA'], 4, '4주 전 대비'),
     ('netliq', 'conditions', '연준 순유동성 참고치', '십억 달러', ['WALCL', 'WTREGEN', 'RRPONTSYD'], 4, '4주 전 대비'),
     ('reserves', 'conditions', '은행 지준금', '십억 달러', ['WRESBAL'], 4, '4주 전 대비'),
+    
     ('m2', 'conditions', 'M2 증가율', '%', ['M2SL'], 3, '3개월 전 대비'),
     ('repo', 'conditions', 'SOFR − IORB', 'bp', ['SOFR', 'IORB'], 20, '20관측일 전 대비'),
     ('credit', 'conditions', '하이일드 신용 스프레드', 'bp', ['BAMLH0A0HYM2'], 20, '20관측일 전 대비'),
@@ -61,6 +62,7 @@ FORMULAS = {
     'claims': 'Mean of 4 consecutive calendar weeks of ICSA / 1000',
     'netliq': 'WALCL/1000 − WTREGEN/1000 − RRPONTSYD; exact same observation date, no forward fill',
     'reserves': 'WRESBAL (millions) / 1000 = billions',
+    'tga': 'WTREGEN (millions) / 1000 = billions; Wednesday level',
     'm2': '(M2SL[t]/M2SL[t−12 months]−1)×100',
     'repo': '(SOFR−IORB)×100; exact same observation date; bp',
     'credit': 'BAMLH0A0HYM2 (%) × 100 = bp',
@@ -231,6 +233,7 @@ def calculate(raw):
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
         'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
         'reserves': transform(calendar(s('WRESBAL'), weekly=True), lambda v: v/1000),
+        'tga': transform(calendar(s('WTREGEN'), weekly=True), lambda v: v/1000),
         'm2': yoy('M2SL'),
         'repo': aligned([s('SOFR'), s('IORB')], lambda a, b: (a-b)*100),
         'credit': transform(s('BAMLH0A0HYM2'), lambda v: v*100),
