@@ -119,8 +119,8 @@ class FallbackTests(unittest.TestCase):
     def test_stale_daily_source_and_empty_bootstrap(self):
         data = raw(VIXCLS=[['2026-01-01', 18]])
         result = f.build(data, {}, None, date(2026, 9, 7))
-        self.assertEqual(result['metrics'][11]['status'], 'stale')
-        self.assertTrue(result['metrics'][11]['sources'][0]['fallback'])
+        self.assertEqual(result['metrics'][12]['status'], 'stale')
+        self.assertTrue(result['metrics'][12]['sources'][0]['fallback'])
         self.assertEqual(result['metrics'][0]['status'], 'missing')
 
 
