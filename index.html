@@ -14,7 +14,7 @@ document.querySelectorAll('[data-section]').forEach(b => b.disabled = true);
 const response = await fetch('./data.json', {cache: 'no-store'});
 if (!response.ok) throw new Error('Data request failed: ' + response.status);
 const DATA = await response.json();
-if (!Array.isArray(DATA.metrics) || DATA.metrics.length !== 15) throw new Error('Invalid dashboard data');
+if (!Array.isArray(DATA.metrics) || DATA.metrics.length !== 16) throw new Error('Invalid dashboard data');
 const sections={economy:{title:'성장과 물가의 방향',description:'노동시장의 변화와 물가 상승 속도를 함께 읽습니다.'},conditions:{title:'유동성과 자금 조달 여건',description:'자금의 양과 시장이 요구하는 위험 보상을 구분합니다.'},market:{title:'주식과 금리시장의 반응',description:'추세·위험 인식·상승 참여를 각각 확인합니다.'}};
 let section='economy',selected='jobs',years=5;
 const $=id=>document.getElementById(id);
