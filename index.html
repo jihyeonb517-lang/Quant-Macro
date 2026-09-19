@@ -47,7 +47,7 @@ function draw(m){
  const primary=m.points.filter(p=>ts(p[0])>=cut&&ts(p[0])<=end);
  const alternate=(m.secondary?.points||[]).filter(p=>ts(p[0])>=Math.max(cut,ts(primary[0][0]))&&ts(p[0])<=end);
  const vals=[...primary,...alternate].filter(p=>p[1]!=null);let min=Math.min(...vals.map(p=>p[1])),max=Math.max(...vals.map(p=>p[1]));
- let pad=(max-min)*.12||Math.max(Math.abs(max)*.03,1);min-=pad;max+=pad;
+ const rawMin=min;let pad=(max-min)*.12||Math.max(Math.abs(max)*.03,1);min-=pad;max+=pad;if(rawMin>=0&&min<0)min=0;
  const start=ts(primary[0][0]),span=end-start||86400000,W=850,H=345,L=70,R=20,T=26,B=40;
  const x=d=>L+(ts(d)-start)/span*(W-L-R),y=v=>T+(max-v)/(max-min)*(H-T-B);
  let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.title)} · ${esc(m.unit)} · ${primary[0][0]}부터 ${all[all.length-1][0]}까지"><text x="${L}" y="15" fill="#5e7080" font-size="12">${esc(m.unit)}</text>`;
