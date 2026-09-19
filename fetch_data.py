@@ -381,4 +381,4 @@ if __name__ == '__main__':
             v.get('error') for v in read_json(args.cache, {}).values())):
         logging.error('One or more sources failed. Fallback status saved; inspect per-source errors.')
         raise SystemExit(2)
-        input('Enter를 누르면 종료됩니다...')
+
