@@ -1,4 +1,4 @@
-# US Macro Observatory — GitHub Pages
+# Macro data — GitHub Pages
 
 The original Korean dashboard, with its tabs, SVG charts, date filters and pointer
 tooltips preserved. The page now loads `./data.json` asynchronously and displays a
