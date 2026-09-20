@@ -89,7 +89,6 @@ class FallbackTests(unittest.TestCase):
         self.assertIn('60s deadline', error)
 
     def test_last_value_retained_without_filling_points(self):
-    def test_last_value_retained_without_filling_points(self):
         data = raw(UNRATE=[['2026-07-01', 4.2], ['2026-08-01', None]])
         metric = f.build(data, {}, None, date(2026, 9, 7))['metrics'][1]
         self.assertEqual((metric['date'], metric['value'], metric['status']), ('2026-07-01', 4.2, 'stale'))
