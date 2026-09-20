@@ -41,7 +41,10 @@ if (!Array.isArray(DATA.metrics) || !DATA.metrics.length) throw new Error('Inval
 let group=null,section=GROUPS[0].tabs[0].key,selected=null,years=5,focusTab=false;
 const groupOf=k=>GROUPS.find(g=>g.key===k);
 const tabOf=k=>ALL.find(t=>t.key===k);
-const listFor=k=>tabOf(k).ids.map(id=>DATA.metrics.find(m=>m.id===id)).filter(Boolean);
+const expired=m=>m.sources.some(s=>s.age!=null&&s.age>Math.max(2*(s.maxAge||0),120));
+const allFor=k=>tabOf(k).ids.map(id=>DATA.metrics.find(m=>m.id===id)).filter(Boolean);
+const listFor=k=>allFor(k).filter(m=>!expired(m));
+const hiddenFor=k=>allFor(k).filter(expired);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=(v,d=2)=>v==null?'—':new Intl.NumberFormat('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:d}).format(v);
 const fmt=m=>m.text||num(m.value,['천 명','천 건','십억 달러','bp'].includes(m.unit)?1:2);
@@ -49,7 +52,7 @@ const deltaUnit=m=>m.unit==='%'?'%p':m.unit;
 const changeText=m=>m.delta==null?'비교 자료 부족':`${m.delta>0?'+':''}${num(m.delta,2)} ${deltaUnit(m)}`;
 const dateText=m=>m.sources.every(s=>s.frequency==='monthly')?m.date?.slice(0,7):m.date;
 function directional(id){const m=DATA.metrics.find(m=>m.id===id);if(!m||m.delta==null)return `${m?.title||id}: 비교 자료 부족`;return `${m.title} ${changeText(m)} (${m.period})${m.status==='stale'?' · 자료 지연':''}`;}
-function reading(){const t=tabOf(section),have=id=>DATA.metrics.some(m=>m.id===id),list=listFor(section);if(!list.length)return '이 탭의 지표는 아직 수집 준비 중입니다.';let ids=(t.read||t.ids).filter(have).slice(0,3);if(!ids.length)ids=list.slice(0,3).map(m=>m.id);return ids.map(directional).join(' · ');}
+function reading(){const t=tabOf(section),list=listFor(section),have=id=>list.some(m=>m.id===id);if(!list.length)return hiddenFor(section).length?'표시할 최신 자료가 없습니다.':'이 탭의 지표는 아직 수집 준비 중입니다.';let ids=(t.read||t.ids).filter(have).slice(0,3);if(!ids.length)ids=list.slice(0,3).map(m=>m.id);return ids.map(directional).join(' · ');}
 function buildTabs(){
  $('tabs').innerHTML=groupOf(group).tabs.map((t,i)=>`<button role="tab" id="tab-${t.key}" data-section="${t.key}" aria-selected="${t.key===section}" aria-controls="content" tabindex="${t.key===section?0:-1}">${String(i+1).padStart(2,'0')} ${t.label}</button>`).join('');
  const items=[...document.querySelectorAll('#tabs [data-section]')];
@@ -70,7 +73,7 @@ function render(){
  renderCrumb();
  document.querySelectorAll('#tabs [data-section]').forEach(b=>{const yes=b.dataset.section===section;b.setAttribute('aria-selected',yes);b.tabIndex=yes?0:-1});
  $('content').setAttribute('aria-labelledby','tab-'+section);
- const tab=tabOf(section);$('section-title').textContent=tab.title;$('section-description').textContent=tab.desc;
+ const tab=tabOf(section),hid=hiddenFor(section);$('section-title').textContent=tab.title;$('section-description').textContent=tab.desc+(hid.length?' · 자료가 오래되어 숨긴 지표: '+hid.map(m=>m.title).join(', '):'');
  const list=listFor(section),valid=list.filter(m=>m.status==='ok').length;
  if(!list.some(m=>m.id===selected))selected=list[0]?.id;
  $('coverage').textContent=list.length?`${list.length}개 지표 · ${valid===list.length?'자료 유효기간 내':(list.length-valid)+'개 확인 필요'}`:'수집 준비 중';$('coverage').className='badge'+(list.length&&valid<list.length?' warn':'');
