@@ -17,7 +17,7 @@ class ArtifactTests(unittest.TestCase):
         source_keys = {'id', 'url', 'observed', 'retrieved', 'origin', 'frequency', 'age',
                        'maxAge', 'status', 'fallback'}
         for m in data['metrics']:
-            self.assertEqual(set(m) - {'text'}, required))
+            self.assertEqual(set(m) - {'text'}, required)
             self.assertIn(m['status'], ['ok', 'stale', 'missing'])
             for source in m['sources']:
                 self.assertEqual(set(source), source_keys)
