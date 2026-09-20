@@ -8,7 +8,7 @@ clear message if loading fails. No build tool or API key is required.
 
 ```text
 index.html                         Original interface, async JSON loading
-data.json                          Generated dashboard snapshot (48 metrics)
+data.json                          Generated dashboard snapshot (59 metrics)
 fetch_data.py                      FRED + Yahoo download and calculations
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps

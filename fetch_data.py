@@ -23,6 +23,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 import japan_sources as jp
+import estat_sources as es
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
@@ -137,6 +138,10 @@ FREQUENCIES.update(jp.FREQUENCIES)
 SPECS.extend(jp.SPECS)
 FORMULAS.update(jp.FORMULAS)
 NOTES.update(jp.NOTES)
+FREQUENCIES.update(es.FREQUENCIES)
+SPECS.extend(es.SPECS)
+FORMULAS.update(es.FORMULAS)
+NOTES.update(es.NOTES)
 def utcnow():
     return datetime.now(timezone.utc).isoformat()
 
@@ -178,6 +183,8 @@ def fetch_series(sid):
         today_ny = datetime.now(ZoneInfo('America/New_York')).date()
         points = clean(((d.strftime('%Y-%m-%d'), v) for d, v in frame['Close'].items()),
                        today=today_ny - timedelta(days=1))
+    elif sid in es.SOURCES:
+        points = es.fetch_points(sid)
     elif sid in jp.SOURCES:
         points = jp.fetch_points(sid)
     else:
@@ -323,6 +330,7 @@ def calculate_base(raw):
 def calculate(raw):
     result = calculate_base(raw)
     result.update(jp.calculate(raw, aligned, calendar, transform))
+    result.update(es.calculate(raw, calendar))
     return result
 
 
@@ -335,7 +343,7 @@ def source_metadata(sid, raw, today):
     age = (today-date.fromisoformat(observed)).days if observed else None
     stale = bool(observed and (age > MAX_AGE[frequency] or points[-1][0] > observed))
     failed = bool(entry.get('error'))
-    origin, url = jp.ORIGINS.get(sid) or (
+    origin, url = es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or (
         ('Yahoo Finance', f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/')
         if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}'))
     return dict(id=sid, url=url,
