@@ -22,6 +22,7 @@ from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
+import japan_sources as jp
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
@@ -132,7 +133,10 @@ NOTES = {
     'wti': FUTURES_NOTE, 'brent': FUTURES_NOTE,
 }
 
-
+FREQUENCIES.update(jp.FREQUENCIES)
+SPECS.extend(jp.SPECS)
+FORMULAS.update(jp.FORMULAS)
+NOTES.update(jp.NOTES)
 def utcnow():
     return datetime.now(timezone.utc).isoformat()
 
@@ -174,6 +178,8 @@ def fetch_series(sid):
         today_ny = datetime.now(ZoneInfo('America/New_York')).date()
         points = clean(((d.strftime('%Y-%m-%d'), v) for d, v in frame['Close'].items()),
                        today=today_ny - timedelta(days=1))
+    elif sid in jp.SOURCES:
+        points = jp.fetch_points(sid)
     else:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
         # Bound connection setup separately and avoid unusable IPv6 routes on
@@ -208,7 +214,7 @@ def fetch_retry(sid):
     return sid, None, error
 
 
-def fetch_bounded(sid, timeout=40):
+def fetch_bounded(sid, timeout=60):
     """A separate process makes the entire provider download deadline enforceable."""
     logging.info('%s: starting download (maximum %ss)', sid, timeout)
     try:
@@ -278,11 +284,12 @@ def aligned(series, fn):
     return result
 
 
-def calculate(raw):
+def calculate_base(raw):
     s = lambda sid: raw.get(sid, {}).get('points', [])
     m = lambda sid: calendar(s(sid))
     yoy = lambda sid: lagged(m(sid), 12, lambda a, b: (a/b-1)*100 if b > 0 else None)
     ratio = aligned([s('RSP'), s('SPY')], lambda a, b: a/b if b > 0 else None)
+
     # Keep only common trading dates, retaining explicit nulls on common dates.
     spy_dates = dict(s('SPY'))
     ratio = [p for p in ratio if p[0] in spy_dates]
@@ -313,6 +320,12 @@ def calculate(raw):
     }
 
 
+def calculate(raw):
+    result = calculate_base(raw)
+    result.update(jp.calculate(raw, aligned, calendar, transform))
+    return result
+
+
 def source_metadata(sid, raw, today):
     entry = raw.get(sid, {})
     points = entry.get('points', [])
@@ -322,10 +335,12 @@ def source_metadata(sid, raw, today):
     age = (today-date.fromisoformat(observed)).days if observed else None
     stale = bool(observed and (age > MAX_AGE[frequency] or points[-1][0] > observed))
     failed = bool(entry.get('error'))
-    return dict(id=sid, url=(f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/'
-                            if sid in YAHOO else f'https://fred.stlouisfed.org/series/{sid}'),
+    origin, url = jp.ORIGINS.get(sid) or (
+        ('Yahoo Finance', f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/')
+        if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}'))
+    return dict(id=sid, url=url,
                 observed=observed, retrieved=entry.get('retrieved'),
-                origin='Yahoo Finance' if sid in YAHOO else 'FRED', frequency=frequency,
+                origin=origin, frequency=frequency,
                 age=age, maxAge=MAX_AGE[frequency],
                 status='missing' if not observed else 'stale' if failed or stale else 'ok',
                 fallback=bool(observed and (failed or stale)))
