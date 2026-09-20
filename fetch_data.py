@@ -74,8 +74,7 @@ SPECS = [
     ('stlfsi', 'conditions', '세인트루이스 연은 금융스트레스지수', '지수', ['STLFSI4'], 4, '4주 전 대비'),
     ('ust2', 'market', '미국 국채 2년 금리', '%', ['DGS2'], 20, '20관측일 전 대비'),
     ('ust10', 'market', '미국 국채 10년 금리', '%', ['DGS10'], 20, '20관측일 전 대비'),
-    ('fedlow', 'market', '연방기금 목표금리 하단', '%', ['DFEDTARL'], 20, '20관측일 전 대비'),
-    ('fedhigh', 'market', '연방기금 목표금리 상단', '%', ['DFEDTARU'], 20, '20관측일 전 대비'),
+    ('fedtarget', 'market', '연방기금 목표금리', '%', ['DFEDTARU', 'DFEDTARL'], 20, '20관측일 전 대비'),
     ('usdjpy', 'fx', 'USD/JPY', '엔', ['JPY=X'], 20, '20거래일 전 대비'),
     ('usdkrw', 'fx', 'USD/KRW', '원', ['KRW=X'], 20, '20거래일 전 대비'),
     ('dxy', 'fx', '달러인덱스(DXY)', '지수', ['DX-Y.NYB'], 20, '20거래일 전 대비'),
@@ -111,8 +110,7 @@ FORMULAS = {
     'curve': 'DGS10−DGS2; exact same observation date; percentage points',
     'ust2': 'FRED DGS2 (%)',
     'ust10': 'FRED DGS10 (%)',
-    'fedlow': 'FRED DFEDTARL (%); lower bound of the federal funds target range',
-    'fedhigh': 'FRED DFEDTARU (%); upper bound of the federal funds target range',
+    'fedtarget': 'FRED DFEDTARL~DFEDTARU (%); target range shown as lower~upper, chart uses the upper bound (secondary line = lower bound)',
     'usdjpy': 'Yahoo JPY=X Close (yen per US dollar); auto_adjust=False',
     'usdkrw': 'Yahoo KRW=X Close (won per US dollar); auto_adjust=False',
     'dxy': 'Yahoo DX-Y.NYB Close (ICE US Dollar Index); auto_adjust=False',
@@ -306,7 +304,8 @@ def calculate(raw):
         'participation': aligned([ratio, average(ratio, 125)], lambda v, ma: (v/ma-1)*100 if ma > 0 else None),
         'real': s('DFII10'), 'curve': aligned([s('DGS10'), s('DGS2')], lambda a, b: a-b),
         'ust2': s('DGS2'), 'ust10': s('DGS10'),
-        'fedlow': s('DFEDTARL'), 'fedhigh': s('DFEDTARU'),
+        'fedtarget': aligned([s('DFEDTARU'), s('DFEDTARL')], lambda u, l: u),
+        'fedtarget_low': aligned([s('DFEDTARU'), s('DFEDTARL')], lambda u, l: l),
         'usdjpy': s('JPY=X'), 'usdkrw': s('KRW=X'), 'dxy': s('DX-Y.NYB'),
         'gold': s('GC=F'), 'silver': s('SI=F'), 'copper': s('HG=F'),
         'wti': s('CL=F'), 'brent': s('BZ=F'),
@@ -376,14 +375,21 @@ def build(raw, previous, generated_at, today=None):
                 if source['status'] == 'ok':
                     source.update(status='stale', fallback=True)
         secondary = ({'label': '3개월 연율', 'points': computed['pce_secondary']}
-                     if mid == 'pce' else None)
+                     if mid == 'pce' else
+                     {'label': '하단', 'primaryLabel': '상단', 'points': computed['fedtarget_low']}
+                     if mid == 'fedtarget' else None)
+        text = None
+        if mid == 'fedtarget' and usable:
+            low = dict(computed['fedtarget_low']).get(last[0])
+            text = f'{low:.2f}~{last[1]:.2f}' if finite(low) else None
         metrics.append(dict(id=mid, section=section, title=title, unit=unit,
                             points=points, date=last[0], value=last[1], delta=delta,
                             period=period, note=old.get('note') or NOTES.get(mid, ''),
                             formula=FORMULAS[mid],
                             status='missing' if not usable else 'stale' if stale or
                             any(s['status'] != 'ok' for s in sources) else 'ok',
-                            sources=sources, secondary=secondary))
+                            sources=sources, secondary=secondary,
+                            **({'text': text} if text else {})))
     return dict(generatedAt=generated_at, metrics=metrics,
                 method='차트는 관측 기준일과 현재 제공되는 수정자료를 사용합니다. 당시 공개정보를 복원한 백테스트가 아닙니다. 다운로드 시각은 발표 시각과 다릅니다. 결측값은 보간하지 않으며 마지막 유효값의 실제 관측일을 유지합니다.')
 
