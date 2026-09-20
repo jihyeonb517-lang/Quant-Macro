@@ -44,6 +44,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_fetch_data.py' -v
           python -m unittest discover -s tests -p 'test_estat.py' -v
+          python -m unittest discover -s tests -p 'test_oecd_cli.py' -v
       - name: Refresh observations
         id: refresh
         continue-on-error: true
