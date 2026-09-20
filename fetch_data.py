@@ -44,7 +44,7 @@ FREQUENCIES = {
     'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
     'CL=F': 'daily', 'BZ=F': 'daily',
 }
-MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75}
+MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 140}
 YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
          'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
 # id, section, title, unit, dependencies, delta lag, comparison label

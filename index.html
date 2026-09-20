@@ -49,7 +49,7 @@ const deltaUnit=m=>m.unit==='%'?'%p':m.unit;
 const changeText=m=>m.delta==null?'비교 자료 부족':`${m.delta>0?'+':''}${num(m.delta,2)} ${deltaUnit(m)}`;
 const dateText=m=>m.sources.every(s=>s.frequency==='monthly')?m.date?.slice(0,7):m.date;
 function directional(id){const m=DATA.metrics.find(m=>m.id===id);if(!m||m.delta==null)return `${m?.title||id}: 비교 자료 부족`;return `${m.title} ${changeText(m)} (${m.period})${m.status==='stale'?' · 자료 지연':''}`;}
-function reading(){const t=tabOf(section);if(!listFor(section).length)return '이 탭의 지표는 아직 수집 준비 중입니다.';return (t.read||t.ids.slice(0,3)).map(directional).join(' · ');}
+function reading(){const t=tabOf(section),have=id=>DATA.metrics.some(m=>m.id===id),list=listFor(section);if(!list.length)return '이 탭의 지표는 아직 수집 준비 중입니다.';let ids=(t.read||t.ids).filter(have).slice(0,3);if(!ids.length)ids=list.slice(0,3).map(m=>m.id);return ids.map(directional).join(' · ');}
 function buildTabs(){
  $('tabs').innerHTML=groupOf(group).tabs.map((t,i)=>`<button role="tab" id="tab-${t.key}" data-section="${t.key}" aria-selected="${t.key===section}" aria-controls="content" tabindex="${t.key===section?0:-1}">${String(i+1).padStart(2,'0')} ${t.label}</button>`).join('');
  const items=[...document.querySelectorAll('#tabs [data-section]')];

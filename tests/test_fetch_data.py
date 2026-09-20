@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import fetch_data as f
+import japan_sources as jp
 
 
 def raw(**series):
@@ -15,6 +16,19 @@ def raw(**series):
 
 
 class FormulaTests(unittest.TestCase):
+    def test_boj_dates_and_cgpi_yoy(self):
+        self.assertEqual(jp._boj_date(20260918, 'daily'), '2026-09-18')
+        self.assertEqual(jp._boj_date(202608, 'monthly'), '2026-08-01')
+        self.assertEqual(jp._boj_date(202603, 'quarterly'), '2026-09-01')
+        data = raw(BOJ_CGPI=[['2025-01-01', 100], ['2026-01-01', 103]])
+        self.assertAlmostEqual(f.calculate(data)['jp_cgpi'][-1][1], 3)
+
+    def test_boj_response_validation(self):
+        payload = {'STATUS': 200, 'RESULTSET': [{'SERIES_CODE': 'A'}]}
+        self.assertEqual(jp._boj_rows(payload, ('A',))[0]['SERIES_CODE'], 'A')
+        with self.assertRaisesRegex(ValueError, 'omitted series'):
+            jp._boj_rows(payload, ('A', 'B'))
+
     def test_calendar_lags_do_not_skip_missing_months(self):
         data = raw(CPILFESL=[['2025-01-01', 100], ['2025-03-01', 110],
                              ['2026-01-01', 105], ['2026-02-01', 106]])

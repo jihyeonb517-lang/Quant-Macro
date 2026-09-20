@@ -8,7 +8,7 @@ clear message if loading fails. No build tool or API key is required.
 
 ```text
 index.html                         Original interface, async JSON loading
-data.json                          Generated dashboard snapshot (15 metrics)
+data.json                          Generated dashboard snapshot (48 metrics)
 fetch_data.py                      FRED + Yahoo download and calculations
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps
@@ -129,14 +129,16 @@ without downloading data. After the bot has updated the repository, run
   No point is appended using today's date to pretend an old value is current.
 - Status is `ok`, `stale`, or `missing`. Stale/failed retained sources have
   `fallback: true`. Freshness limits are 7 calendar days for daily sources,
-  18 for weekly sources, and 75 for monthly sources, measured from observation
+  18 for weekly sources, 75 for monthly sources, and 140 for quarterly sources,
+  measured from observation
   dates. Monthly observation dates commonly precede publication; these thresholds
   are conservative freshness heuristics, not release-calendar guarantees.
 - Weekends, holidays, and days between monthly releases do not automatically make
   a value stale. Explicit missing latest observations and failed downloads do.
-- Eight isolated source workers run concurrently, each with a hard 40-second
+- Eight isolated source workers run concurrently, each with a hard 60-second
   deadline covering all retries. Progress appears as each source starts and ends.
-  Even if all 20 sources hang, downloads finish in approximately two minutes,
+  Even if every source hangs, downloads finish in batches within the workflow's
+  eight-minute emergency timeout,
   plus process startup and JSON calculation time. The Actions refresh step has
   a separate four-minute emergency timeout.
 - Downloads retry up to three times within that deadline. If every download fails, the script writes fallback
