@@ -15,7 +15,7 @@ const response = await fetch('./data.json', {cache: 'no-store'});
 if (!response.ok) throw new Error('Data request failed: ' + response.status);
 const DATA = await response.json();
 if (!Array.isArray(DATA.metrics) || !DATA.metrics.length) throw new Error('Invalid dashboard data');
-const sections={economy:{title:'성장과 물가의 방향',description:'노동시장의 변화와 물가 상승 속도를 함께 읽습니다.'},conditions:{title:'유동성과 자금 조달 여건',description:'자금의 양과 시장이 요구하는 위험 보상을 구분합니다.'},market:{title:'주식과 금리시장의 반응',description:'추세·위험 인식·상승 참여를 각각 확인합니다.'}};
+const sections={economy:{title:'성장과 물가의 방향',description:'노동시장의 변화와 물가 상승 속도를 함께 읽습니다.'},conditions:{title:'유동성과 자금 조달 여건',description:'자금의 양과 시장이 요구하는 위험 보상을 구분합니다.'},market:{title:'주식과 금리시장의 반응',description:'추세·위험 인식·상승 참여를 각각 확인합니다.'},fx:{title:'환율·원자재',description:'달러 강세와 엔·원 환율, 원자재 가격의 흐름을 확인합니다.'}};
 let section='economy',selected='jobs',years=5;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,7 +25,7 @@ const deltaUnit=m=>m.unit==='%'?'%p':m.unit;
 const changeText=m=>m.delta==null?'비교 자료 부족':`${m.delta>0?'+':''}${num(m.delta,2)} ${deltaUnit(m)}`;
 const dateText=m=>m.sources.every(s=>s.frequency==='monthly')?m.date?.slice(0,7):m.date;
 function directional(id){const m=DATA.metrics.find(m=>m.id===id);if(!m||m.status!=='ok'||m.delta==null)return `${m?.title||id}: 판단 제한`;return `${m.title} ${changeText(m)} (${m.period})`;}
-function reading(){const ids={economy:['jobs','unemployment','pce'],conditions:['netliq','repo','credit'],market:['trend','participation','real']}[section];return ids.map(directional).join(' · ');}
+function reading(){const ids={economy:['jobs','unemployment','pce'],conditions:['netliq','repo','credit'],market:['trend','participation','real'],fx:['usdjpy','dxy','wti']}[section];return ids.map(directional).join(' · ');}
 function render(){
  document.querySelectorAll('[data-section]').forEach(b=>{const yes=b.dataset.section===section;b.setAttribute('aria-selected',yes);b.tabIndex=yes?0:-1});
  $('content').setAttribute('aria-labelledby','tab-'+section);
