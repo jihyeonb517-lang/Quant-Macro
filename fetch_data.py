@@ -25,6 +25,7 @@ from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
+    # --- existing FRED / Yahoo sources ---
     'PAYEMS': 'monthly', 'UNRATE': 'monthly', 'PCEPILFE': 'monthly',
     'CPILFESL': 'monthly', 'ICSA': 'weekly', 'WALCL': 'weekly',
     'WTREGEN': 'weekly', 'WRESBAL': 'weekly', 'RRPONTSYD': 'daily',
@@ -32,45 +33,104 @@ FREQUENCIES = {
     'BAMLH0A0HYM2': 'daily', 'VIXCLS': 'daily', 'DFII10': 'daily',
     'DGS10': 'daily', 'DGS2': 'daily', '^GSPC': 'daily',
     'RSP': 'daily', 'SPY': 'daily',
+    # --- phase 1: US (FRED) ---
+    'RSAFS': 'monthly', 'DGORDER': 'monthly', 'CPIAUCSL': 'monthly',
+    'PCEPI': 'monthly', 'PPIFES': 'monthly',
+    'NFCI': 'weekly', 'STLFSI4': 'weekly',
+    'DFEDTARL': 'daily', 'DFEDTARU': 'daily',
+    # --- phase 1: FX, dollar index, commodity futures (Yahoo) ---
+    'JPY=X': 'daily', 'KRW=X': 'daily', 'DX-Y.NYB': 'daily',
+    'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
+    'CL=F': 'daily', 'BZ=F': 'daily',
 }
 MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75}
-YAHOO = {'^GSPC', 'RSP', 'SPY'}
+YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
+         'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
 # id, section, title, unit, dependencies, delta lag, comparison label
 SPECS = [
     ('jobs', 'economy', '비농업 고용 증가', '천 명', ['PAYEMS'], 3, '직전 3개월 평균 대비'),
     ('unemployment', 'economy', '실업률', '%', ['UNRATE'], 3, '3개월 전 대비'),
     ('pce', 'economy', '근원 PCE 상승률', '%', ['PCEPILFE'], 3, '3개월 전 대비'),
+    ('pce_headline', 'economy', '헤드라인 PCE 상승률', '%', ['PCEPI'], 3, '3개월 전 대비'),
     ('cpi', 'economy', '근원 CPI 상승률', '%', ['CPILFESL'], 3, '3개월 전 대비'),
+    ('cpi_headline', 'economy', '헤드라인 CPI 상승률', '%', ['CPIAUCSL'], 3, '3개월 전 대비'),
+    ('ppi_core', 'economy', '근원 PPI 상승률', '%', ['PPIFES'], 3, '3개월 전 대비'),
     ('claims', 'economy', '신규 실업수당 청구', '천 건', ['ICSA'], 4, '4주 전 대비'),
+    ('retail', 'economy', '소매판매 증가율', '%', ['RSAFS'], 3, '3개월 전 대비'),
+    ('durable', 'economy', '내구재 수주 증가율', '%', ['DGORDER'], 3, '3개월 전 대비'),
     ('netliq', 'conditions', '연준 순유동성 참고치', '십억 달러', ['WALCL', 'WTREGEN', 'RRPONTSYD'], 4, '4주 전 대비'),
-    ('reserves', 'conditions', '은행 지준금', '십억 달러', ['WRESBAL'], 4, '4주 전 대비'),    
+    ('reserves', 'conditions', '은행 지준금', '십억 달러', ['WRESBAL'], 4, '4주 전 대비'),
     ('tga', 'conditions', '재무부 일반계좌(TGA) 잔고', '십억 달러', ['WTREGEN'], 4, '4주 전 대비'),
     ('m2', 'conditions', 'M2 증가율', '%', ['M2SL'], 3, '3개월 전 대비'),
     ('repo', 'conditions', 'SOFR − IORB', 'bp', ['SOFR', 'IORB'], 20, '20관측일 전 대비'),
     ('credit', 'conditions', '하이일드 신용 스프레드', 'bp', ['BAMLH0A0HYM2'], 20, '20관측일 전 대비'),
+    ('nfci', 'conditions', '시카고 연은 금융여건지수(NFCI)', '지수', ['NFCI'], 4, '4주 전 대비'),
+    ('stlfsi', 'conditions', '세인트루이스 연은 금융스트레스지수', '지수', ['STLFSI4'], 4, '4주 전 대비'),
     ('trend', 'market', 'S&P 500 · 200일선 이격', '%', ['^GSPC'], 20, '20거래일 전 대비'),
     ('vix', 'market', 'VIX', '지수', ['VIXCLS'], 20, '20관측일 전 대비'),
     ('participation', 'market', '동일가중 상대강도', '%', ['RSP', 'SPY'], 20, '20거래일 전 대비'),
     ('real', 'market', '미국 10년 실질금리', '%', ['DFII10'], 20, '20관측일 전 대비'),
     ('curve', 'market', '미국 10년 − 2년 금리', '%p', ['DGS10', 'DGS2'], 20, '20관측일 전 대비'),
+    ('ust2', 'market', '미국 국채 2년 금리', '%', ['DGS2'], 20, '20관측일 전 대비'),
+    ('ust10', 'market', '미국 국채 10년 금리', '%', ['DGS10'], 20, '20관측일 전 대비'),
+    ('fedlow', 'market', '연방기금 목표금리 하단', '%', ['DFEDTARL'], 20, '20관측일 전 대비'),
+    ('fedhigh', 'market', '연방기금 목표금리 상단', '%', ['DFEDTARU'], 20, '20관측일 전 대비'),
+    ('usdjpy', 'fx', 'USD/JPY', '엔', ['JPY=X'], 20, '20거래일 전 대비'),
+    ('usdkrw', 'fx', 'USD/KRW', '원', ['KRW=X'], 20, '20거래일 전 대비'),
+    ('dxy', 'fx', '달러인덱스(DXY)', '지수', ['DX-Y.NYB'], 20, '20거래일 전 대비'),
+    ('gold', 'fx', '금 선물', '달러/트로이온스', ['GC=F'], 20, '20거래일 전 대비'),
+    ('silver', 'fx', '은 선물', '달러/트로이온스', ['SI=F'], 20, '20거래일 전 대비'),
+    ('copper', 'fx', '구리 선물', '달러/파운드', ['HG=F'], 20, '20거래일 전 대비'),
+    ('wti', 'fx', 'WTI 선물', '달러/배럴', ['CL=F'], 20, '20거래일 전 대비'),
+    ('brent', 'fx', 'Brent 선물', '달러/배럴', ['BZ=F'], 20, '20거래일 전 대비'),
 ]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
     'unemployment': 'UNRATE (%)',
     'pce': '(PCEPILFE[t]/PCEPILFE[t−12 months]−1)×100; secondary: ((PCEPILFE[t]/PCEPILFE[t−3 months])^4−1)×100',
+    'pce_headline': '(PCEPI[t]/PCEPI[t−12 months]−1)×100; no interpolation',
     'cpi': '(CPILFESL[t]/CPILFESL[t−12 months]−1)×100; no interpolation',
+    'cpi_headline': '(CPIAUCSL[t]/CPIAUCSL[t−12 months]−1)×100; seasonally adjusted index, no interpolation',
+    'ppi_core': '(PPIFES[t]/PPIFES[t−12 months]−1)×100; final demand less foods and energy, seasonally adjusted',
     'claims': 'Mean of 4 consecutive calendar weeks of ICSA / 1000',
+    'retail': '(RSAFS[t]/RSAFS[t−12 months]−1)×100; advance retail sales, seasonally adjusted, nominal',
+    'durable': '(DGORDER[t]/DGORDER[t−12 months]−1)×100; new orders for durable goods, nominal',
     'netliq': 'WALCL/1000 − WTREGEN/1000 − RRPONTSYD; exact same observation date, no forward fill',
     'reserves': 'WRESBAL (millions) / 1000 = billions',
     'tga': 'WTREGEN (millions) / 1000 = billions; Wednesday level',
     'm2': '(M2SL[t]/M2SL[t−12 months]−1)×100',
     'repo': '(SOFR−IORB)×100; exact same observation date; bp',
     'credit': 'BAMLH0A0HYM2 (%) × 100 = bp',
+    'nfci': 'FRED NFCI weekly level; 0 = average conditions, positive = tighter than average',
+    'stlfsi': 'FRED STLFSI4 weekly level; 0 = average stress, positive = above-average stress',
     'trend': '(Yahoo ^GSPC Close / 200-session mean Close−1)×100',
     'vix': 'FRED VIXCLS closing value',
     'participation': '((RSP Close/SPY Close)/125-common-session mean of ratio−1)×100; auto_adjust=False',
     'real': 'FRED DFII10 (%)',
     'curve': 'DGS10−DGS2; exact same observation date; percentage points',
+    'ust2': 'FRED DGS2 (%)',
+    'ust10': 'FRED DGS10 (%)',
+    'fedlow': 'FRED DFEDTARL (%); lower bound of the federal funds target range',
+    'fedhigh': 'FRED DFEDTARU (%); upper bound of the federal funds target range',
+    'usdjpy': 'Yahoo JPY=X Close (yen per US dollar); auto_adjust=False',
+    'usdkrw': 'Yahoo KRW=X Close (won per US dollar); auto_adjust=False',
+    'dxy': 'Yahoo DX-Y.NYB Close (ICE US Dollar Index); auto_adjust=False',
+    'gold': 'Yahoo GC=F Close; COMEX futures, continuous front month (not spot)',
+    'silver': 'Yahoo SI=F Close; COMEX futures, continuous front month (not spot)',
+    'copper': 'Yahoo HG=F Close; COMEX futures, continuous front month (not spot)',
+    'wti': 'Yahoo CL=F Close; NYMEX futures, continuous front month (not spot)',
+    'brent': 'Yahoo BZ=F Close; ICE futures, continuous front month (not spot)',
+}
+# Shown under the chart for metrics that have no stored note yet.
+FUTURES_NOTE = '선물 근월물 연속 시세이며 현물이 아닙니다. 만기 교체 시점에 가격이 불연속으로 움직일 수 있습니다.'
+FX_NOTE = 'Yahoo Finance 시장 종가 기준입니다. FRED 고시환율(뉴욕 정오)과 값이 다를 수 있습니다.'
+NOTES = {
+    'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
+    'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
+    'usdjpy': FX_NOTE, 'usdkrw': FX_NOTE,
+    'dxy': 'Yahoo Finance의 ICE 달러인덱스 종가입니다.',
+    'gold': FUTURES_NOTE, 'silver': FUTURES_NOTE, 'copper': FUTURES_NOTE,
+    'wti': FUTURES_NOTE, 'brent': FUTURES_NOTE,
 }
 
 
@@ -230,6 +290,8 @@ def calculate(raw):
     return {
         'jobs': transform(lagged(m('PAYEMS'), 3, lambda a, b: a-b), lambda v: v/3),
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
+        'pce_headline': yoy('PCEPI'), 'cpi_headline': yoy('CPIAUCSL'),
+        'ppi_core': yoy('PPIFES'), 'retail': yoy('RSAFS'), 'durable': yoy('DGORDER'),
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
         'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
         'reserves': transform(calendar(s('WRESBAL'), weekly=True), lambda v: v/1000),
@@ -237,10 +299,16 @@ def calculate(raw):
         'm2': yoy('M2SL'),
         'repo': aligned([s('SOFR'), s('IORB')], lambda a, b: (a-b)*100),
         'credit': transform(s('BAMLH0A0HYM2'), lambda v: v*100),
+        'nfci': calendar(s('NFCI'), weekly=True), 'stlfsi': calendar(s('STLFSI4'), weekly=True),
         'trend': aligned([s('^GSPC'), average(s('^GSPC'), 200)], lambda v, ma: (v/ma-1)*100 if ma > 0 else None),
         'vix': s('VIXCLS'),
         'participation': aligned([ratio, average(ratio, 125)], lambda v, ma: (v/ma-1)*100 if ma > 0 else None),
         'real': s('DFII10'), 'curve': aligned([s('DGS10'), s('DGS2')], lambda a, b: a-b),
+        'ust2': s('DGS2'), 'ust10': s('DGS10'),
+        'fedlow': s('DFEDTARL'), 'fedhigh': s('DFEDTARU'),
+        'usdjpy': s('JPY=X'), 'usdkrw': s('KRW=X'), 'dxy': s('DX-Y.NYB'),
+        'gold': s('GC=F'), 'silver': s('SI=F'), 'copper': s('HG=F'),
+        'wti': s('CL=F'), 'brent': s('BZ=F'),
         'pce_secondary': lagged(m('PCEPILFE'), 3, lambda a, b: ((a/b)**4-1)*100 if b > 0 else None),
     }
 
@@ -310,7 +378,8 @@ def build(raw, previous, generated_at, today=None):
                      if mid == 'pce' else None)
         metrics.append(dict(id=mid, section=section, title=title, unit=unit,
                             points=points, date=last[0], value=last[1], delta=delta,
-                            period=period, note=old.get('note', ''), formula=FORMULAS[mid],
+                            period=period, note=old.get('note') or NOTES.get(mid, ''),
+                            formula=FORMULAS[mid],
                             status='missing' if not usable else 'stale' if stale or
                             any(s['status'] != 'ok' for s in sources) else 'ok',
                             sources=sources, secondary=secondary))
@@ -381,4 +450,3 @@ if __name__ == '__main__':
             v.get('error') for v in read_json(args.cache, {}).values())):
         logging.error('One or more sources failed. Fallback status saved; inspect per-source errors.')
         raise SystemExit(2)
-
