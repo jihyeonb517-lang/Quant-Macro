@@ -9,39 +9,34 @@ import fetch_data as f
 class ArtifactTests(unittest.TestCase):
     def test_data_contract(self):
         data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))
-       self.assertEqual(
-    set(data),
-    {'generatedAt', 'method', 'metrics', 'regimes'},
-)
+        self.assertEqual(
+            set(data),
+            {'generatedAt', 'method', 'metrics', 'regimes'},
+        )
         self.assertIsNotNone(datetime.fromisoformat(data['generatedAt']).tzinfo)
-                self.assertEqual(set(data['regimes']), {'us', 'jp'})
+
+        self.assertEqual(set(data['regimes']), {'us', 'jp'})
         valid_regimes = {
             'contraction',
             'recovery',
             'expansion',
             'slowdown',
         }
-
         for country in ('us', 'jp'):
             intervals = data['regimes'][country]
             self.assertIsInstance(intervals, list)
-
             previous_end = None
-
             for interval in intervals:
                 self.assertEqual(len(interval), 3)
                 start, end, regime = interval
-
                 datetime.fromisoformat(start)
                 datetime.fromisoformat(end)
-
                 self.assertLess(start, end)
                 self.assertIn(regime, valid_regimes)
-
                 if previous_end is not None:
                     self.assertLessEqual(previous_end, start)
-
                 previous_end = end
+
         self.assertEqual([m['id'] for m in data['metrics']], [s[0] for s in f.SPECS])
         required = {'id', 'section', 'title', 'unit', 'points', 'date', 'value', 'delta',
                     'period', 'note', 'formula', 'status', 'sources', 'secondary'}
