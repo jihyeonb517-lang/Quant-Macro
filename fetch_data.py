@@ -1,10 +1,9 @@
-    """Refresh dashboard observations. No API keys, interpolation, or forward filling.
-    
-    Run: python fetch_data.py. --offline recomputes from the local observation cache.
-    Dates are observation dates, NOT historical release/vintage dates.
-    """
-    from __future__ import annotations
-    
+"""Refresh dashboard observations. No API keys, interpolation, or forward filling.
+
+Run: python fetch_data.py. --offline recomputes from the local observation cache.
+Dates are observation dates, NOT historical release/vintage dates.
+"""
+from __future__ import annotations
     import argparse
     import copy
     import csv
