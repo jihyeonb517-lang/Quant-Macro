@@ -24,6 +24,7 @@ from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 import japan_sources as jp
 import estat_sources as es
+import shunto_source as sh
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
@@ -142,6 +143,14 @@ FREQUENCIES.update(es.FREQUENCIES)
 SPECS.extend(es.SPECS)
 FORMULAS.update(es.FORMULAS)
 NOTES.update(es.NOTES)
+FREQUENCIES.update(sh.FREQUENCIES)
+SPECS.extend(sh.SPECS)
+FORMULAS.update(sh.FORMULAS)
+NOTES.update(sh.NOTES)
+MAX_AGE.setdefault('annual', 430)
+
+
+
 def utcnow():
     return datetime.now(timezone.utc).isoformat()
 
@@ -187,6 +196,8 @@ def fetch_series(sid):
         points = es.fetch_points(sid)
     elif sid in jp.SOURCES:
         points = jp.fetch_points(sid)
+    elif sid in sh.SOURCES:
+        points = sh.fetch_points(sid)
     else:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
         # Bound connection setup separately and avoid unusable IPv6 routes on
@@ -330,6 +341,7 @@ def calculate_base(raw):
 def calculate(raw):
     result = calculate_base(raw)
     result.update(jp.calculate(raw, aligned, calendar, transform))
+    result.update(sh.calculate(raw))
     result.update(es.calculate(raw, calendar))
     return result
 
@@ -343,7 +355,7 @@ def source_metadata(sid, raw, today):
     age = (today-date.fromisoformat(observed)).days if observed else None
     stale = bool(observed and (age > MAX_AGE[frequency] or points[-1][0] > observed))
     failed = bool(entry.get('error'))
-    origin, url = es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or (
+    origin, url = es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or sh.ORIGINS.get(sid) or (
         ('Yahoo Finance', f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/')
         if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}'))
     return dict(id=sid, url=url,
