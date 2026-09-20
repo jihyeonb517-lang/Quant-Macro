@@ -46,26 +46,26 @@
         'JPY=X': 'daily', 'KRW=X': 'daily', 'DX-Y.NYB': 'daily',
          'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
     'CL=F': 'daily', 'BZ=F': 'daily',
-}
+     }
 
-CLI_SOURCES = {
+     CLI_SOURCES = {
     'OECD_CLI_US': 'us',
     'OECD_CLI_JP': 'jp',
-}
+     }
 
-FREQUENCIES.update({
-    sid: 'monthly'
-    for sid in CLI_SOURCES
-})
+     FREQUENCIES.update({
+     sid: 'monthly'
+     for sid in CLI_SOURCES
+     })
 
-MAX_AGE = {
+     MAX_AGE = {
     'daily': 7,
     'weekly': 18,
     'monthly': 75,
     'quarterly': 140,
-}
+     }
 
-YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
+    YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
              'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
     # id, section, title, unit, dependencies, delta lag, comparison label
     SPECS = [
@@ -386,18 +386,18 @@ YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
                     fallback=bool(observed and (failed or stale)))
     
     
-  def build_regimes(raw, previous):
-    """
-    Build US and Japan OECD CLI regimes independently.
+        def build_regimes(raw, previous):
+        """
+        Build US and Japan OECD CLI regimes independently.
 
-    If one country's download fails, retain that country's previously
-    published regimes. Successful data are recalculated without
-    interpolation or forward filling.
-    """
-    previous_regimes = previous.get('regimes', {})
-    regimes = {}
+        If one country's download fails, retain that country's previously
+        published regimes. Successful data are recalculated without
+        interpolation or forward filling.
+        """
+        previous_regimes = previous.get('regimes', {})
+        regimes = {}
 
-    for sid, country in CLI_SOURCES.items():
+        for sid, country in CLI_SOURCES.items():
         entry = raw.get(sid, {})
         points = entry.get('points', [])
 
@@ -409,10 +409,10 @@ YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
 
         regimes[country] = cli.calculate_regimes(points)
 
-    return regimes
+        return regimes
 
 
-def build(raw, previous, generated_at, today=None):
+        def build(raw, previous, generated_at, today=None):
         today = today or datetime.now(timezone.utc).date()
         computed = calculate(raw)
         old_metrics = {m['id']: m for m in previous.get('metrics', [])}
@@ -533,7 +533,7 @@ def build(raw, previous, generated_at, today=None):
         return successes
     
     
-    if __name__ == '__main__':
+        if __name__ == '__main__':
         parser = argparse.ArgumentParser(description=__doc__)
         parser.add_argument('--offline', action='store_true')
         parser.add_argument('--source', choices=list(FREQUENCIES), help=argparse.SUPPRESS)
