@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>매크로 데이터 | Macro Data</title>
 <style>
-:root{--ink:#182a3b;--muted:#5e7080;--line:#d6e0e7;--paper:#f4f7fa;--accent:#007d83;--navy:#142c40;--warn:#a66313}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 "Malgun Gothic","Apple SD Gothic Neo",sans-serif}button,a{touch-action:manipulation}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #dd9d35;outline-offset:4px}header{background:white;border-bottom:1px solid var(--line)}.head{max-width:1440px;margin:auto;padding:26px 36px;display:flex;align-items:center;justify-content:space-between;gap:24px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--accent)}h1{margin:4px 0 0;font-size:25px;letter-spacing:-1px}.stamp{font-size:13px;color:var(--muted);text-align:right}.wrap{max-width:1440px;margin:auto;padding:0 36px 36px}.tabs{display:flex;gap:32px;border-bottom:1px solid var(--line);margin-bottom:26px}.tabs button{padding:20px 0 15px;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font-weight:700}.tabs button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}.intro{display:flex;align-items:start;justify-content:space-between;gap:24px;margin-bottom:22px}h2{margin:0;font-size:22px}.intro p{color:var(--muted);margin:6px 0 0}.badge{font-size:13px;padding:5px 10px;border:1px solid var(--line);white-space:nowrap;background:white}.badge.warn{color:var(--warn);border-color:#dcc5a6}.reading{background:var(--navy);color:white;padding:20px 24px;display:flex;gap:26px;margin-bottom:26px}.reading strong{font-size:13px;white-space:nowrap;color:#72d1ce;letter-spacing:1px}.reading p{margin:0;font-size:16px}.workspace{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}.metric-list{display:flex;flex-direction:column;gap:0;background:white;border:1px solid var(--line)}.metric{background:transparent;border:0;border-bottom:1px solid var(--line);padding:17px 18px;text-align:left;color:var(--ink);border-left:4px solid transparent}.metric:last-child{border-bottom:0}.metric[aria-pressed=true]{background:#e9f3f3;border-left-color:var(--accent)}.metric:hover{background:#eff5f7}.metric .name{display:block;font-size:14px;font-weight:700}.metric .value{font-size:25px;font-weight:700;font-variant-numeric:tabular-nums;display:block;margin-top:3px}.metric .unit{font-size:13px;font-weight:400;margin-left:5px;color:var(--muted)}.metric .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);gap:8px}.panel{background:white;border:1px solid var(--line);padding:25px 28px}.panel-top{display:flex;justify-content:space-between;align-items:start;gap:20px}.panel h3{font-size:20px;margin:0}.latest{font-size:34px;line-height:1.4;font-weight:700;letter-spacing:-1px}.latest small{font-size:15px;margin-left:6px;color:var(--muted);font-weight:400;letter-spacing:0}.delta{color:var(--muted);font-size:14px;margin-top:3px}.periods{display:flex;gap:3px;flex-wrap:wrap;justify-content:end}.periods button{background:none;border:1px solid transparent;padding:5px 9px;font-size:13px;color:var(--muted)}.periods button.active{background:var(--navy);color:white}.chart-wrap{position:relative;margin-top:18px}.chart{width:100%;height:auto;display:block;overflow:visible}.hover{height:25px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}.legend{display:flex;gap:20px;font-size:13px;color:var(--muted);margin:8px 0;flex-wrap:wrap}.key{display:inline-block;width:18px;height:3px;margin-right:7px;vertical-align:middle;background:var(--accent)}.key.alt{background:#a36c22}.chart-range{font-size:12px;color:var(--muted);text-align:right}.note{border-top:1px solid var(--line);margin-top:16px;padding-top:15px;color:var(--muted);font-size:14px}.quality{margin-top:18px;color:var(--warn);font-size:14px}.sources{margin-top:24px;border-top:1px solid var(--line);padding-top:18px}summary{cursor:pointer;font-weight:700;font-size:14px}.formula{font-size:14px;padding:10px 0;color:var(--muted)}.source{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 0;border-top:1px solid var(--line);font-size:13px}.source a{color:var(--accent);font-weight:700}.source span{display:block;color:var(--muted)}.method{margin-top:28px;font-size:13px;color:var(--muted);max-width:1060px}.foot{border-top:1px solid var(--line);margin-top:22px;padding-top:16px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:20px}noscript{display:block;padding:30px}.empty{padding:80px 20px;text-align:center;color:var(--muted)}@media(max-width:1000px){.workspace{grid-template-columns:245px 1fr}.panel{padding:20px}.panel-top{flex-direction:column}.periods{justify-content:start}}@media(max-width:720px){.head{padding:18px 20px;align-items:start}.stamp{max-width:140px;font-size:12px}.wrap{padding:0 18px 24px}.tabs{gap:20px}.tabs button{font-size:14px}.intro{display:block}.intro .badge{display:inline-block;margin-top:12px}.reading{display:block;padding:18px}.reading p{margin-top:6px;font-size:14px}.workspace{grid-template-columns:1fr}.metric-list{display:grid;grid-template-columns:1fr 1fr}.metric{padding:12px;border-bottom:1px solid var(--line)}.metric .value{font-size:22px}.metric .meta{display:block}.metric .meta span{display:block}.metric:last-child{grid-column:1/-1}.source{grid-template-columns:1fr}.latest{font-size:30px}.foot{display:block}.panel{padding:18px}.chart-wrap{margin-top:8px}.chart-range{text-align:left}}.tip{position:absolute;display:none;pointer-events:none;z-index:5;background:var(--navy);color:white;padding:8px 12px;font-size:14px;line-height:1.5;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 2px 8px rgba(0,0,0,.2)}.tip b{display:block;font-size:12px;font-weight:400;color:#72d1ce}.wrap{max-width:1440px;margin:auto;padding:0 36px 36px}.tabs{gap:22px;overflow-x:auto;white-space:nowrap}.tabs button{flex:none}
+:root{--ink:#182a3b;--muted:#5e7080;--line:#d6e0e7;--paper:#f4f7fa;--accent:#007d83;--navy:#142c40;--warn:#a66313}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 "Malgun Gothic","Apple SD Gothic Neo",sans-serif}button,a{touch-action:manipulation}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #dd9d35;outline-offset:4px}header{background:white;border-bottom:1px solid var(--line)}.head{max-width:1440px;margin:auto;padding:26px 36px;display:flex;align-items:center;justify-content:space-between;gap:24px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--accent)}h1{margin:4px 0 0;font-size:25px;letter-spacing:-1px}.stamp{font-size:13px;color:var(--muted);text-align:right}.wrap{max-width:1440px;margin:auto;padding:0 36px 36px}.tabs{display:flex;gap:32px;border-bottom:1px solid var(--line);margin-bottom:26px}.tabs button{padding:20px 0 15px;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font-weight:700}.tabs button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}.intro{display:flex;align-items:start;justify-content:space-between;gap:24px;margin-bottom:22px}h2{margin:0;font-size:22px}.intro p{color:var(--muted);margin:6px 0 0}.badge{font-size:13px;padding:5px 10px;border:1px solid var(--line);white-space:nowrap;background:white}.badge.warn{color:var(--warn);border-color:#dcc5a6}.reading{background:var(--navy);color:white;padding:20px 24px;display:flex;gap:26px;margin-bottom:26px}.reading strong{font-size:13px;white-space:nowrap;color:#72d1ce;letter-spacing:1px}.reading p{margin:0;font-size:16px}.workspace{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}.metric-list{display:flex;flex-direction:column;gap:0;background:white;border:1px solid var(--line)}.metric{background:transparent;border:0;border-bottom:1px solid var(--line);padding:17px 18px;text-align:left;color:var(--ink);border-left:4px solid transparent}.metric:last-child{border-bottom:0}.metric[aria-pressed=true]{background:#e9f3f3;border-left-color:var(--accent)}.metric:hover{background:#eff5f7}.metric .name{display:block;font-size:14px;font-weight:700}.metric .value{font-size:25px;font-weight:700;font-variant-numeric:tabular-nums;display:block;margin-top:3px}.metric .unit{font-size:13px;font-weight:400;margin-left:5px;color:var(--muted)}.metric .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);gap:8px}.panel{background:white;border:1px solid var(--line);padding:25px 28px}.panel-top{display:flex;justify-content:space-between;align-items:start;gap:20px}.panel h3{font-size:20px;margin:0}.latest{font-size:34px;line-height:1.4;font-weight:700;letter-spacing:-1px}.latest small{font-size:15px;margin-left:6px;color:var(--muted);font-weight:400;letter-spacing:0}.delta{color:var(--muted);font-size:14px;margin-top:3px}.periods{display:flex;gap:3px;flex-wrap:wrap;justify-content:end}.periods button{background:none;border:1px solid transparent;padding:5px 9px;font-size:13px;color:var(--muted)}.periods button.active{background:var(--navy);color:white}.chart-wrap{position:relative;margin-top:18px}.chart{width:100%;height:auto;display:block;overflow:visible}.hover{height:25px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}.legend{display:flex;gap:20px;font-size:13px;color:var(--muted);margin:8px 0;flex-wrap:wrap}.key{display:inline-block;width:18px;height:3px;margin-right:7px;vertical-align:middle;background:var(--accent)}.key.alt{background:#a36c22}.regime-tools{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:12px 0 6px;flex-wrap:wrap}.regime-toggle{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;cursor:pointer;user-select:none}.regime-toggle input{width:16px;height:16px;margin:0;accent-color:var(--accent)}.regime-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px}.regime-legend span{display:inline-flex;align-items:center;gap:6px}.regime-swatch{display:inline-block;width:18px;height:11px;border:1px solid transparent}.regime-swatch.unavailable{background:repeating-linear-gradient(135deg,transparent 0,transparent 4px,#94a3b8 4px,#94a3b8 5px);border-color:#94a3b8}
 </style></head><body>
 <header><div class="head"><div><div class="eyebrow">Macro data</div><h1>매크로 데이터</h1></div><div class="stamp" id="stamp"></div></div></header> 
 <main class="wrap"><div id="home"></div><div id="crumb" style="display:none"></div><nav class="tabs" id="tabs" role="tablist" aria-label="매크로 화면" style="display:none"></nav>
@@ -10,7 +10,7 @@
 <script>
 'use strict';
 
-const REGIME_STYLES = {
+const REGIME\_STYLES = {
   contraction: {
     label: '침체기',
     fill: '#FEE2E2',
@@ -67,7 +67,50 @@ const response = await fetch('./data.json', {cache: 'no-store'});
 if (!response.ok) throw new Error('Data request failed: ' + response.status);
 const DATA = await response.json();
 if (!Array.isArray(DATA.metrics) || !DATA.metrics.length) throw new Error('Invalid dashboard data');
+
+const REGIMES =
+  DATA.regimes &&
+  Array.isArray(DATA.regimes.us) &&
+  Array.isArray(DATA.regimes.jp)
+    ? DATA.regimes
+    : {us: [], jp: []};
+
+let showRegimes = false;
+
+try {
+  showRegimes = localStorage.getItem('macroShowRegimes') === 'true';
+} catch (error) {
+  console.warn('Regime preference could not be loaded.', error);
+}
+
 let group=null,section=GROUPS[0].tabs[0].key,selected=null,years=5,focusTab=false;
+
+const activeRegimes = () =>
+  group && Array.isArray(REGIMES[group]) ? REGIMES[group] : [];
+
+const regimeAt = day => {
+  const interval = activeRegimes().find(
+    ([start, end]) => day >= start && day < end
+  );
+
+  return interval ? interval[2] : 'unavailable';
+};
+const regimeLegendHTML = () =>
+  Object.entries(REGIME_STYLES).map(([key, style]) => {
+  const swatch = key === 'unavailable'
+  ? '<i class="regime-swatch unavailable"></i>'
+  : `<i class="regime-swatch" style="background:${style.fill};border-color:${style.border}"></i>`;
+
+return `<span>${swatch}${style.label}</span>`;
+  }).join('');
+
+const saveRegimePreference = value => {
+  try {
+    localStorage.setItem('macroShowRegimes', String(value));
+  } catch (error) {
+    console.warn('Regime preference could not be saved.', error);
+  }
+};
 const groupOf=k=>GROUPS.find(g=>g.key===k);
 const tabOf=k=>ALL.find(t=>t.key===k);
 const expired=m=>m.sources.some(s=>s.age!=null&&s.age>Math.max(2*(s.maxAge||0),120));
@@ -119,8 +162,23 @@ function apply(){
 
 }
 function renderPanel(){const m=DATA.metrics.find(m=>m.id===selected);if(!m){$('panel').innerHTML='<div class="empty">표시할 지표가 없습니다.</div>';return;}const source=m.sources.map(s=>`<div class="source"><div><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.id)} ↗</a><span>${esc(s.origin)}</span></div><div><span>원자료 관측일 ${esc(s.observed||'없음')} · ${esc({daily:'일간',weekly:'주간',monthly:'월간',quarterly:'분기',annual:'연간'}[s.frequency]||s.frequency)}</span><span>수집 ${s.retrieved?esc(new Date(s.retrieved).toLocaleString('ko-KR')):'시각 미확인 · 기존 캐시'}</span><span>관측일 경과 ${s.age??'—'}일 / 유효기간 ${s.maxAge}일${s.fallback?' · 이전 유효 자료 사용':''}</span></div></div>`).join('');
- $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div><div class="chart-wrap" id="chart-wrap"><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
- document.querySelectorAll('[data-years]').forEach(b=>b.onclick=()=>{years=+b.dataset.years;renderPanel()});draw(m);
+ $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div><div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div><div class="chart-wrap" id="chart-wrap"><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
+const regimeToggle = $('regime-toggle');
+
+regimeToggle.onchange = () => {
+  showRegimes = regimeToggle.checked;
+  saveRegimePreference(showRegimes);
+  draw(m);
+};
+
+document.querySelectorAll('[data-years]').forEach(
+  b => b.onclick = () => {
+    years = +b.dataset.years;
+    renderPanel();
+  }
+);
+
+draw(m);
 }
 function draw(m){
  const ts=d=>Date.parse(d+'T00:00:00Z');const all=m.points.filter(p=>p[1]!=null);
@@ -131,8 +189,23 @@ function draw(m){
  const vals=[...primary,...alternate].filter(p=>p[1]!=null);let min=Math.min(...vals.map(p=>p[1])),max=Math.max(...vals.map(p=>p[1]));
  const rawMin=min;let pad=(max-min)*.12||Math.max(Math.abs(max)*.03,1);min-=pad;max+=pad;if(rawMin>=0&&min<0)min=0;
  const start=ts(primary[0][0]),span=end-start||86400000,W=850,H=345,L=70,R=20,T=26,B=40;
- const x=d=>L+(ts(d)-start)/span*(W-L-R),y=v=>T+(max-v)/(max-min)*(H-T-B);
+ const xTime=t=>L+(t-start)/span*(W-L-R);
+ const x=d=>xTime(ts(d));
+ const y=v=>T+(max-v)/(max-min)*(H-T-B);
  let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.title)} · ${esc(m.unit)} · ${primary[0][0]}부터 ${all[all.length-1][0]}까지"><text x="${L}" y="15" fill="#5e7080" font-size="12">${esc(m.unit)}</text>`;
+  if (showRegimes) {
+  for (const [regimeStart, regimeEnd, regime] of activeRegimes()) {
+    const clippedStart = Math.max(ts(regimeStart), start);
+    const clippedEnd = Math.min(ts(regimeEnd), end);
+
+    if (clippedEnd <= clippedStart) continue;
+
+    const style = REGIME_STYLES[regime];
+    if (!style) continue;
+
+    svg += `<rect aria-hidden="true" x="${xTime(clippedStart).toFixed(2)}" y="${T}" width="${(xTime(clippedEnd)-xTime(clippedStart)).toFixed(2)}" height="${H-T-B}" fill="${style.fill}"/>`;
+  }
+}
  for(let i=0;i<5;i++){const v=min+(max-min)*i/4,yy=y(v);svg+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="#e2e9ee"/><text x="${L-12}" y="${yy+4}" text-anchor="end" fill="#5e7080" font-size="12">${num(v,Math.abs(v)>100?0:1)}</text>`;}
  if(min<0&&max>0)svg+=`<line x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}" stroke="#8ba1b0" stroke-dasharray="4 4"/>`;
  for(let i=0;i<5;i++){const d=new Date(start+span*i/4).toISOString().slice(0,10);svg+=`<text x="${L+(W-L-R)*i/4}" y="${H-12}" text-anchor="${i===0?'start':i===4?'end':'middle'}" fill="#5e7080" font-size="12">${d.slice(0,7)}</text>`;}
@@ -141,7 +214,26 @@ function draw(m){
  svg+=path(primary,'#007d83')+path(alternate,'#a36c22');svg+=`<line id="cross" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="#8ba1b0" stroke-dasharray="3 3" visibility="hidden"/><circle id="dot" r="4" fill="#007d83" visibility="hidden"/><rect id="hit" x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent"/></svg>`;
  $('chart').innerHTML=svg;$('chart-range').textContent=`표시 기간 ${primary[0][0]} — ${all[all.length-1][0]} · 관측일 기준`;
  const good=primary.filter(p=>p[1]!=null),chart=$('chart').querySelector('svg');
- $('hit').onpointermove=e=>{const rect=chart.getBoundingClientRect(),px=(e.clientX-rect.left)/rect.width*W;let point=good.reduce((a,b)=>Math.abs(x(b[0])-px)<Math.abs(x(a[0])-px)?b:a);const cross=$('cross'),dot=$('dot');cross.setAttribute('x1',x(point[0]));cross.setAttribute('x2',x(point[0]));cross.setAttribute('visibility','visible');dot.setAttribute('cx',x(point[0]));dot.setAttribute('cy',y(point[1]));dot.setAttribute('visibility','visible');const other=alternate.find(p=>p[0]===point[0]);$('hover').textContent=`${point[0]} · ${num(point[1])} ${m.unit}`+(other&&other[1]!=null?` · ${m.secondary.label} ${num(other[1])} ${m.unit}`:'');const tip=$('tip'),digits=['천 명','천 건','십억 달러','bp'].includes(m.unit)?1:2;tip.innerHTML=`<b>${esc(point[0])}</b>${num(point[1],digits)} ${esc(m.unit)}`+(other&&other[1]!=null?`<br>${esc(m.secondary.label)} ${num(other[1],digits)} ${esc(m.unit)}`:'');tip.style.display='block';const wr=$('chart-wrap').getBoundingClientRect();let left=e.clientX-wr.left+14;if(left+tip.offsetWidth>wr.width)left=e.clientX-wr.left-tip.offsetWidth-14;tip.style.left=left+'px';tip.style.top=Math.max(0,e.clientY-wr.top-tip.offsetHeight-12)+'px';};
+ $('hit').onpointermove=e=>{const rect=chart.getBoundingClientRect(),px=(e.clientX-rect.left)/rect.width*W;let point=good.reduce((a,b)=>Math.abs(x(b[0])-px)<Math.abs(x(a[0])-px)?b:a);const cross=$('cross'),dot=$('dot');cross.setAttribute('x1',x(point[0]));cross.setAttribute('x2',x(point[0]));cross.setAttribute('visibility','visible');dot.setAttribute('cx',x(point[0]));dot.setAttribute('cy',y(point[1]));dot.setAttribute('visibility','visible');const other=alternate.find(p=>p[0]===point[0]);const pointRegime = showRegimes ? regimeAt(point[0]) : null;
+const regimeLabel = pointRegime
+  ? REGIME_STYLES[pointRegime]?.label
+  : null;$('hover').textContent =
+  `${point[0]} · ${num(point[1])} ${m.unit}` +
+  (other && other[1] != null
+    ? ` · ${m.secondary.label} ${num(other[1])} ${m.unit}`
+    : '') +
+  (regimeLabel ? ` · 경기국면 ${regimeLabel}` : '');
+
+const tip = $('tip');
+const digits = ['천 명','천 건','십억 달러','bp'].includes(m.unit) ? 1 : 2;
+
+tip.innerHTML =
+  `<b>${esc(point[0])}</b>${num(point[1],digits)} ${esc(m.unit)}` +
+  (other && other[1] != null
+    ? `<br>${esc(m.secondary.label)} ${num(other[1],digits)} ${esc(m.unit)}`
+    : '') +
+  (regimeLabel ? `<br>경기국면 ${esc(regimeLabel)}` : '');
+                          tip.style.display='block';const wr=$('chart-wrap').getBoundingClientRect();let left=e.clientX-wr.left+14;if(left+tip.offsetWidth>wr.width)left=e.clientX-wr.left-tip.offsetWidth-14;tip.style.left=left+'px';tip.style.top=Math.max(0,e.clientY-wr.top-tip.offsetHeight-12)+'px';};
  $('hit').onpointerleave=()=>{$('cross').setAttribute('visibility','hidden');$('dot').setAttribute('visibility','hidden');$('tip').style.display='none';};
 }
 $('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString('ko-KR');$('method').textContent=DATA.method;
