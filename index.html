@@ -11,6 +11,7 @@
   
 .tip{position:absolute;display:none;pointer-events:none;z-index:5;background:var(--navy);color:white;padding:8px 12px;font-size:14px;line-height:1.5;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .tip b{display:block;font-size:12px;font-weight:400;color:#72d1ce}
+.regime-source{color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 </style></head><body>
 <header><div class="head"><div><div class="eyebrow">Macro data</div><h1>매크로 데이터</h1></div><div class="stamp" id="stamp"></div></div></header> 
 <main class="wrap"><div id="home"></div><div id="crumb" style="display:none"></div><nav class="tabs" id="tabs" role="tablist" aria-label="매크로 화면" style="display:none"></nav>
@@ -22,25 +23,21 @@
 const REGIME_STYLES = {
   contraction: {
     label: '침체기',
-    fill: '#FECACA',
     fill: '#FEE2E2',
     border: '#DC2626'
   },
   recovery: {
     label: '회복기',
-    fill: '#BFDBFE',
     fill: '#E8F1FD',
     border: '#2563EB'
   },
   expansion: {
     label: '확장기',
-    fill: '#BBF7D0',
     fill: '#DCFCE7',
     border: '#16A34A'
   },
   slowdown: {
     label: '둔화기',
-    fill: '#FDE68A',
     fill: '#FEF3C7',
     border: '#D97706'
   },
@@ -175,7 +172,7 @@ function apply(){
 
 }
 function renderPanel(){const m=DATA.metrics.find(m=>m.id===selected);if(!m){$('panel').innerHTML='<div class="empty">표시할 지표가 없습니다.</div>';return;}const source=m.sources.map(s=>`<div class="source"><div><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.id)} ↗</a><span>${esc(s.origin)}</span></div><div><span>원자료 관측일 ${esc(s.observed||'없음')} · ${esc({daily:'일간',weekly:'주간',monthly:'월간',quarterly:'분기',annual:'연간'}[s.frequency]||s.frequency)}</span><span>수집 ${s.retrieved?esc(new Date(s.retrieved).toLocaleString('ko-KR')):'시각 미확인 · 기존 캐시'}</span><span>관측일 경과 ${s.age??'—'}일 / 유효기간 ${s.maxAge}일${s.fallback?' · 이전 유효 자료 사용':''}</span></div></div>`).join('');
- $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div><div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div><div class="chart-wrap" id="chart-wrap"><button type="button" class="zoom-reset" id="zoom-reset" ${zoomRange?'':'hidden'} aria-label="차트 확대 초기화">확대 초기화</button><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
+ $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div><div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><span class="regime-source">경기국면 기준 · OECD CLI · ${group==='jp'?'일본':'미국'}</span><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div><div class="chart-wrap" id="chart-wrap"><button type="button" class="zoom-reset" id="zoom-reset" ${zoomRange?'':'hidden'} aria-label="차트 확대 초기화">확대 초기화</button><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
 const regimeToggle = $('regime-toggle');
 
 regimeToggle.onchange = () => {
