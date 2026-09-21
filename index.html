@@ -17,6 +17,7 @@
 <main class="wrap"><div id="home"></div><div id="crumb" style="display:none"></div><nav class="tabs" id="tabs" role="tablist" aria-label="매크로 화면" style="display:none"></nav>
 <section id="content" role="tabpanel" style="display:none"><div class="intro"><div><h2 id="section-title"></h2><p id="section-description"></p></div><span class="badge" id="coverage" style="display:none"></span></div><div class="reading"><strong>최근 변화</strong><p id="reading"></p></div><div class="workspace"><div class="metric-list" id="metrics" aria-label="지표 선택"></div><article class="panel" id="panel"></article></div></section>
 <div class="method"><strong>읽는 기준</strong><br>점수 하나로 시장을 판정하지 않습니다. 수준과 최근 변화, 서로 다른 지표의 방향을 함께 확인하세요. <span id="method"></span> 자료가 오래되거나 없으면 이전 값을 현재 값으로 바꾸지 않고 상태를 표시합니다.</div><footer class="foot"><span>원자료 → 계산 → 표시를 분리한 매크로 관측 도구</span><span>하루 2회(한국시간 08:17·20:17) 자동 수집 · 실제 관측일과 자료 상태를 확인하세요.</span></footer></main><noscript>이 대시보드에는 JavaScript가 필요합니다.</noscript>
+</main><noscript>이 대시보드에는 JavaScript가 필요합니다.</noscript>
 <script>
 'use strict';
 
@@ -142,6 +143,7 @@ function buildTabs(){
 }
 function renderHome(){
  $('home').innerHTML=`<div style="padding:34px 0 8px"><h2>지역 선택</h2><p style="color:var(--muted);margin:6px 0 24px">지역을 선택하면 해당 지역의 지표 탭이 열립니다.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">`+GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('')+`</div>`;
+ $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">`+GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('')+`</div>`;
  document.querySelectorAll('#home [data-group]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.group});
 }
 function renderCrumb(){
@@ -353,6 +355,7 @@ tip.innerHTML =
  });
 }
 $('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString('ko-KR');$('method').textContent=DATA.method;
+$('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString('ko-KR');
 window.addEventListener('hashchange',apply);apply();
 })().catch(error => {
  console.error(error);
