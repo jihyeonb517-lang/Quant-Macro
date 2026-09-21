@@ -2,8 +2,8 @@ name: Update data and deploy dashboard
 
 on:
   schedule:
-    # 08:17 and 20:17 Korea time, away from the busy top of the hour.
-    - cron: '17 23,11 * * *'
+    # Every 6 hours: 02:17, 08:17, 14:17, 20:17 Korea time (UTC+9).
+    - cron: '17 5,11,17,23 * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -44,7 +44,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_fetch_data.py' -v
           python -m unittest discover -s tests -p 'test_estat.py' -v
-          python -m unittest discover -s tests -p 'test_oecd_cli.py' -v
+          python -m unittest discover -s tests -p 'test_manual.py' -v
       - name: Refresh observations
         id: refresh
         continue-on-error: true
