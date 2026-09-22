@@ -17,14 +17,15 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, datetime, time as datetime_time, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 import japan_sources as jp
 import estat_sources as es
-import manual_sources as manual
+import shunto_source as sh
+import oecd_cli_source as cli
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
@@ -46,10 +47,20 @@ FREQUENCIES = {
     'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
     'CL=F': 'daily', 'BZ=F': 'daily',
 }
-MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 140, 'annual': 550}
+
+CLI_SOURCES = {
+    'OECD_CLI_US': 'us',
+    'OECD_CLI_JP': 'jp',
+}
+
+FREQUENCIES.update({
+    sid: 'monthly'
+    for sid in CLI_SOURCES
+})
+
+MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 140}
 YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
          'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
-US_EQUITY_CLOSE = {'^GSPC', 'RSP', 'SPY'}
 # id, section, title, unit, dependencies, delta lag, comparison label
 SPECS = [
     # First 16 keep their original positions (tests index metrics by position); new metrics are appended.
@@ -144,10 +155,14 @@ FREQUENCIES.update(es.FREQUENCIES)
 SPECS.extend(es.SPECS)
 FORMULAS.update(es.FORMULAS)
 NOTES.update(es.NOTES)
-FREQUENCIES.update(manual.FREQUENCIES)
-SPECS.extend(manual.SPECS)
-FORMULAS.update(manual.FORMULAS)
-NOTES.update(manual.NOTES)
+FREQUENCIES.update(sh.FREQUENCIES)
+SPECS.extend(sh.SPECS)
+FORMULAS.update(sh.FORMULAS)
+NOTES.update(sh.NOTES)
+MAX_AGE.setdefault('annual', 430)
+
+
+
 def utcnow():
     return datetime.now(timezone.utc).isoformat()
 
@@ -176,14 +191,6 @@ def clean(rows, today=None):
     return [[d, v] for d, v in sorted(result.items())]
 
 
-def yahoo_last_complete_day(sid, now_ny=None):
-    """Allow the US equity session's daily close from 16:00 New York time."""
-    now_ny = now_ny or datetime.now(ZoneInfo('America/New_York'))
-    if sid in US_EQUITY_CLOSE and now_ny.time() >= datetime_time(16, 0):
-        return now_ny.date()
-    return now_ny.date() - timedelta(days=1)
-
-
 def fetch_series(sid):
     if sid in YAHOO:
         import yfinance as yf
@@ -193,16 +200,22 @@ def fetch_series(sid):
                             multi_level_index=False)
         if frame is None or frame.empty:
             raise ValueError('Yahoo returned no prices')
-        # Accept today's US equity close after 16:00 ET; retain the prior-day
-        # cutoff for FX and futures, whose sessions do not follow that close.
+        # US equities may use today's close after 16:00 New York time.
+        # FX and futures retain the previous-day cutoff.
+        now_ny = datetime.now(ZoneInfo('America/New_York'))
+        completed_day = (now_ny.date()
+                         if sid in {'^GSPC', 'SPY', 'RSP'} and now_ny.hour >= 16
+                         else now_ny.date() - timedelta(days=1))
         points = clean(((d.strftime('%Y-%m-%d'), v) for d, v in frame['Close'].items()),
-                       today=yahoo_last_complete_day(sid))
-    elif sid in manual.SOURCES:
-        points = manual.fetch_points(sid)
+                       today=completed_day)
+    elif sid in CLI_SOURCES:
+        points = cli.fetch_points(CLI_SOURCES[sid])
     elif sid in es.SOURCES:
         points = es.fetch_points(sid)
     elif sid in jp.SOURCES:
         points = jp.fetch_points(sid)
+    elif sid in sh.SOURCES:
+        points = sh.fetch_points(sid)
     else:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
         # Bound connection setup separately and avoid unusable IPv6 routes on
@@ -221,8 +234,7 @@ def fetch_series(sid):
         if not rows or len(rows[0]) != 2 or rows[0][1] != sid:
             raise ValueError('Unexpected FRED CSV header')
         points = clean(row for row in rows[1:] if len(row) == 2)
-    # An empty manual file is a valid placeholder until the first value is entered.
-    if not any(finite(v) for _, v in points) and sid not in manual.SOURCES:
+    if not any(finite(v) for _, v in points):
         raise ValueError('No finite observations')
     return {'points': points, 'retrieved': utcnow(), 'error': None}
 
@@ -347,8 +359,8 @@ def calculate_base(raw):
 def calculate(raw):
     result = calculate_base(raw)
     result.update(jp.calculate(raw, aligned, calendar, transform))
+    result.update(sh.calculate(raw))
     result.update(es.calculate(raw, calendar))
-    result.update(manual.calculate(raw))
     return result
 
 
@@ -361,7 +373,7 @@ def source_metadata(sid, raw, today):
     age = (today-date.fromisoformat(observed)).days if observed else None
     stale = bool(observed and (age > MAX_AGE[frequency] or points[-1][0] > observed))
     failed = bool(entry.get('error'))
-    origin, url = manual.ORIGINS.get(sid) or es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or (
+    origin, url = es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or sh.ORIGINS.get(sid) or (
         ('Yahoo Finance', f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/')
         if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}'))
     return dict(id=sid, url=url,
@@ -370,6 +382,20 @@ def source_metadata(sid, raw, today):
                 age=age, maxAge=MAX_AGE[frequency],
                 status='missing' if not observed else 'stale' if failed or stale else 'ok',
                 fallback=bool(observed and (failed or stale)))
+
+
+def build_regimes(raw, previous):
+    """Build each country's regimes, retaining its prior result on failure."""
+    previous_regimes = previous.get('regimes', {})
+    regimes = {}
+    for sid, country in CLI_SOURCES.items():
+        entry = raw.get(sid, {})
+        points = entry.get('points', [])
+        if entry.get('error') or not points:
+            regimes[country] = copy.deepcopy(previous_regimes.get(country, []))
+            continue
+        regimes[country] = cli.calculate_regimes(points)
+    return regimes
 
 
 def build(raw, previous, generated_at, today=None):
@@ -431,8 +457,19 @@ def build(raw, previous, generated_at, today=None):
                             any(s['status'] != 'ok' for s in sources) else 'ok',
                             sources=sources, secondary=secondary,
                             **({'text': text} if text else {})))
-    return dict(generatedAt=generated_at, metrics=metrics,
-                method='차트는 관측 기준일과 현재 제공되는 수정자료를 사용합니다. 당시 공개정보를 복원한 백테스트가 아닙니다. 다운로드 시각은 발표 시각과 다릅니다. 결측값은 보간하지 않으며 마지막 유효값의 실제 관측일을 유지합니다.')
+    return dict(
+        generatedAt=generated_at,
+        metrics=metrics,
+        regimes=build_regimes(raw, previous),
+        method=(
+            '차트는 관측 기준일과 현재 제공되는 수정자료를 사용합니다. '
+            '당시 공개정보를 복원한 백테스트가 아닙니다. '
+            'OECD 경기국면도 현재 제공되는 수정 자료로 판정하며 '
+            '당시 공개정보를 복원하지 않습니다. '
+            '다운로드 시각은 발표 시각과 다릅니다. '
+            '결측값은 보간하지 않으며 마지막 유효값의 실제 관측일을 유지합니다.'
+        ),
+    )
 
 
 def atomic_json(path, data):
@@ -454,11 +491,6 @@ def refresh(output=ROOT/'data.json', cache=ROOT/'cache'/'observations.json', off
         for sid, entry, error in download_all():
             if entry:
                 existing = raw.get(sid, {}).get('points', [])
-                if not entry['points']:
-                    raw[sid] = entry
-                    successes += 1
-                    logging.info('%s: manual file is empty', sid)
-                    continue
                 # Preserve older history when providers limit their downloadable window.
                 # New observations (including nulls/revisions) are authoritative within it.
                 first, last = entry['points'][0][0], entry['points'][-1][0]
