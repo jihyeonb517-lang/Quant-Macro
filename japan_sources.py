@@ -294,7 +294,9 @@ def aligned_fill(series, fn, max_gap_days=5):
 
 def calculate(raw, aligned, calendar, transform):
     s = lambda sid: raw.get(sid, {}).get('points', [])
-    net = lambda sid: transform(calendar(s(sid), weekly=True), lambda v: v / 1000)
+    # CFTC observation weekdays can change (or shift for holidays). Preserve
+    # actual report dates instead of forcing a fixed seven-day calendar grid.
+    net = lambda sid: transform(s(sid), lambda v: v / 1000)
     monthly = lambda sid: calendar(s(sid))
     yoy = lambda sid: _lagged_monthly(monthly(sid), 12)
     return {
