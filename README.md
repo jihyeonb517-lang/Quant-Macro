@@ -188,4 +188,3 @@ historical knowledge would require vintage/release data rather than this CSV fee
 - [Scheduled workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 - [yfinance download parameters](https://ranaroussi.github.io/yfinance/reference/api/yfinance.download.html)
 - [FRED WTREGEN source definition](https://fred.stlouisfed.org/series/WTREGEN)
-
