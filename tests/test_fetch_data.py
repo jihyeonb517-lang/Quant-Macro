@@ -82,7 +82,7 @@ class FormulaTests(unittest.TestCase):
             UMCSENT=[['2026-08-01', 58.2]],
             CORESTICKM159SFRBATL=[['2026-08-01', 2.8]],
             PCETRIM12M159SFRBDAL=[['2026-08-01', 2.6]],
-            KOSIS_KR_EXPORTS=[['2025-08-01', 100], ['2026-08-01', 104.1]],
+            ECOS_KR_EXPORT_VALUE=[['2025-08-01', 100], ['2026-08-01', 104.1]],
             KOSIS_KR_INDUSTRIAL_PRODUCTION=[['2025-08-01', 100], ['2026-08-01', 101.7]],
             KOSIS_KR_RETAIL=[['2025-08-01', 100], ['2026-08-01', 102.2]],
             KOSIS_KR_UNEMPLOYMENT=[['2026-08-01', 2.7]],
@@ -217,12 +217,12 @@ class FormulaTests(unittest.TestCase):
         data = raw(
             ECOS_KR_RESERVES=[['2026-08-01', 421]],
             ECOS_KR_HOUSEHOLD_CREDIT=[['2026-04-01', 2_300_000]],
-            KOSIS_KR_HOUSE_PRICES=[['2026-04-01', 143.2]],
+            ECOS_KR_HOUSE_PRICES=[['2026-04-01', 143.2]],
         )
         result = f.calculate(data)
         self.assertEqual(result['kr_reserves_bok'], [['2026-08-01', 421]])
         self.assertEqual(result['kr_household_credit_bok'], [['2026-04-01', 2300]])
-        self.assertEqual(result['kr_house_prices_kosis'], [['2026-04-01', 143.2]])
+        self.assertEqual(result['kr_house_prices_ecos'], [['2026-04-01', 143.2]])
 
     def test_korea_cli_source_is_registered(self):
         self.assertEqual(f.CLI_SOURCES['OECD_CLI_KR'], 'kr')
