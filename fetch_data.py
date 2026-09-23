@@ -26,6 +26,7 @@ import japan_sources as jp
 import estat_sources as es
 import shunto_source as sh
 import oecd_cli_source as cli
+import korea_sources as kr
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
@@ -43,6 +44,17 @@ FREQUENCIES = {
     'PCEPI': 'monthly', 'PPIFES': 'monthly',
     'NFCI': 'weekly', 'STLFSI4': 'weekly',
     'DFEDTARL': 'daily', 'DFEDTARU': 'daily',
+    # --- additional US growth, demand, inflation and survey indicators ---
+    'GDPC1': 'quarterly', 'GACDFSA066MSFRBPHI': 'monthly',
+    'UMCSENT': 'monthly', 'PCECC96': 'quarterly',
+    'PCNDGC96': 'quarterly', 'PCDGCC96': 'quarterly', 'PCESVC96': 'quarterly',
+    'CORESTICKM159SFRBATL': 'monthly', 'PCETRIM12M159SFRBDAL': 'monthly',
+    # --- Japan real GDP (Cabinet Office series distributed by FRED) ---
+    'JPNRGDPEXP': 'quarterly',
+    # --- Korea FRED/OECD accessible series and official API sources ---
+    'KORXTEXVA01GYSAM': 'monthly', 'KORPRMNTO01GYSAM': 'monthly',
+    'KORSLRTTO01GYSAM': 'monthly', 'LRUNTTTTKRM156S': 'monthly',
+    'KORBNBUCT02STSAM': 'monthly', 'CSCICP02KRM066S': 'monthly',
     # --- phase 1: FX, dollar index, commodity futures (Yahoo) ---
     'JPY=X': 'daily', 'KRW=X': 'daily', 'DX-Y.NYB': 'daily',
     'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
@@ -65,6 +77,12 @@ FREQUENCIES.update({
     sid: 'monthly'
     for sid in CLI_SOURCES
 })
+FREQUENCIES.update({
+    sid: ('daily' if kr.ECOS[sid]['cycle'] == 'D' else
+          'quarterly' if kr.ECOS[sid]['cycle'] == 'Q' else 'monthly')
+    for sid in kr.ECOS
+})
+FREQUENCIES.update({sid: 'monthly' for sid in kr.KOSIS})
 
 MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 310}
 YAHOO = {'^GSPC', '^NDX', '^N225', '1306.T', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
@@ -113,6 +131,32 @@ SPECS = [
     ('kr_reserves', 'korea', '한국 외환보유액(금 제외)', '십억 달러', ['TRESEGKRM052N'], 3, '3개월 전 대비'),
     ('kr_household_credit', 'korea', '한국 가계신용 잔액', '조 원', ['CRDQKRAHABIS'], 4, '1년 전 대비'),
     ('kr_house_prices', 'korea', '한국 주택가격지수(명목)', '지수', ['QKRN628BIS'], 4, '1년 전 대비'),
+    ('us_real_gdp', 'economy', '미국 실질 GDP 증가율', '%', ['GDPC1'], 4, '1년 전 대비'),
+    ('philly_fed', 'economy', '필라델피아 연은 제조업 경기', '지수', ['GACDFSA066MSFRBPHI'], 1, '전월 대비'),
+    ('umich_sentiment', 'economy', '미시간대 소비자심리지수', '지수', ['UMCSENT'], 1, '전월 대비'),
+    ('real_pce', 'economy', '실질 개인소비지출 증가율', '%', ['PCECC96'], 4, '1년 전 대비'),
+    ('real_pce_nondurable', 'economy', '실질 비내구재 소비 증가율', '%', ['PCNDGC96'], 4, '1년 전 대비'),
+    ('real_pce_durable', 'economy', '실질 내구재 소비 증가율', '%', ['PCDGCC96'], 4, '1년 전 대비'),
+    ('real_pce_services', 'economy', '실질 서비스 소비 증가율', '%', ['PCESVC96'], 4, '1년 전 대비'),
+    ('sticky_cpi', 'economy', '애틀랜타 연은 Sticky CPI', '%', ['CORESTICKM159SFRBATL'], 3, '3개월 전 대비'),
+    ('trimmed_pce', 'economy', '댈러스 연은 절사평균 PCE', '%', ['PCETRIM12M159SFRBDAL'], 3, '3개월 전 대비'),
+    ('jp_real_gdp', 'japan', '일본 실질 GDP 증가율', '%', ['JPNRGDPEXP'], 4, '1년 전 대비'),
+    ('kr_exports', 'korea', '한국 수출 증가율', '%', ['KORXTEXVA01GYSAM'], 1, '전월 대비'),
+    ('kr_industrial_production', 'korea', '한국 제조업 생산 증가율', '%', ['KORPRMNTO01GYSAM'], 3, '3개월 전 대비'),
+    ('kr_retail', 'korea', '한국 소매판매 증가율', '%', ['KORSLRTTO01GYSAM'], 3, '3개월 전 대비'),
+    ('kr_unemployment', 'korea', '한국 실업률', '%', ['LRUNTTTTKRM156S'], 3, '3개월 전 대비'),
+    ('kr_real_gdp', 'korea', '한국 실질 GDP 증가율(ECOS)', '%', ['ECOS_KR_REAL_GDP'], 4, '1년 전 대비'),
+    ('kr_bsi_oecd', 'korea', '한국 기업경기 설문(제조·비제조)', '%p', ['KORBNBUCT02STSAM'], 1, '전월 대비'),
+    ('kr_consumer_confidence_oecd', 'korea', '한국 소비자 신뢰 설문(OECD)', '%p', ['CSCICP02KRM066S'], 1, '전월 대비'),
+    ('kr_semiconductor_exports', 'korea', '한국 반도체 수출', '천 달러', ['KOSIS_KR_SEMICONDUCTOR_EXPORTS'], 12, '1년 전 대비'),
+    ('kr_cpi_kosis', 'korea', '한국 소비자물가 상승률(KOSIS)', '%', ['KOSIS_KR_CPI'], 12, '1년 전 대비'),
+    ('kr_core_cpi_kosis', 'korea', '한국 근원물가 상승률(KOSIS)', '%', ['KOSIS_KR_CORE_CPI'], 12, '1년 전 대비'),
+    ('kr_house_prices_kosis', 'korea', '한국 주택매매가격지수(KOSIS)', '지수', ['KOSIS_KR_HOUSE_PRICES'], 12, '1년 전 대비'),
+    ('kr_base_rate', 'korea', '한국은행 기준금리', '%', ['ECOS_KR_BASE_RATE'], 20, '20관측일 전 대비'),
+    ('kr_reserves_bok', 'korea', '한국은행 외환보유액(금 포함)', '억 달러', ['ECOS_KR_RESERVES'], 3, '3개월 전 대비'),
+    ('kr_household_credit_bok', 'korea', '한국은행 가계신용 잔액', '조 원', ['ECOS_KR_HOUSEHOLD_CREDIT'], 4, '1년 전 대비'),
+    ('kr_bsi_bok', 'korea', '한국은행 기업경기실사지수(BSI)', '지수', ['ECOS_KR_BSI'], 1, '전월 대비'),
+    ('kr_ccsi', 'korea', '한국은행 소비자심리지수(CCSI)', '지수', ['ECOS_KR_CCSI'], 1, '전월 대비'),
 ]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
@@ -155,6 +199,32 @@ FORMULAS = {
     'kr_reserves': 'TRESEGKRM052N / 1000; IMF International Financial Statistics, 금 제외 외환보유액(월간 백만 달러를 십억 달러로 변환)',
     'kr_household_credit': 'CRDQKRAHABIS / 1000; BIS 가계·가계서비스 비영리기관 신용 잔액(분기말, 구조변화 조정, 십억 원을 조 원으로 변환)',
     'kr_house_prices': 'QKRN628BIS; BIS 명목 주거용 부동산 가격지수(2010=100), 전국 신규·기존 주택 포함',
+    'us_real_gdp': '(GDPC1[t]/GDPC1[t−4 quarters]−1)×100; 실질 GDP 전년동기 대비',
+    'philly_fed': 'GACDFSA066MSFRBPHI; 필라델피아 연은 제조업 일반 경기활동 확산지수, 0 초과는 개선 응답 우세',
+    'umich_sentiment': 'UMCSENT; 미시간대 소비자심리지수 원계열',
+    'real_pce': '(PCECC96[t]/PCECC96[t−4 quarters]−1)×100; 실질 PCE 전년동기 대비',
+    'real_pce_nondurable': '(PCNDGC96[t]/PCNDGC96[t−4 quarters]−1)×100; 실질 비내구재 PCE 전년동기 대비',
+    'real_pce_durable': '(PCDGCC96[t]/PCDGCC96[t−4 quarters]−1)×100; 실질 내구재 PCE 전년동기 대비',
+    'real_pce_services': '(PCESVC96[t]/PCESVC96[t−4 quarters]−1)×100; 실질 서비스 PCE 전년동기 대비',
+    'sticky_cpi': 'CORESTICKM159SFRBATL; 애틀랜타 연은 Sticky Price CPI 전년 대비 상승률(원자료)',
+    'trimmed_pce': 'PCETRIM12M159SFRBDAL; 댈러스 연은 Trimmed Mean PCE 전년 대비 상승률(원자료)',
+    'jp_real_gdp': '(JPNRGDPEXP[t]/JPNRGDPEXP[t−4 quarters]−1)×100; Cabinet Office real GDP, FRED 배포 계열의 전년동기 대비',
+    'kr_exports': 'KORXTEXVA01GYSAM; OECD 한국 상품수출의 계절조정 전년동월 대비 증가율(원자료)',
+    'kr_industrial_production': 'KORPRMNTO01GYSAM; OECD 제조업 생산의 계절조정 전년동월 대비 증가율(원자료)',
+    'kr_retail': 'KORSLRTTO01GYSAM; OECD 소매판매량 전년동월 대비 증가율(원자료)',
+    'kr_unemployment': 'LRUNTTTTKRM156S; OECD 15세 이상 실업률, 계절조정',
+    'kr_real_gdp': '(ECOS_KR_REAL_GDP[t]/ECOS_KR_REAL_GDP[t−4 quarters]−1)×100; 한국은행 국민계정 실질 GDP 전년동기 대비',
+    'kr_bsi_oecd': 'KORBNBUCT02STSAM; OECD 수록 한국 기업경기 설문, 비제조업 현재 경기 확산 잔액',
+    'kr_consumer_confidence_oecd': 'CSCICP02KRM066S; OECD 수록 한국 소비자 신뢰 설문 잔액(한국은행 CCSI와 별도 계열)',
+    'kr_semiconductor_exports': 'KOSIS 수출 통계의 반도체 품목, 명목 수출액. 계절조정하지 않음.',
+    'kr_cpi_kosis': 'KOSIS 소비자물가지수 총지수 전년동월 대비 상승률',
+    'kr_core_cpi_kosis': 'KOSIS 농산물·석유류 제외 또는 식료품·에너지 제외 소비자물가지수 전년동월 대비 상승률',
+    'kr_house_prices_kosis': 'KOSIS 전국 주택매매가격지수; 월간 명목 지수',
+    'kr_base_rate': 'ECOS 722Y001 / 0101000; 한국은행 기준금리, 일별',
+    'kr_reserves_bok': '한국은행 ECOS 외환보유액 월말 금 포함 잔액',
+    'kr_household_credit_bok': '한국은행 ECOS 가계신용 분기 잔액',
+    'kr_bsi_bok': '한국은행 ECOS 기업경기조사 제조업 업황 BSI',
+    'kr_ccsi': '한국은행 ECOS 소비자동향조사 소비자심리지수(CCSI)',
 }
 # Shown under the chart for metrics that have no stored note yet.
 FUTURES_NOTE = '선물 근월물 연속 시세이며 현물이 아닙니다. 만기 교체 시점에 가격이 불연속으로 움직일 수 있습니다.'
@@ -178,6 +248,31 @@ NOTES = {
                             '한국은행 가계신용 통계와 구성·편제 기준이 완전히 같지는 않습니다.'),
     'kr_house_prices': ('BIS 전국 주택가격 자료로 신규·기존 주거용 부동산을 포함한 명목 지수입니다. '
                         '분기 자료이며 한국부동산원의 월간 지수와 표본·산식이 다를 수 있습니다.'),
+    'philly_fed': '월간 필라델피아 연은 제조업 설문 일반 경기활동 확산지수입니다. 0을 웃돌면 개선 응답이 악화 응답보다 많습니다.',
+    'umich_sentiment': '미시간대 조사로 측정한 소비자심리지수입니다. 수준과 추세를 함께 보세요.',
+    'real_pce': 'BEA 실질 PCE 연쇄달러 기준의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
+    'real_pce_nondurable': 'BEA 실질 비내구재 상품 소비의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
+    'real_pce_durable': 'BEA 실질 내구재 상품 소비의 전년동기 대비 증가율입니다. 분기 자료이며 변동성이 큽니다.',
+    'real_pce_services': 'BEA 실질 서비스 소비의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
+    'sticky_cpi': '애틀랜타 연은이 가격 조정 빈도가 낮은 항목을 묶은 물가지수의 전년 대비 상승률입니다.',
+    'trimmed_pce': '댈러스 연은이 월별 극단값을 절사해 계산한 근원 PCE 물가의 전년 대비 상승률입니다.',
+    'jp_real_gdp': '일본 내각부 국민계정 기반 실질 GDP의 FRED 배포 계열입니다. 분기 자료이며 개정될 수 있습니다.',
+    'kr_industrial_production': 'OECD의 한국 제조업 생산 계절조정 전년동월 대비 증가율입니다. 국가데이터처 광공업 전체 증가율과 포괄범위가 같지 않습니다.',
+    'kr_exports': 'OECD의 상품수출 전년동월 대비 계열입니다. 반도체만의 수출은 별도 KOSIS 통계로 표시합니다.',
+    'kr_retail': 'OECD 한국 소매판매량의 전년동월 대비 계절조정 증가율입니다.',
+    'kr_unemployment': 'OECD가 제공하는 한국 15세 이상 계절조정 실업률입니다.',
+    'kr_real_gdp': '한국은행 ECOS 국민계정 실질 GDP의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
+    'kr_bsi_oecd': 'OECD의 한국 비제조업 기업경기 현재 설문 잔액입니다. 한국은행 BSI와 조사·표본·산식이 다릅니다.',
+    'kr_consumer_confidence_oecd': 'OECD 수록 소비자 신뢰 설문 잔액입니다. 한국은행 CCSI와 기준·산식이 다른 보조 지표입니다.',
+    'kr_semiconductor_exports': 'KOSIS 월간 수출액에서 반도체 품목을 선택합니다. 명목 금액이며 계절·조업일 효과가 포함됩니다.',
+    'kr_cpi_kosis': 'KOSIS 총 CPI로 계산한 전년동월 대비 상승률입니다.',
+    'kr_core_cpi_kosis': 'KOSIS 근원 CPI 계열을 사용합니다. 표에서 해당 근원지수를 찾지 못하면 값을 만들지 않습니다.',
+    'kr_house_prices_kosis': 'KOSIS의 전국 주택매매가격지수입니다. 이전 BIS 분기 지수와 표본·주기·기준연도가 다릅니다.',
+    'kr_base_rate': '한국은행이 결정·공표하는 정책 기준금리의 일별 계열입니다.',
+    'kr_reserves_bok': '한국은행 기준 월말 외환보유액(금 포함)입니다. 기존 IMF/FRED 금 제외 계열과 정의가 다릅니다.',
+    'kr_household_credit_bok': '한국은행 가계신용 분기 잔액으로, 가계대출과 판매신용을 포함합니다.',
+    'kr_bsi_bok': '한국은행 기업경기실사지수(BSI)입니다. 통상 100을 중심으로 경기 판단을 읽습니다.',
+    'kr_ccsi': '한국은행 소비자심리지수(CCSI)입니다. 통상 100을 장기 평균 기준으로 해석합니다.',
 }
 
 SOURCE_ORIGINS = {
@@ -185,9 +280,17 @@ SOURCE_ORIGINS = {
     'CRDQKRAHABIS': 'BIS Credit to the Non-Financial Sector (FRED 배포)',
     'QKRN628BIS': 'BIS Residential Property Price Database (FRED 배포)',
     'OECD_CLI_KR': 'OECD Composite Leading Indicator (FRED 배포)',
+    **{sid: 'OECD Main Economic Indicators (FRED 배포)' for sid in (
+        'KORXTEXVA01GYSAM', 'KORPRMNTO01IXOBSAM', 'KORSLRTTO01GYSAM',
+        'LRUNTTTTKRM156S', 'KORBNBUCT02STSAM', 'CSCICP02KRM066S',
+    )},
+    **{sid: 'Bank of Korea ECOS Open API' for sid in kr.ECOS},
+    **{sid: 'Statistics Korea KOSIS Open API' for sid in kr.KOSIS},
 }
 SOURCE_URLS = {
     'OECD_CLI_KR': 'https://fred.stlouisfed.org/series/KORLOLITOAASTSAM',
+    **{sid: 'https://ecos.bok.or.kr/' for sid in kr.ECOS},
+    **{sid: 'https://kosis.kr/' for sid in kr.KOSIS},
 }
 
 FREQUENCIES.update(jp.FREQUENCIES)
@@ -265,6 +368,8 @@ def fetch_series(sid):
         points = jp.fetch_points(sid)
     elif sid in sh.SOURCES:
         points = sh.fetch_points(sid)
+    elif sid in kr.ECOS or sid in kr.KOSIS:
+        points = kr.fetch_points(sid)
     else:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
         # Bound connection setup separately and avoid unusable IPv6 routes on
@@ -388,6 +493,7 @@ def calculate_base(raw):
     s = lambda sid: raw.get(sid, {}).get('points', [])
     m = lambda sid: calendar(s(sid))
     yoy = lambda sid: lagged(m(sid), 12, lambda a, b: (a/b-1)*100 if b > 0 else None)
+    quarterly_yoy = lambda sid: lagged(s(sid), 4, lambda a, b: (a/b-1)*100 if b > 0 else None)
     ratio = aligned([s('RSP'), s('SPY')], lambda a, b: a/b if b > 0 else None)
 
     # Keep only common trading dates, retaining explicit nulls on common dates.
@@ -430,6 +536,32 @@ def calculate_base(raw):
         'kr_reserves': transform(s('TRESEGKRM052N'), lambda v: v/1000),
         'kr_household_credit': transform(s('CRDQKRAHABIS'), lambda v: v/1000),
         'kr_house_prices': s('QKRN628BIS'),
+        'us_real_gdp': quarterly_yoy('GDPC1'),
+        'philly_fed': s('GACDFSA066MSFRBPHI'),
+        'umich_sentiment': s('UMCSENT'),
+        'real_pce': quarterly_yoy('PCECC96'),
+        'real_pce_nondurable': quarterly_yoy('PCNDGC96'),
+        'real_pce_durable': quarterly_yoy('PCDGCC96'),
+        'real_pce_services': quarterly_yoy('PCESVC96'),
+        'sticky_cpi': s('CORESTICKM159SFRBATL'),
+        'trimmed_pce': s('PCETRIM12M159SFRBDAL'),
+        'jp_real_gdp': quarterly_yoy('JPNRGDPEXP'),
+        'kr_exports': s('KORXTEXVA01GYSAM'),
+        'kr_industrial_production': s('KORPRMNTO01IXOBSAM'),
+        'kr_retail': s('KORSLRTTO01GYSAM'),
+        'kr_unemployment': s('LRUNTTTTKRM156S'),
+        'kr_real_gdp': quarterly_yoy('ECOS_KR_REAL_GDP'),
+        'kr_bsi_oecd': s('KORBNBUCT02STSAM'),
+        'kr_consumer_confidence_oecd': s('CSCICP02KRM066S'),
+        'kr_semiconductor_exports': yoy('KOSIS_KR_SEMICONDUCTOR_EXPORTS'),
+        'kr_cpi_kosis': yoy('KOSIS_KR_CPI'),
+        'kr_core_cpi_kosis': yoy('KOSIS_KR_CORE_CPI'),
+        'kr_house_prices_kosis': s('KOSIS_KR_HOUSE_PRICES'),
+        'kr_base_rate': s('ECOS_KR_BASE_RATE'),
+        'kr_reserves_bok': s('ECOS_KR_RESERVES'),
+        'kr_household_credit_bok': transform(s('ECOS_KR_HOUSEHOLD_CREDIT'), lambda v: v/1000),
+        'kr_bsi_bok': s('ECOS_KR_BSI'),
+        'kr_ccsi': s('ECOS_KR_CCSI'),
     }
 
 

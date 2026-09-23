@@ -40,6 +40,15 @@ background in the same way as the US and Japan. These international series use
 different scopes and frequencies from Korea's Bank of Korea and Korea Real Estate
 Board releases; source, frequency, and observation date are shown on each chart.
 
+Additional US growth, consumption, inflation and survey indicators, Japan real
+GDP, and Korean exports, production, retail sales, CPI, jobs, policy rate,
+household credit, housing and sentiment series are refreshed by the same
+workflow. Korean official series use ECOS and KOSIS adapters. Add the credentials
+as repository Actions secrets named `ECOS_API_KEY` and `KOSIS_API_KEY`; never put
+the values in code or a public file. The workflow keeps the keys in its runtime
+environment and masks request failures so provider URLs cannot expose them in
+logs. If either provider is unavailable, the last good observation cache is used.
+
 ## Connect this local folder to a new GitHub repository
 
 1. Sign in at https://github.com/new.

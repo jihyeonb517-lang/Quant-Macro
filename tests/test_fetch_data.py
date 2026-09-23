@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import fetch_data as f
 import japan_sources as jp
+import korea_sources as kr
 
 
 def raw(**series):
@@ -45,6 +46,77 @@ class FormulaTests(unittest.TestCase):
         result = f.calculate(data)
         self.assertAlmostEqual(result['pce'][-1][1], 8)
         self.assertAlmostEqual(result['pce_secondary'][-1][1], ((108/104)**4-1)*100)
+
+    def test_real_gdp_and_pce_components_use_four_quarter_yoy(self):
+        dates = ['2025-01-01', '2025-04-01', '2025-07-01', '2025-10-01', '2026-01-01']
+        data = raw(
+            GDPC1=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 110])],
+            PCECC96=[[d, value] for d, value in zip(dates, [200, 202, 204, 206, 210])],
+            PCNDGC96=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 105])],
+            PCDGCC96=[[d, value] for d, value in zip(dates, [50, 51, 52, 53, 55])],
+            PCESVC96=[[d, value] for d, value in zip(dates, [150, 151, 152, 153, 157.5])],
+            JPNRGDPEXP=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 104])],
+            ECOS_KR_REAL_GDP=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 106])],
+        )
+        result = f.calculate(data)
+        for mid, expected in [('us_real_gdp', 10), ('real_pce', 5),
+                              ('real_pce_nondurable', 5), ('real_pce_durable', 10),
+                              ('real_pce_services', 5), ('jp_real_gdp', 4),
+                              ('kr_real_gdp', 6)]:
+            self.assertAlmostEqual(result[mid][-1][1], expected)
+
+    def test_added_fred_survey_and_korea_series_are_registered(self):
+        required = {
+            'philly_fed', 'umich_sentiment', 'sticky_cpi', 'trimmed_pce',
+            'kr_exports', 'kr_industrial_production', 'kr_retail',
+            'kr_unemployment', 'kr_real_gdp', 'kr_bsi_oecd',
+            'kr_consumer_confidence_oecd',
+        }
+        self.assertTrue(required.issubset({spec[0] for spec in f.SPECS}))
+        data = raw(
+            GACDFSA066MSFRBPHI=[['2026-08-01', 12.5]],
+            UMCSENT=[['2026-08-01', 58.2]],
+            CORESTICKM159SFRBATL=[['2026-08-01', 2.8]],
+            PCETRIM12M159SFRBDAL=[['2026-08-01', 2.6]],
+            KORXTEXVA01GYSAM=[['2026-08-01', 4.1]],
+            KORPRMNTO01GYSAM=[['2026-08-01', 1.7]],
+            KORSLRTTO01GYSAM=[['2026-08-01', 2.2]],
+            LRUNTTTTKRM156S=[['2026-08-01', 2.7]],
+            KORBNBUCT02STSAM=[['2026-08-01', -25]],
+            CSCICP02KRM066S=[['2026-08-01', 5]],
+        )
+        result = f.calculate(data)
+        self.assertEqual(result['philly_fed'][-1][1], 12.5)
+        self.assertEqual(result['umich_sentiment'][-1][1], 58.2)
+        self.assertEqual(result['kr_exports'][-1][1], 4.1)
+        self.assertEqual(result['kr_unemployment'][-1][1], 2.7)
+
+    def test_official_api_helper_parsing_and_item_selection(self):
+        self.assertEqual(kr._points([
+            {'TIME': '2026Q2', 'DATA_VALUE': '3.4'},
+            {'TIME': '2026Q1', 'DATA_VALUE': '2.1'},
+        ], 'TIME', 'DATA_VALUE', 'Q'),
+            [['2026-01-01', 2.1], ['2026-04-01', 3.4]])
+        rows = [
+            {'GRP_CODE': 'Group1', 'CYCLE': 'M', 'ITEM_NAME': '전국', 'ITEM_CODE': 'A'},
+            {'GRP_CODE': 'Group1', 'CYCLE': 'M', 'ITEM_NAME': '서울', 'ITEM_CODE': 'B'},
+            {'GRP_CODE': 'Group2', 'CYCLE': 'M', 'ITEM_NAME': '총계', 'ITEM_CODE': 'C'},
+        ]
+        selected = kr._select_ecos_codes(rows, {'cycle': 'M', 'item': ('총계',)})
+        self.assertEqual(selected, ['A', 'C'])
+
+    def test_korean_api_sources_have_frequency_and_no_embedded_keys(self):
+        self.assertEqual(f.FREQUENCIES['ECOS_KR_BASE_RATE'], 'daily')
+        self.assertEqual(f.FREQUENCIES['ECOS_KR_REAL_GDP'], 'quarterly')
+        self.assertEqual(f.FREQUENCIES['KOSIS_KR_CPI'], 'monthly')
+        self.assertNotIn('ECOS_API_KEY =', Path(f.__file__).read_text(encoding='utf-8'))
+
+    def test_korean_api_errors_do_not_echo_credentials(self):
+        with patch.object(kr, 'urlopen', side_effect=RuntimeError(
+                'request failed for https://kosis.kr/?apiKey=secret-value')):
+            with self.assertRaises(RuntimeError) as raised:
+                kr._json('https://kosis.kr/?apiKey=secret-value')
+        self.assertNotIn('secret-value', str(raised.exception))
 
     def test_claims_require_four_consecutive_weeks(self):
         days = ['2026-08-01', '2026-08-08', '2026-08-15', '2026-08-22']
