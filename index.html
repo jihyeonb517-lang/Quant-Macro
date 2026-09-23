@@ -58,8 +58,8 @@ const REGIME_STYLES = {
 const GROUPS=[
 {key:'us',label:'미국 매크로',tabs:[
 {key:'jobs',label:'고용·실업',title:'고용과 실업',desc:'노동시장의 강도와 변화를 확인합니다.',ids:['unemployment','jobs','claims']},
-{key:'prices',label:'물가',title:'물가 상승 속도',desc:'소비자·생산자 물가를 헤드라인과 근원으로 나누어 읽습니다.',ids:['cpi_headline','cpi','pce_headline','pce','ppi_core'],read:['cpi_headline','pce_headline','ppi_core']},
-{key:'growth',label:'경기',title:'소비와 주문',desc:'소매판매와 내구재 수주로 수요의 방향을 확인합니다.',ids:['retail','durable','household_debt_service']},
+{key:'prices',label:'물가',title:'물가 상승 속도',desc:'소비자·생산자 물가와 애틀랜타·댈러스 연은의 보조 근원물가 지표를 함께 봅니다.',ids:['cpi_headline','cpi','pce_headline','pce','ppi_core','sticky_cpi','trimmed_pce'],read:['cpi_headline','pce_headline','ppi_core','sticky_cpi','trimmed_pce']},
+{key:'growth',label:'경기·소비',title:'실질 성장과 소비·심리',desc:'GDP와 실질 소비 증가율, 제조업 설문, 소비자 심리로 수요의 강도를 확인합니다.',ids:['us_real_gdp','real_pce','real_pce_nondurable','real_pce_durable','real_pce_services','philly_fed','umich_sentiment','retail','durable','household_debt_service'],read:['us_real_gdp','real_pce','philly_fed','umich_sentiment']},
 {key:'liquidity',label:'유동성',title:'유동성',desc:'재무부 계좌·지준금·연준 순유동성으로 자금의 양을 확인합니다.',ids:['tga','reserves','netliq','m2'],read:['tga','reserves','netliq']},
 {key:'stability',label:'금융 안정',title:'금융 안정',desc:'단기 자금시장의 긴장, 신용 스프레드, 금융 스트레스, 은행 대출태도를 확인합니다.',ids:['repo','credit','nfci','stlfsi','bank_lending'],read:['repo','credit','bank_lending']},
 {key:'rates',label:'미국채',title:'미국채와 정책금리',desc:'국채 금리 수준, 장단기 금리차, 실질금리, 정책금리를 확인합니다.',ids:['ust2','ust10','curve','real','fedtarget'],read:['ust2','ust10','curve']},
@@ -73,15 +73,19 @@ const GROUPS=[
 {key:'jp_rates',label:'금리',title:'정책금리와 국채 금리',desc:'일본은행 정책금리, 일본 국채 금리, 일본 장단기 금리차와 미·일 금리차를 확인합니다.',ids:['boj_rate','jgb2','jgb10','jp_curve','us_jp_2y','us_jp_10y'],read:['boj_rate','jgb10','us_jp_10y']},
 {key:'jp_business',label:'기업 경기·투자',title:'단칸 기업 경기와 설비투자',desc:'대기업 업황·전망 DI와 설비투자 계획을 확인합니다.',ids:['tankan_mfg_now','tankan_mfg_fcst','tankan_nonmfg_now','tankan_nonmfg_fcst','tankan_capex'],read:['tankan_mfg_now','tankan_nonmfg_now','tankan_capex']},
 {key:'jp_activity',label:'생산·소비',title:'생산과 소비',desc:'광공업 생산·재고와 소매판매, 가계소비를 확인합니다.',ids:['jp_ip','jp_inventory','jp_retail','jp_hh_consumption']},
+{key:'jp_growth',label:'GDP',title:'실질 GDP 성장률',desc:'일본 내각부 국민계정 기반 실질 GDP를 전년 동기와 비교합니다.',ids:['jp_real_gdp'],read:['jp_real_gdp']},
 {key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']}
 ]},
 {key:'kr',label:'한국 매크로',tabs:[
-{key:'kr_external',label:'대외 건전성',title:'대외 건전성',desc:'IMF 금 제외 외환보유액의 수준과 최근 변화를 확인합니다.',ids:['kr_reserves']},
-{key:'kr_household',label:'가계·부동산',title:'가계부채와 주택시장',desc:'BIS 분기 가계신용 잔액과 전국 명목 주택가격지수를 확인합니다.',ids:['kr_household_credit','kr_house_prices'],read:['kr_household_credit','kr_house_prices']}
+{key:'kr_external',label:'대외·수출',title:'대외 건전성과 수출',desc:'한국은행 외환보유액, 전체·반도체 수출과 환율로 대외 부문을 확인합니다.',ids:['kr_reserves_bok','kr_exports','kr_semiconductor_exports','usdkrw'],read:['kr_reserves_bok','kr_exports','kr_semiconductor_exports']},
+{key:'kr_activity',label:'경기·고용',title:'생산·소비·고용·GDP',desc:'실질 GDP, 산업생산, 소매판매와 실업률로 경기의 현재 상태를 살펴봅니다.',ids:['kr_real_gdp','kr_industrial_production','kr_retail','kr_unemployment'],read:['kr_real_gdp','kr_industrial_production','kr_retail']},
+{key:'kr_prices',label:'물가·금리',title:'소비자물가와 기준금리',desc:'헤드라인·근원 물가와 한국은행 기준금리를 함께 봅니다.',ids:['kr_cpi_kosis','kr_core_cpi_kosis','kr_base_rate'],read:['kr_cpi_kosis','kr_core_cpi_kosis','kr_base_rate']},
+{key:'kr_household',label:'가계·부동산',title:'가계부채와 주택시장',desc:'한국은행 가계신용 및 KOSIS 주택가격을 보고 BIS 장기 비교계열도 참고합니다.',ids:['kr_household_credit_bok','kr_house_prices_kosis','kr_household_credit','kr_house_prices'],read:['kr_household_credit_bok','kr_house_prices_kosis']},
+{key:'kr_surveys',label:'심리·설문',title:'기업과 소비자 심리',desc:'한국은행 BSI·CCSI 원계열을 봅니다. OECD 설문은 별도의 국제 비교 자료입니다.',ids:['kr_bsi_bok','kr_ccsi','kr_bsi_oecd','kr_consumer_confidence_oecd'],read:['kr_bsi_bok','kr_ccsi']}
 ]}
 ];
 const ALL=GROUPS.flatMap(g=>g.tabs);
-const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션',kr:'OECD 경기선행지수 · 외환보유액 · 가계부채 · 주택가격'};
+const DESC={us:'고용·물가·실질 성장·소비·심리·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·GDP·엔 포지션',kr:'수출·산업생산·소비·물가·고용·기준금리·가계신용·주택가격·OECD 경기선행지수'};
 const $=id=>document.getElementById(id);
 (async () => {
 const response = await fetch('./data.json', {cache: 'no-store'});
@@ -506,3 +510,4 @@ window.addEventListener('hashchange',apply);apply();
  document.getElementById('panel').textContent = '데이터를 불러올 수 없습니다. 잠시 후 페이지를 새로고침해 주세요.';
 });
 </script></body></html>
+
