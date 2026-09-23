@@ -1,17 +1,22 @@
-"""Download OECD amplitude-adjusted CLI data and calculate monthly regimes."""
+"""Download OECD amplitude-adjusted CLI data directly from OECD SDMX."""
 
-import csv
-import io
+import math
+import xml.etree.ElementTree as ET
 from datetime import date
+from urllib.request import Request, urlopen
 
 
 SERIES = {
-    'us': 'USALOLITOAASTSAM',
-    'jp': 'JPNLOLITOAASTSAM',
-    'kr': 'KORLOLITOAASTSAM',
+    'us': 'USA',
+    'jp': 'JPN',
+    'kr': 'KOR',
 }
 
-FRED_CSV_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id={}'
+OECD_DATA_URL = (
+    'https://sdmx.oecd.org/public/rest/v1/data/'
+    'OECD.SDD.STES,DSD_STES@DF_CLI,{country}.M.LI...AA...H'
+    '?startPeriod=1950-01'
+)
 
 
 def _next_month(day):
@@ -29,64 +34,58 @@ def _consecutive_month(previous_day, current_day):
     return _next_month(previous_day) == current_day
 
 
-def parse_fred_csv(text, series_id):
-    """Parse a FRED CSV response without interpolating missing observations."""
-    rows = list(csv.reader(io.StringIO(text.lstrip('\ufeff'))))
+def parse_oecd_sdmx_xml(text, country):
+    """Parse SDMX generic-data XML for a single country's monthly CLI."""
+    try:
+        root = ET.fromstring(text.lstrip('\ufeff'))
+    except ET.ParseError as exc:
+        raise ValueError('Unexpected OECD SDMX response') from exc
 
-    if not rows or len(rows[0]) != 2:
-        raise ValueError('Unexpected FRED CSV header')
-
-    if rows[0][1] != series_id:
-        raise ValueError(
-            f'Unexpected FRED series: expected {series_id}, got {rows[0][1]}'
-        )
+    def local_name(element):
+        return element.tag.rsplit('}', 1)[-1]
 
     points = []
-    seen_dates = set()
-
-    for line_number, row in enumerate(rows[1:], 2):
-        if len(row) != 2:
-            raise ValueError(f'Unexpected FRED CSV row on line {line_number}')
-
-        day = row[0].strip()
-        raw_value = row[1].strip()
-
-        if not day:
+    for series in (element for element in root.iter() if local_name(element) == 'Series'):
+        key_values = {
+            item.attrib.get('id'): item.attrib.get('value')
+            for item in series.iter()
+            if local_name(item) == 'Value'
+        }
+        if key_values.get('REF_AREA') != country.upper():
             continue
+        for observation in (element for element in series.iter()
+                            if local_name(element) == 'Obs'):
+            dimension = next((child for child in observation.iter()
+                              if local_name(child) == 'ObsDimension'), None)
+            value_node = next((child for child in observation.iter()
+                               if local_name(child) == 'ObsValue'), None)
+            if dimension is None:
+                continue
+            period = dimension.attrib.get('value', '')
+            try:
+                parsed = date.fromisoformat(period + '-01')
+            except ValueError as exc:
+                raise ValueError(f'Invalid OECD CLI month: {period}') from exc
+            raw_value = value_node.attrib.get('value', '') if value_node is not None else ''
+            if raw_value in ('', '.', 'NA', 'NaN'):
+                value = None
+            else:
+                try:
+                    value = float(raw_value)
+                except ValueError as exc:
+                    raise ValueError(f'Invalid OECD CLI value: {raw_value}') from exc
+                if not math.isfinite(value):
+                    value = None
+            points.append([parsed.replace(day=1).isoformat(), value])
 
-        try:
-            parsed_day = date.fromisoformat(day)
-        except ValueError as exc:
-            raise ValueError(
-                f'Invalid FRED date on line {line_number}: {day}'
-            ) from exc
-
-        # OECD CLI is monthly and represented on the first day of each month.
-        if parsed_day.day != 1:
-            raise ValueError(
-                f'Unexpected non-monthly observation date: {day}'
-            )
-
-        if day in seen_dates:
+    by_date = {}
+    for day, value in points:
+        if day in by_date and by_date[day] != value:
             raise ValueError(f'Duplicate OECD CLI observation: {day}')
-
-        seen_dates.add(day)
-
-        # FRED uses "." for missing observations. Keep the month missing.
-        if raw_value in ('', '.', 'NA', 'NaN'):
-            points.append([day, None])
-            continue
-
-        try:
-            value = float(raw_value)
-        except ValueError as exc:
-            raise ValueError(
-                f'Invalid OECD CLI value on line {line_number}: {raw_value}'
-            ) from exc
-
-        points.append([day, value])
-
-    return sorted(points)
+        by_date[day] = value
+    if not by_date:
+        raise ValueError(f'OECD returned no CLI observations for {country.upper()}')
+    return [[day, value] for day, value in sorted(by_date.items())]
 
 
 def classify_month(previous_value, current_value):
@@ -148,28 +147,23 @@ def calculate_regimes(points):
 
 
 def fetch_points(country):
-    """Download one country's current OECD CLI history from FRED."""
+    """Download one country's current OECD CLI history from OECD SDMX."""
     if country not in SERIES:
         raise KeyError(f'Unsupported OECD CLI country: {country}')
 
-    series_id = SERIES[country]
-    url = FRED_CSV_URL.format(series_id)
+    country_code = SERIES[country]
+    url = OECD_DATA_URL.format(country=country_code)
+    request = Request(url, headers={
+        'Accept': 'application/vnd.sdmx.data+generic-2.1+xml',
+        'User-Agent': 'macro-observer/1.0',
+    })
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = response.read().decode('utf-8-sig')
+    except Exception as exc:
+        raise RuntimeError(f'OECD CLI request failed ({type(exc).__name__})') from None
 
-    from curl_cffi import requests
-    from curl_cffi.const import CurlHttpVersion
-
-    response = requests.get(
-        url,
-        impersonate='chrome',
-        timeout=15,
-        http_version=CurlHttpVersion.V1_1,
-    )
-    response.raise_for_status()
-
-    points = parse_fred_csv(
-        response.content.decode('utf-8-sig'),
-        series_id,
-    )
+    points = parse_oecd_sdmx_xml(payload, country_code)
 
     if not any(value is not None for _, value in points):
         raise ValueError(f'No usable OECD CLI observations for {country}')
@@ -180,3 +174,4 @@ def fetch_points(country):
 def fetch_regimes(country):
     """Download one country and return its calculated regime intervals."""
     return calculate_regimes(fetch_points(country))
+
