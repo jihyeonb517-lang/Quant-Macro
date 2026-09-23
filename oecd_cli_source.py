@@ -3,6 +3,7 @@
 import math
 import xml.etree.ElementTree as ET
 from datetime import date
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 
@@ -160,6 +161,8 @@ def fetch_points(country):
     try:
         with urlopen(request, timeout=20) as response:
             payload = response.read().decode('utf-8-sig')
+    except HTTPError as exc:
+        raise RuntimeError(f'OECD CLI request failed (HTTP {exc.code})') from None
     except Exception as exc:
         raise RuntimeError(f'OECD CLI request failed ({type(exc).__name__})') from None
 
