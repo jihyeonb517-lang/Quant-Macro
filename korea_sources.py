@@ -44,26 +44,53 @@ ECOS = {
 }
 
 KOSIS = {
-    'KOSIS_KR_SEMICONDUCTOR_EXPORTS': {
-        'search': '품목별 수출액', 'table_terms': ('수출', '품목'),
-        'item_terms': ('반도체',), 'output_terms': ('반도체',),
+    'KOSIS_KR_EXPORTS': {
+        'search': '품목별 수출입실적', 'table_terms': ('품목별 수출입실적', '수출입실적'),
+        'item_terms': ('수출',),
+        'output_terms': ('총계', '계', '전체', '전국'),
         'cycle': 'M', 'start': '200001',
+    },
+    'KOSIS_KR_SEMICONDUCTOR_EXPORTS': {
+        'search': '품목별 수출입실적', 'table_terms': ('품목별 수출입실적', '수출입실적'),
+        'item_terms': ('수출',), 'output_target': '반도체',
+        'output_terms': ('총계', '계', '전체', '전국'),
+        'cycle': 'M', 'start': '200001',
+    },
+    'KOSIS_KR_INDUSTRIAL_PRODUCTION': {
+        'search': '광공업생산지수', 'table_terms': ('광공업생산지수',),
+        'item_terms': ('광공업생산지수', '생산지수'),
+        'output_terms': ('광공업', '전산업', '전국', '총지수', '계', '전체'),
+        'cycle': 'M', 'start': '200001',
+    },
+    'KOSIS_KR_RETAIL': {
+        'search': '재별 및 상품군별 소매판매액지수',
+        'table_terms': ('재별및상품군별소매판매액지수', '소매판매액지수'),
+        'item_terms': ('소매판매액지수', '불변지수'),
+        'output_terms': ('전국', '총지수', '계', '전체'),
+        'cycle': 'M', 'start': '200001',
+    },
+    'KOSIS_KR_UNEMPLOYMENT': {
+        'search': '경제활동인구총괄 공식 실업률',
+        'table_terms': ('경제활동인구총괄', '실업률'),
+        'item_terms': ('실업률',), 'output_terms': ('전국', '계', '전체'),
+        'cycle': 'M', 'start': '199906',
     },
     'KOSIS_KR_CPI': {
         'search': '소비자물가지수', 'table_terms': ('소비자물가지수',),
-        'item_terms': ('총지수', '소비자물가지수'), 'output_terms': ('총지수',),
+        'item_terms': ('총지수', '소비자물가지수'),
+        'output_terms': ('전국', '전체', '총지수', '계'),
         'cycle': 'M', 'start': '196501',
     },
     'KOSIS_KR_CORE_CPI': {
         'search': '소비자물가지수', 'table_terms': ('소비자물가지수',),
         'item_terms': ('농산물및석유류제외', '농산물 및 석유류 제외', '식료품및에너지제외'),
-        'output_terms': ('농산물및석유류제외', '농산물 및 석유류 제외', '식료품및에너지제외'),
+        'output_terms': ('전국', '전체', '총지수', '계'),
         'cycle': 'M', 'start': '196501',
     },
     'KOSIS_KR_HOUSE_PRICES': {
         'search': '전국주택가격동향조사 매매가격지수',
         'table_terms': ('주택가격',), 'item_terms': ('매매가격지수', '매매'),
-        'output_terms': ('전국', '매매'),
+        'output_terms': ('전국', '매매', '전체', '계'),
         'cycle': 'M', 'start': '200301',
     },
 }
@@ -246,7 +273,12 @@ def _points(rows, time_key, value_key, cycle):
         except (ValueError, TypeError):
             continue
         output.append([day, value])
-    return sorted(output)
+    by_date = {}
+    for day, value in output:
+        if day in by_date and by_date[day] != value:
+            raise ValueError(f'한국 통계 API가 같은 기간에 서로 다른 값을 반환했습니다: {day}')
+        by_date[day] = value
+    return [[day, value] for day, value in sorted(by_date.items())]
 
 
 def fetch_kosis(sid):
@@ -279,16 +311,29 @@ def fetch_kosis(sid):
                        cycle, cfg['start'], end)
     points = []
     for row in rows:
-        labels = ' '.join(str(row.get(f'C{i}_NM') or row.get(f'OBJ_NM{i}') or '')
-                          for i in range(1, 9))
-        labels += ' ' + str(row.get('ITM_NM') or row.get('itmNm') or '')
-        if _score_text(labels, cfg.get('output_terms', ('전국', '총지수', '총계'))):
+        labels = [str(row.get(f'C{i}_NM') or row.get(f'OBJ_NM{i}') or '').strip()
+                  for i in range(1, 9)]
+        labels = [label for label in labels if label]
+        terms = {re.sub(r'\s+', '', term).lower()
+                 for term in cfg.get('output_terms', ('전국', '총지수', '총계'))}
+        normalized = [re.sub(r'\s+', '', label).lower() for label in labels]
+        target = re.sub(r'\s+', '', cfg.get('output_target', '')).lower()
+        # Do not accept a merely containing label: e.g. matching "계" inside
+        # "가계" can silently pick a household series instead of a national total.
+        accepted = (not normalized or all(label in terms or label == target
+                                          for label in normalized))
+        if accepted and (not target or target in normalized):
             dt = row.get('PRD_DE') or row.get('prdDe')
             value = row.get('DT') or row.get('dt')
             points.extend(_points([{'TIME': dt, 'DATA_VALUE': value}], 'TIME', 'DATA_VALUE', cycle))
     if not points:
         raise ValueError('KOSIS 응답에서 전국/총계 관측값을 찾지 못했습니다')
-    return sorted({day: value for day, value in points}.items())
+    by_date = {}
+    for day, value in points:
+        if day in by_date and by_date[day] != value:
+            raise ValueError(f'KOSIS 분류값이 기간별로 하나로 좁혀지지 않았습니다: {sid} {day}')
+        by_date[day] = value
+    return [[day, value] for day, value in sorted(by_date.items())]
 
 
 def fetch_points(sid):
