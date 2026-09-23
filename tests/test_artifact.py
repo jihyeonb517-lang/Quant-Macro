@@ -50,7 +50,8 @@ class ArtifactTests(unittest.TestCase):
         # full set before publishing, while this validation still permits the
         # preserved snapshot to deploy as a fallback.
         self.assertEqual(len(metric_ids), len(set(metric_ids)))
-        self.assertTrue(set(metric_ids).issubset(set(expected_ids)))
+        retired = {'kr_reserves', 'kr_household_credit', 'kr_house_prices'}
+        self.assertTrue(set(metric_ids).issubset(set(expected_ids) | retired))
         required = {'id', 'section', 'title', 'unit', 'points', 'date', 'value', 'delta',
                     'period', 'note', 'formula', 'status', 'sources', 'secondary'}
         source_keys = {'id', 'url', 'observed', 'retrieved', 'origin', 'frequency', 'age',
@@ -76,12 +77,17 @@ class ArtifactTests(unittest.TestCase):
         self.assertIn('if (!response.ok)', html)
         self.assertIn('})().catch(error =>', html)
 
-    def test_korea_metrics_and_cli_have_seeded_history(self):
+    def test_korea_metrics_use_domestic_providers_and_cli_has_seeded_history(self):
         data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))
-        metrics = {item['id']: item for item in data['metrics']}
-        for metric_id in ('kr_reserves', 'kr_household_credit', 'kr_house_prices'):
-            self.assertTrue(metrics[metric_id]['points'])
-            self.assertIsNotNone(metrics[metric_id]['value'])
+        korea_sources = {
+            sid for _mid, section, _title, _unit, deps, *_ in f.SPECS
+            if section == 'korea' for sid in deps
+        }
+        self.assertTrue(all(sid.startswith(('ECOS_', 'KOSIS_')) or sid == 'KRW=X'
+                            for sid in korea_sources))
+        self.assertFalse({'TRESEGKRM052N', 'CRDQKRAHABIS', 'QKRN628BIS',
+                          'KORXTEXVA01GYSAM', 'KORPRMNTO01GYSAM',
+                          'KORSLRTTO01GYSAM', 'LRUNTTTTKRM156S'} & korea_sources)
         self.assertTrue(data['regimes']['kr'])
 
     def test_dcf_is_a_browser_calculator(self):
@@ -94,3 +100,4 @@ class ArtifactTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

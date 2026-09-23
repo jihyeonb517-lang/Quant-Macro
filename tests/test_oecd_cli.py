@@ -53,14 +53,21 @@ class OECDCLITests(unittest.TestCase):
             [['2026-08-01', '2026-09-01', 'expansion']],
         )
 
-    def test_fred_csv_preserves_missing_values(self):
+    def test_oecd_sdmx_xml_parses_country_and_preserves_missing_values(self):
         text = (
-            'observation_date,USALOLITOAASTSAM\n'
-            '2026-07-01,100.1\n'
-            '2026-08-01,.\n'
+            '<GenericData xmlns="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message">'
+            '<DataSet><Series><SeriesKey>'
+            '<Value id="REF_AREA" value="KOR"/>'
+            '<Value id="FREQ" value="M"/>'
+            '</SeriesKey>'
+            '<Obs><ObsDimension value="2026-07"/><ObsValue value="100.1"/></Obs>'
+            '<Obs><ObsDimension value="2026-08"/><ObsValue value=""/></Obs>'
+            '</Series><Series><SeriesKey><Value id="REF_AREA" value="USA"/>'
+            '</SeriesKey><Obs><ObsDimension value="2026-08"/>'
+            '<ObsValue value="500"/></Obs></Series></DataSet></GenericData>'
         )
         self.assertEqual(
-            cli.parse_fred_csv(text, 'USALOLITOAASTSAM'),
+            cli.parse_oecd_sdmx_xml(text, 'KOR'),
             [
                 ['2026-07-01', 100.1],
                 ['2026-08-01', None],
@@ -68,8 +75,9 @@ class OECDCLITests(unittest.TestCase):
         )
 
     def test_korea_cli_series_is_available(self):
-        self.assertEqual(cli.SERIES['kr'], 'KORLOLITOAASTSAM')
+        self.assertEqual(cli.SERIES['kr'], 'KOR')
 
 
 if __name__ == '__main__':
     unittest.main()
+

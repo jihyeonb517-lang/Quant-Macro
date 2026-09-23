@@ -9,7 +9,7 @@ clear message if loading fails. No build tool or API key is required.
 ```text
 index.html                         Original interface, async JSON loading
 data.json                          Generated dashboard snapshot
-fetch_data.py                      FRED + Yahoo download and calculations
+fetch_data.py                      FRED/Yahoo (US & markets) + domestic official APIs for Korea
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps
 .github/workflows/update-data.yml  Daily refresh, commit, and Pages deployment
@@ -33,17 +33,18 @@ the 1306.T TOPIX-linked ETF as an explicitly labelled market-price proxy.
 
 ## Korea macro indicators
 
-The Korea section adds IMF IFS foreign-exchange reserves excluding gold, BIS
-household credit adjusted for breaks, and the BIS national nominal residential
-property price index. OECD Korea CLI regimes appear as an optional chart
-background in the same way as the US and Japan. These international series use
-different scopes and frequencies from Korea's Bank of Korea and Korea Real Estate
-Board releases; source, frequency, and observation date are shown on each chart.
+The Korea section uses Bank of Korea ECOS and Statistics Korea KOSIS for the
+country's domestic macro series: GDP, exchange reserves, household credit, BSI,
+CCSI, policy rate, exports, semiconductor exports, industrial production, retail
+sales, CPI, unemployment and housing prices. OECD Korea CLI remains a separate
+background regime indicator as previously requested. Each chart shows its data
+provider, frequency and observation date.
 
 Additional US growth, consumption, inflation and survey indicators, Japan real
 GDP, and Korean exports, production, retail sales, CPI, jobs, policy rate,
 household credit, housing and sentiment series are refreshed by the same
-workflow. Korean official series use ECOS and KOSIS adapters. Add the credentials
+workflow. Korean indicators no longer rely on FRED-distributed or BIS series;
+they use ECOS and KOSIS adapters. Add the credentials
 as repository Actions secrets named `ECOS_API_KEY` and `KOSIS_API_KEY`; never put
 the values in code or a public file. The workflow keeps the keys in its runtime
 environment and masks request failures so provider URLs cannot expose them in
@@ -188,3 +189,4 @@ historical knowledge would require vintage/release data rather than this CSV fee
 - [Scheduled workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 - [yfinance download parameters](https://ranaroussi.github.io/yfinance/reference/api/yfinance.download.html)
 - [FRED WTREGEN source definition](https://fred.stlouisfed.org/series/WTREGEN)
+
