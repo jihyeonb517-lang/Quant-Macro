@@ -326,12 +326,14 @@ def fetch_kosis(sid):
                     if (row.get('ITM_ID') or row.get('itmId'))
                     and str(row.get('OBJ_ID', 'ITEM')).upper() == 'ITEM']
     if not item_choices:
-        raise ValueError('KOSIS 통계표에서 항목 메타데이터를 찾지 못했습니다: ' + cfg['search'])
+        raise ValueError(f'KOSIS 항목 메타데이터가 없습니다: {table_id}; '
+                         f'분류={[(r.get("OBJ_ID"), r.get("ITM_NM")) for r in items[:8]]}')
     item = max(item_choices, key=lambda r: _score_text(
         r.get('ITM_NM') or r.get('itmNm') or '', cfg['item_terms'],
     ))
     if not _score_text(item.get('ITM_NM') or item.get('itmNm') or '', cfg['item_terms']):
-        raise ValueError('KOSIS 표에서 지정한 항목을 찾지 못했습니다: ' + cfg['search'])
+        names = [str(r.get('ITM_NM') or r.get('itmNm') or '') for r in item_choices[:12]]
+        raise ValueError(f'KOSIS 항목 불일치: {table_id}; 항목={names}')
     item_id = item.get('ITM_ID') or item.get('itmId')
     # KOSIS needs a concrete code for every classifier. ALL is not a valid
     # substitute for the table's own national/total classification code.
@@ -349,7 +351,8 @@ def fetch_kosis(sid):
             preferred = [r for r in choices if str(r.get('ITM_NM') or r.get('itmNm') or '').strip()
                          in ('전국', '전체', '총계', '계', '총지수', '광공업', '매매')]
         if not preferred:
-            raise ValueError(f'KOSIS 분류값을 선택하지 못했습니다: {table_id} {obj}')
+            names = [str(r.get('ITM_NM') or r.get('itmNm') or '') for r in choices[:12]]
+            raise ValueError(f'KOSIS 분류값 불일치: {table_id} {obj}; 값={names}')
         dimensions.append(str(preferred[0].get('ITM_ID') or preferred[0].get('itmId')))
     if not dimensions:
         raise ValueError(f'KOSIS 분류 메타데이터가 없습니다: {table_id}')
