@@ -42,18 +42,26 @@ ECOS = {
         'item': ('소비자심리지수',), 'cycle': 'M', 'start': '200801',
         'stat': '511Y002', 'item_codes': ['FME', '99988'],
     },
+    'ECOS_KR_CPI': {
+        'title': ('소비자물가지수',), 'item': ('총지수',),
+        'cycle': 'M', 'stat': '901Y009', 'item_codes': ['0'], 'start': '196501',
+    },
+    'ECOS_KR_CORE_CPI': {
+        'title': ('소비자물가지수(특수분류)',), 'item': ('농산물및석유류제외지수',),
+        'cycle': 'M', 'stat': '901Y010', 'item_codes': ['QB'], 'start': '196501',
+    },
 }
 
 KOSIS = {
     'KOSIS_KR_EXPORTS': {
         'search': '품목별 수출입실적', 'table_terms': ('품목별 수출입실적', '수출입실적'),
-        'item_terms': ('수출',),
+        'item_terms': ('항목',),
         'output_terms': ('총계', '계', '전체', '전국'),
         'cycle': 'M', 'start': '200001',
     },
     'KOSIS_KR_SEMICONDUCTOR_EXPORTS': {
         'search': '품목별 수출입실적', 'table_terms': ('품목별 수출입실적', '수출입실적'),
-        'item_terms': ('수출',), 'output_target': '반도체',
+        'item_terms': ('항목',), 'output_target': '반도체',
         'output_terms': ('총계', '계', '전체', '전국'),
         'cycle': 'M', 'start': '200001',
     },
@@ -73,24 +81,12 @@ KOSIS = {
     'KOSIS_KR_UNEMPLOYMENT': {
         'search': '경제활동인구총괄 공식 실업률',
         'table_terms': ('경제활동인구총괄', '실업률'),
-        'item_terms': ('실업률',), 'output_terms': ('전국', '계', '전체'),
+        'item_terms': ('실업률',), 'output_terms': ('전국', '계', '전체', '15세 이상 전체'),
         'cycle': 'M', 'start': '199906',
-    },
-    'KOSIS_KR_CPI': {
-        'search': '소비자물가지수', 'table_terms': ('소비자물가지수',),
-        'item_terms': ('총지수', '소비자물가지수'),
-        'output_terms': ('전국', '전체', '총지수', '계'),
-        'cycle': 'M', 'start': '196501',
-    },
-    'KOSIS_KR_CORE_CPI': {
-        'search': '소비자물가지수', 'table_terms': ('소비자물가지수',),
-        'item_terms': ('농산물및석유류제외', '농산물 및 석유류 제외', '식료품및에너지제외'),
-        'output_terms': ('전국', '전체', '총지수', '계'),
-        'cycle': 'M', 'start': '196501',
     },
     'KOSIS_KR_HOUSE_PRICES': {
         'search': '전국주택가격동향조사 매매가격지수',
-        'table_terms': ('주택가격',), 'item_terms': ('매매가격지수', '매매'),
+        'table_terms': ('주택가격',), 'item_terms': ('주택가격지수',),
         'output_terms': ('전국', '매매', '전체', '계'),
         'cycle': 'M', 'start': '200301',
     },
@@ -349,7 +345,8 @@ def fetch_kosis(sid):
                      if str(r.get('ITM_NM') or r.get('itmNm') or '').strip() == target] if target else []
         if not preferred:
             preferred = [r for r in choices if str(r.get('ITM_NM') or r.get('itmNm') or '').strip()
-                         in ('전국', '전체', '총계', '계', '총지수', '광공업', '매매')]
+                         in ('전국', '전체', '총계', '계', '총지수', '광공업', '매매',
+                             '수출', '15세 이상 전체')]
         if not preferred:
             names = [str(r.get('ITM_NM') or r.get('itmNm') or '') for r in choices[:12]]
             raise ValueError(f'KOSIS 분류값 불일치: {table_id} {obj}; 값={names}')

@@ -123,7 +123,7 @@ class FormulaTests(unittest.TestCase):
     def test_korean_api_sources_have_frequency_and_no_embedded_keys(self):
         self.assertEqual(f.FREQUENCIES['ECOS_KR_BASE_RATE'], 'daily')
         self.assertEqual(f.FREQUENCIES['ECOS_KR_REAL_GDP'], 'quarterly')
-        self.assertEqual(f.FREQUENCIES['KOSIS_KR_CPI'], 'monthly')
+        self.assertEqual(f.FREQUENCIES['ECOS_KR_CPI'], 'monthly')
         self.assertNotIn('ECOS_API_KEY =', Path(f.__file__).read_text(encoding='utf-8'))
 
     def test_korean_api_errors_do_not_echo_credentials(self):
@@ -140,13 +140,13 @@ class FormulaTests(unittest.TestCase):
         ]
         with patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
              patch.object(kr, '_kosis_search', return_value=[
-                 {'TBL_NM': '소비자물가지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
+                 {'TBL_NM': '소매판매액지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
              patch.object(kr, '_kosis_meta', return_value=[
-                 {'OBJ_ID': 'ITEM', 'ITM_NM': '총지수', 'ITM_ID': 'I'},
+                 {'OBJ_ID': 'ITEM', 'ITM_NM': '소매판매액지수', 'ITM_ID': 'I'},
                  {'OBJ_ID': 'C1', 'ITM_NM': '전국', 'ITM_ID': '00'},
                  {'OBJ_ID': 'C1', 'ITM_NM': '서울', 'ITM_ID': '01'}]), \
              patch.object(kr, '_kosis_data', return_value=rows):
-            self.assertEqual(kr.fetch_kosis('KOSIS_KR_CPI'), [['2026-08-01', 104.2]])
+            self.assertEqual(kr.fetch_kosis('KOSIS_KR_RETAIL'), [['2026-08-01', 104.2]])
 
     def test_kosis_rejects_conflicting_duplicate_periods(self):
         rows = [
@@ -155,13 +155,13 @@ class FormulaTests(unittest.TestCase):
         ]
         with patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
              patch.object(kr, '_kosis_search', return_value=[
-                 {'TBL_NM': '소비자물가지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
+                 {'TBL_NM': '소매판매액지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
              patch.object(kr, '_kosis_meta', return_value=[
-                 {'OBJ_ID': 'ITEM', 'ITM_NM': '총지수', 'ITM_ID': 'I'},
+                 {'OBJ_ID': 'ITEM', 'ITM_NM': '소매판매액지수', 'ITM_ID': 'I'},
                  {'OBJ_ID': 'C1', 'ITM_NM': '전국', 'ITM_ID': '00'}]), \
              patch.object(kr, '_kosis_data', return_value=rows):
             with self.assertRaisesRegex(ValueError, '하나로 좁혀지지 않았습니다'):
-                kr.fetch_kosis('KOSIS_KR_CPI')
+                kr.fetch_kosis('KOSIS_KR_RETAIL')
 
     def test_claims_require_four_consecutive_weeks(self):
         days = ['2026-08-01', '2026-08-08', '2026-08-15', '2026-08-22']
