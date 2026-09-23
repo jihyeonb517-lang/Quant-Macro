@@ -46,6 +46,9 @@ FREQUENCIES = {
     'JPY=X': 'daily', 'KRW=X': 'daily', 'DX-Y.NYB': 'daily',
     'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
     'CL=F': 'daily', 'BZ=F': 'daily',
+    # --- cycle/bubble-fingerprint additions ---
+    'WILL5000IND': 'daily', 'GDP': 'quarterly',
+    'TDSP': 'quarterly', 'DRTSCILM': 'quarterly',
 }
 
 CLI_SOURCES = {
@@ -98,6 +101,10 @@ SPECS = [
     ('copper', 'fx', '구리 선물', '달러/파운드', ['HG=F'], 20, '20거래일 전 대비'),
     ('wti', 'fx', 'WTI 선물', '달러/배럴', ['CL=F'], 20, '20거래일 전 대비'),
     ('brent', 'fx', 'Brent 선물', '달러/배럴', ['BZ=F'], 20, '20거래일 전 대비'),
+    # --- cycle/bubble-fingerprint additions ---
+    ('buffett', 'market', '버핏 지표(시가총액/GDP)', '%', ['WILL5000IND', 'GDP'], 4, '1년 전 대비'),
+    ('household_debt_service', 'economy', '가계부채 상환비율', '%', ['TDSP'], 4, '1년 전 대비'),
+    ('bank_lending', 'conditions', '은행 대출태도(순%, 긴축)', '%p', ['DRTSCILM'], 4, '1년 전 대비'),
 ]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
@@ -134,6 +141,9 @@ FORMULAS = {
     'copper': 'Yahoo HG=F Close; COMEX futures, continuous front month (not spot)',
     'wti': 'Yahoo CL=F Close; NYMEX futures, continuous front month (not spot)',
     'brent': 'Yahoo BZ=F Close; ICE futures, continuous front month (not spot)',
+    'buffett': 'WILL5000IND(GDP 분기일 직전 최종 관측치) / GDP × 100; Wilshire 5000 시가총액 지수를 시가총액 대용으로 사용',
+    'household_debt_service': 'FRED TDSP 분기 수준; 가처분소득 대비 가계부채(모기지+소비자부채) 원리금 상환비율',
+    'bank_lending': 'FRED DRTSCILM 분기 수준; SLOOS 설문 기준 대형·중견기업 상업대출에 대한 은행의 순(긴축−완화) 응답 비율',
 }
 # Shown under the chart for metrics that have no stored note yet.
 FUTURES_NOTE = '선물 근월물 연속 시세이며 현물이 아닙니다. 만기 교체 시점에 가격이 불연속으로 움직일 수 있습니다.'
@@ -145,6 +155,9 @@ NOTES = {
     'dxy': 'Yahoo Finance의 ICE 달러인덱스 종가입니다.',
     'gold': FUTURES_NOTE, 'silver': FUTURES_NOTE, 'copper': FUTURES_NOTE,
     'wti': FUTURES_NOTE, 'brent': FUTURES_NOTE,
+    'buffett': '워런 버핏이 언급한 시가총액/GDP 비율입니다. 절대 임계값(예: 100%)보다 자체 역사 대비 상대적 위치(퍼센타일)로 해석하는 것이 안전합니다. 분기 지표라 갱신이 느립니다.',
+    'household_debt_service': '가계가 가처분소득 중 부채 원리금 상환에 쓰는 비율입니다. 모기지·소비자부채를 합산한 값입니다.',
+    'bank_lending': '연준 SLOOS 설문 기준입니다. 양수(+)는 순 긴축, 음수(-)는 순 완화를 의미하며, 2001년·2008-09년 침체 전 뚜렷한 긴축이 관측된 바 있습니다.',
 }
 
 FREQUENCIES.update(jp.FREQUENCIES)
@@ -290,6 +303,21 @@ def calendar(points, weekly=False):
     return result
 
 
+def quarterly_match(daily_points, anchor_dates):
+    """For each anchor date (e.g. GDP quarter dates), return the most recent
+    daily observation on or before that date. No forward-filling beyond that:
+    an anchor date earlier than any daily observation stays null.
+    Assumes both daily_points and anchor_dates are sorted ascending."""
+    result = []
+    i, last_val = 0, None
+    for anchor in anchor_dates:
+        while i < len(daily_points) and daily_points[i][0] <= anchor:
+            last_val = daily_points[i][1]
+            i += 1
+        result.append([anchor, last_val])
+    return result
+
+
 def transform(points, fn):
     return [[d, fn(v) if finite(v) else None] for d, v in points]
 
@@ -329,6 +357,11 @@ def calculate_base(raw):
     # Keep only common trading dates, retaining explicit nulls on common dates.
     spy_dates = dict(s('SPY'))
     ratio = [p for p in ratio if p[0] in spy_dates]
+
+    # Buffett indicator: match Wilshire 5000 to each GDP quarter date.
+    gdp_points = s('GDP')
+    gdp_dates = [d for d, _ in gdp_points]
+    will_matched = quarterly_match(s('WILL5000IND'), gdp_dates)
     return {
         'jobs': transform(lagged(m('PAYEMS'), 3, lambda a, b: a-b), lambda v: v/3),
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
@@ -353,6 +386,9 @@ def calculate_base(raw):
         'gold': s('GC=F'), 'silver': s('SI=F'), 'copper': s('HG=F'),
         'wti': s('CL=F'), 'brent': s('BZ=F'),
         'pce_secondary': lagged(m('PCEPILFE'), 3, lambda a, b: ((a/b)**4-1)*100 if b > 0 else None),
+        'buffett': aligned([will_matched, gdp_points], lambda w, g: w/g*100 if g > 0 else None),
+        'household_debt_service': s('TDSP'),
+        'bank_lending': s('DRTSCILM'),
     }
 
 
