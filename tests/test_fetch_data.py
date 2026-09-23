@@ -135,27 +135,30 @@ class FormulaTests(unittest.TestCase):
 
     def test_kosis_requires_single_unambiguous_national_series(self):
         rows = [
-            {'PRD_DE': '202608', 'C1_NM': '전국', 'DT': '104.2'},
-            {'PRD_DE': '202608', 'C1_NM': '서울', 'DT': '110.7'},
+            {'PRD_DE': '202608', 'C1': '00', 'C1_NM': '전국', 'DT': '104.2'},
+            {'PRD_DE': '202608', 'C1': '01', 'C1_NM': '서울', 'DT': '110.7'},
         ]
         with patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
              patch.object(kr, '_kosis_search', return_value=[
                  {'TBL_NM': '소비자물가지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
              patch.object(kr, '_kosis_meta', return_value=[
-                 {'ITM_NM': '총지수', 'ITM_ID': 'I'}]), \
+                 {'OBJ_ID': 'ITEM', 'ITM_NM': '총지수', 'ITM_ID': 'I'},
+                 {'OBJ_ID': 'C1', 'ITM_NM': '전국', 'ITM_ID': '00'},
+                 {'OBJ_ID': 'C1', 'ITM_NM': '서울', 'ITM_ID': '01'}]), \
              patch.object(kr, '_kosis_data', return_value=rows):
             self.assertEqual(kr.fetch_kosis('KOSIS_KR_CPI'), [['2026-08-01', 104.2]])
 
     def test_kosis_rejects_conflicting_duplicate_periods(self):
         rows = [
-            {'PRD_DE': '202608', 'C1_NM': '전국', 'DT': '104.2'},
-            {'PRD_DE': '202608', 'C1_NM': '총지수', 'DT': '110.7'},
+            {'PRD_DE': '202608', 'C1': '00', 'C1_NM': '전국', 'DT': '104.2'},
+            {'PRD_DE': '202608', 'C1': '00', 'C1_NM': '전국', 'DT': '110.7'},
         ]
         with patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
              patch.object(kr, '_kosis_search', return_value=[
                  {'TBL_NM': '소비자물가지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
              patch.object(kr, '_kosis_meta', return_value=[
-                 {'ITM_NM': '총지수', 'ITM_ID': 'I'}]), \
+                 {'OBJ_ID': 'ITEM', 'ITM_NM': '총지수', 'ITM_ID': 'I'},
+                 {'OBJ_ID': 'C1', 'ITM_NM': '전국', 'ITM_ID': '00'}]), \
              patch.object(kr, '_kosis_data', return_value=rows):
             with self.assertRaisesRegex(ValueError, '하나로 좁혀지지 않았습니다'):
                 kr.fetch_kosis('KOSIS_KR_CPI')
