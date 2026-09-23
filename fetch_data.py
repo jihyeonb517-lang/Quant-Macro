@@ -102,7 +102,7 @@ SPECS = [
     ('wti', 'fx', 'WTI 선물', '달러/배럴', ['CL=F'], 20, '20거래일 전 대비'),
     ('brent', 'fx', 'Brent 선물', '달러/배럴', ['BZ=F'], 20, '20거래일 전 대비'),
     # --- cycle/bubble-fingerprint additions ---
-    ('buffett', 'market', '버핏 지표(상장주식 시가총액/GDP)', '%' ['BOGZ1FL883164113Q', 'GDP'], 4, '1년 전 대비'),
+    ('buffett', 'market', '버핏 지표(상장주식 시가총액/GDP)', '%', ['BOGZ1FL883164113Q', 'GDP'], 4, '1년 전 대비'),
     ('household_debt_service', 'economy', '가계부채 상환비율', '%', ['TDSP'], 4, '1년 전 대비'),
     ('bank_lending', 'conditions', '은행 대출태도(순%, 긴축)', '%p', ['DRTSCILM'], 4, '1년 전 대비'),
 ]
