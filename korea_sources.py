@@ -105,7 +105,17 @@ def _json(url: str, timeout: int = 20):
         # urllib exception messages can include the full request URL. Never
         # propagate ECOS/KOSIS credentials into GitHub Actions logs.
         raise RuntimeError(f'Korean statistics API request failed ({type(exc).__name__})') from None
-    return json.loads(data)
+    try:
+        return json.loads(data)
+    except json.JSONDecodeError:
+        # KOSIS sometimes formats API errors as JavaScript object literals
+        # (for example {err:"11",errMsg:"..."}), which are not JSON.
+        code = re.search(r'\berr\s*:\s*["\']?(\d+)', data)
+        if 'kosis.kr' in url and code:
+            explanations = {'10': '인증키 누락', '11': '인증키가 유효하지 않음'}
+            detail = explanations.get(code.group(1), '공급자 오류')
+            raise ValueError(f'KOSIS API 오류 {code.group(1)}: {detail}') from None
+        raise ValueError('한국 통계 API가 유효한 JSON을 반환하지 않았습니다') from None
 
 
 def _rows(payload, key):

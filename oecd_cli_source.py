@@ -13,7 +13,7 @@ SERIES = {
 }
 
 OECD_DATA_URL = (
-    'https://sdmx.oecd.org/public/rest/v1/data/'
+    'https://sdmx.oecd.org/public/rest/data/'
     'OECD.SDD.STES,DSD_STES@DF_CLI,{country}.M.LI...AA...H'
     '?startPeriod=1950-01'
 )
