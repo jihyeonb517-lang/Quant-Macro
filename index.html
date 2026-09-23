@@ -58,11 +58,11 @@ const GROUPS=[
 {key:'us',label:'미국 매크로',tabs:[
 {key:'jobs',label:'고용·실업',title:'고용과 실업',desc:'노동시장의 강도와 변화를 확인합니다.',ids:['unemployment','jobs','claims']},
 {key:'prices',label:'물가',title:'물가 상승 속도',desc:'소비자·생산자 물가를 헤드라인과 근원으로 나누어 읽습니다.',ids:['cpi_headline','cpi','pce_headline','pce','ppi_core'],read:['cpi_headline','pce_headline','ppi_core']},
-{key:'growth',label:'경기',title:'소비와 주문',desc:'소매판매와 내구재 수주로 수요의 방향을 확인합니다.',ids:['retail','durable']},
+{key:'growth',label:'경기',title:'소비와 주문',desc:'소매판매와 내구재 수주로 수요의 방향을 확인합니다.',ids:['retail','durable','household_debt_service']},
 {key:'liquidity',label:'유동성',title:'유동성',desc:'재무부 계좌·지준금·연준 순유동성으로 자금의 양을 확인합니다.',ids:['tga','reserves','netliq','m2'],read:['tga','reserves','netliq']},
-{key:'stability',label:'금융 안정',title:'금융 안정',desc:'단기 자금시장의 긴장, 신용 스프레드, 금융 스트레스를 확인합니다.',ids:['repo','credit','nfci','stlfsi'],read:['repo','credit','nfci']},
+{key:'stability',label:'금융 안정',title:'금융 안정',desc:'단기 자금시장의 긴장, 신용 스프레드, 금융 스트레스, 은행 대출태도를 확인합니다.',ids:['repo','credit','nfci','stlfsi','bank_lending'],read:['repo','credit','bank_lending']},
 {key:'rates',label:'미국채',title:'미국채와 정책금리',desc:'국채 금리 수준, 장단기 금리차, 실질금리, 정책금리를 확인합니다.',ids:['ust2','ust10','curve','real','fedtarget'],read:['ust2','ust10','curve']},
-{key:'market',label:'시장',title:'주식시장',desc:'S&P 500의 추세와 변동성을 확인합니다.',ids:['trend','vix']},
+{key:'market',label:'시장',title:'주식시장과 밸류에이션',desc:'S&P 500의 추세와 변동성, 시가총액/GDP 밸류에이션을 확인합니다.',ids:['trend','vix','buffett']},
 {key:'fx',label:'환율',title:'환율',desc:'원·달러, 엔·달러, 달러인덱스의 흐름을 확인합니다.',ids:['usdkrw','usdjpy','dxy']},
 {key:'commodities',label:'원자재',title:'원자재',desc:'귀금속, 구리, 원유 선물 가격의 흐름을 확인합니다.',ids:['gold','silver','copper','wti','brent'],read:['gold','copper','wti']}
 ]},
