@@ -108,6 +108,15 @@ def _json(url: str, timeout: int = 20):
     try:
         return json.loads(data)
     except json.JSONDecodeError:
+        if 'kosis.kr' in url:
+            # KOSIS metadata may use JavaScript-style unquoted property names.
+            # Quote only property names in object positions, never evaluate code.
+            normalized = re.sub(r'([\{,]\s*)([A-Za-z_][A-Za-z_0-9]*)(\s*:)',
+                                r'\1"\2"\3', data)
+            try:
+                return json.loads(normalized)
+            except json.JSONDecodeError:
+                pass
         # KOSIS sometimes formats API errors as JavaScript object literals
         # (for example {err:"11",errMsg:"..."}), which are not JSON.
         code = re.search(r'\berr\s*:\s*["\']?(\d+)', data)
@@ -220,7 +229,10 @@ def fetch_ecos(sid):
             )
         except ValueError as exc:
             raise ValueError(f'{exc} (ECOS 통계표 {stat}, 항목 {codes})') from None
-        page = _rows(payload, 'StatisticSearch')
+        try:
+            page = _rows(payload, 'StatisticSearch')
+        except ValueError as exc:
+            raise ValueError(f'{exc} (ECOS 통계표 {stat}, 항목 {codes})') from None
         rows.extend(page)
         if len(page) < 1000:
             break
