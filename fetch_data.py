@@ -47,7 +47,7 @@ FREQUENCIES = {
     'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
     'CL=F': 'daily', 'BZ=F': 'daily',
     # --- cycle/bubble-fingerprint additions ---
-    'WILL5000IND': 'daily', 'GDP': 'quarterly',
+    'BOGZ1FL883164113Q': 'quarterly', 'GDP': 'quarterly',
     'TDSP': 'quarterly', 'DRTSCILM': 'quarterly',
 }
 
@@ -102,7 +102,7 @@ SPECS = [
     ('wti', 'fx', 'WTI 선물', '달러/배럴', ['CL=F'], 20, '20거래일 전 대비'),
     ('brent', 'fx', 'Brent 선물', '달러/배럴', ['BZ=F'], 20, '20거래일 전 대비'),
     # --- cycle/bubble-fingerprint additions ---
-    ('buffett', 'market', '버핏 지표(시가총액/GDP)', '%', ['WILL5000IND', 'GDP'], 4, '1년 전 대비'),
+    ('buffett', 'market', '버핏 지표(상장주식 시가총액/GDP)', '%' ['BOGZ1FL883164113Q', 'GDP'], 4, '1년 전 대비'),
     ('household_debt_service', 'economy', '가계부채 상환비율', '%', ['TDSP'], 4, '1년 전 대비'),
     ('bank_lending', 'conditions', '은행 대출태도(순%, 긴축)', '%p', ['DRTSCILM'], 4, '1년 전 대비'),
 ]
@@ -141,7 +141,7 @@ FORMULAS = {
     'copper': 'Yahoo HG=F Close; COMEX futures, continuous front month (not spot)',
     'wti': 'Yahoo CL=F Close; NYMEX futures, continuous front month (not spot)',
     'brent': 'Yahoo BZ=F Close; ICE futures, continuous front month (not spot)',
-    'buffett': 'WILL5000IND(GDP 분기일 직전 최종 관측치) / GDP × 100; Wilshire 5000 시가총액 지수를 시가총액 대용으로 사용',
+    'buffett': 'BOGZ1FL883164113Q / (GDP × 1000) × 100; 미국 국내 상장주식 시가총액의 분기말 시장가치를 명목 GDP로 나눈 대용 지표',
     'household_debt_service': 'FRED TDSP 분기 수준; 가처분소득 대비 가계부채(모기지+소비자부채) 원리금 상환비율',
     'bank_lending': 'FRED DRTSCILM 분기 수준; SLOOS 설문 기준 대형·중견기업 상업대출에 대한 은행의 순(긴축−완화) 응답 비율',
 }
@@ -360,8 +360,6 @@ def calculate_base(raw):
 
     # Buffett indicator: match Wilshire 5000 to each GDP quarter date.
     gdp_points = s('GDP')
-    gdp_dates = [d for d, _ in gdp_points]
-    will_matched = quarterly_match(s('WILL5000IND'), gdp_dates)
     return {
         'jobs': transform(lagged(m('PAYEMS'), 3, lambda a, b: a-b), lambda v: v/3),
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
@@ -386,7 +384,9 @@ def calculate_base(raw):
         'gold': s('GC=F'), 'silver': s('SI=F'), 'copper': s('HG=F'),
         'wti': s('CL=F'), 'brent': s('BZ=F'),
         'pce_secondary': lagged(m('PCEPILFE'), 3, lambda a, b: ((a/b)**4-1)*100 if b > 0 else None),
-        'buffett': aligned([will_matched, gdp_points], lambda w, g: w/g*100 if g > 0 else None),
+        'buffett': aligned([s('BOGZ1FL883164113Q'), gdp_points],lambda market_cap, gdp:
+        market_cap/(gdp*1000)*100 if g > 0 else None
+),
         'household_debt_service': s('TDSP'),
         'bank_lending': s('DRTSCILM'),
     }
