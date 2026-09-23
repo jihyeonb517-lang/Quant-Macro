@@ -17,6 +17,7 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Semaphore
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
@@ -372,9 +373,19 @@ def fetch_retry(sid):
     return sid, None, error
 
 
+KOSIS_DOWNLOAD_SLOTS = Semaphore(2)
+OECD_DOWNLOAD_SLOTS = Semaphore(1)
+
+
 def fetch_bounded(sid, timeout=60):
     """A separate process makes the entire provider download deadline enforceable."""
+    if sid.startswith(('KOSIS_', 'OECD_CLI_')) and timeout == 60:
+        timeout = 100
     logging.info('%s: starting download (maximum %ss)', sid, timeout)
+    slot = (KOSIS_DOWNLOAD_SLOTS if sid.startswith('KOSIS_') else
+            OECD_DOWNLOAD_SLOTS if sid.startswith('OECD_CLI_') else None)
+    if slot:
+        slot.acquire()
     try:
         result = subprocess.run(
             [sys.executable, '-u', str(Path(__file__).resolve()), '--source', sid],
@@ -388,6 +399,9 @@ def fetch_bounded(sid, timeout=60):
         return sid, None, f'Download exceeded {timeout}s deadline'
     except (OSError, ValueError) as exc:
         return sid, None, str(exc)
+    finally:
+        if slot:
+            slot.release()
 
 
 def download_all():
