@@ -63,8 +63,6 @@ const GROUPS=[
 {key:'stability',label:'금융 안정',title:'금융 안정',desc:'단기 자금시장의 긴장, 신용 스프레드, 금융 스트레스, 은행 대출태도를 확인합니다.',ids:['repo','credit','nfci','stlfsi','bank_lending'],read:['repo','credit','bank_lending']},
 {key:'rates',label:'미국채',title:'미국채와 정책금리',desc:'국채 금리 수준, 장단기 금리차, 실질금리, 정책금리를 확인합니다.',ids:['ust2','ust10','curve','real','fedtarget'],read:['ust2','ust10','curve']},
 {key:'market',label:'시장',title:'주식시장과 밸류에이션',desc:'S&P 500의 추세와 변동성, 시가총액/GDP 밸류에이션을 확인합니다.',ids:['trend','vix','buffett']},
-{key:'dcf_sp500',label:'DCF · S&P 500',title:'S&P 500 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 S&P 500 적정 지수를 계산합니다.',ids:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_cf0','index_dcf_sp500_stage1_growth','index_dcf_sp500_stage1_years','index_dcf_sp500_discount_rate','index_dcf_sp500_terminal_growth'],read:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_discount_rate']},
-{key:'dcf_nasdaq100',label:'DCF · NASDAQ-100',title:'NASDAQ-100 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 NASDAQ-100 적정 지수를 계산합니다.',ids:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_cf0','index_dcf_nasdaq100_stage1_growth','index_dcf_nasdaq100_stage1_years','index_dcf_nasdaq100_discount_rate','index_dcf_nasdaq100_terminal_growth'],read:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_discount_rate']},
 {key:'fx',label:'환율',title:'환율',desc:'원·달러, 엔·달러, 달러인덱스의 흐름을 확인합니다.',ids:['usdkrw','usdjpy','dxy']},
 {key:'commodities',label:'원자재',title:'원자재',desc:'귀금속, 구리, 원유 선물 가격의 흐름을 확인합니다.',ids:['gold','silver','copper','wti','brent'],read:['gold','copper','wti']}
 ]},
@@ -74,13 +72,17 @@ const GROUPS=[
 {key:'jp_rates',label:'금리',title:'정책금리와 국채 금리',desc:'일본은행 정책금리, 일본 국채 금리, 일본 장단기 금리차와 미·일 금리차를 확인합니다.',ids:['boj_rate','jgb2','jgb10','jp_curve','us_jp_2y','us_jp_10y'],read:['boj_rate','jgb10','us_jp_10y']},
 {key:'jp_business',label:'기업 경기·투자',title:'단칸 기업 경기와 설비투자',desc:'대기업 업황·전망 DI와 설비투자 계획을 확인합니다.',ids:['tankan_mfg_now','tankan_mfg_fcst','tankan_nonmfg_now','tankan_nonmfg_fcst','tankan_capex'],read:['tankan_mfg_now','tankan_nonmfg_now','tankan_capex']},
 {key:'jp_activity',label:'생산·소비',title:'생산과 소비',desc:'광공업 생산·재고와 소매판매, 가계소비를 확인합니다.',ids:['jp_ip','jp_inventory','jp_retail','jp_hh_consumption']},
-{key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']},
-{key:'dcf_nikkei225',label:'DCF · Nikkei 225',title:'Nikkei 225 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 Nikkei 225 적정 지수를 계산합니다.',ids:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_cf0','index_dcf_nikkei225_stage1_growth','index_dcf_nikkei225_stage1_years','index_dcf_nikkei225_discount_rate','index_dcf_nikkei225_terminal_growth'],read:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_discount_rate']},
-{key:'dcf_topix',label:'DCF · TOPIX',title:'TOPIX Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 TOPIX 적정 지수를 계산합니다.',ids:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_cf0','index_dcf_topix_stage1_growth','index_dcf_topix_stage1_years','index_dcf_topix_discount_rate','index_dcf_topix_terminal_growth'],read:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_discount_rate']}
+{key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']}
+]},
+{key:'backtest',label:'백테스트',tabs:[
+{key:'dcf_sp500',label:'S&P 500',title:'S&P 500 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 S&P 500 적정 지수를 계산합니다.',ids:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_cf0','index_dcf_sp500_stage1_growth','index_dcf_sp500_stage1_years','index_dcf_sp500_discount_rate','index_dcf_sp500_terminal_growth'],read:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_discount_rate']},
+{key:'dcf_nasdaq100',label:'NASDAQ-100',title:'NASDAQ-100 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 NASDAQ-100 적정 지수를 계산합니다.',ids:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_cf0','index_dcf_nasdaq100_stage1_growth','index_dcf_nasdaq100_stage1_years','index_dcf_nasdaq100_discount_rate','index_dcf_nasdaq100_terminal_growth'],read:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_discount_rate']},
+{key:'dcf_nikkei225',label:'Nikkei 225',title:'Nikkei 225 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 Nikkei 225 적정 지수를 계산합니다.',ids:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_cf0','index_dcf_nikkei225_stage1_growth','index_dcf_nikkei225_stage1_years','index_dcf_nikkei225_discount_rate','index_dcf_nikkei225_terminal_growth'],read:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_discount_rate']},
+{key:'dcf_topix',label:'TOPIX',title:'TOPIX Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 TOPIX 적정 지수를 계산합니다.',ids:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_cf0','index_dcf_topix_stage1_growth','index_dcf_topix_stage1_years','index_dcf_topix_discount_rate','index_dcf_topix_terminal_growth'],read:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_discount_rate']}
 ]}
 ];
 const ALL=GROUPS.flatMap(g=>g.tabs);
-const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·Index DCF·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션·Index DCF'};
+const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션',backtest:'S&P 500·NASDAQ-100·Nikkei 225·TOPIX Index DCF'};
 const $=id=>document.getElementById(id);
 (async () => {
 const response = await fetch('./data.json', {cache: 'no-store'});
@@ -108,11 +110,14 @@ let group=null,section=GROUPS[0].tabs[0].key,selected=null,years=5,focusTab=fals
 // -- Compare ("지표 비교") state: any two metrics, US+JP combined --
 const metricGroupLabel = {};
 GROUPS.forEach(g=>g.tabs.forEach(t=>t.ids.forEach(id=>{ if(!metricGroupLabel[id]) metricGroupLabel[id]=g.label+' · '+t.label; })));
+const backtestIds = new Set(GROUPS.find(g=>g.key==='backtest').tabs.flatMap(t=>t.ids));
+const compareMetrics = DATA.metrics.filter(m=>!backtestIds.has(m.id));
 let compareA = DATA.metrics.some(m=>m.id==='unemployment') ? 'unemployment' : DATA.metrics[0]?.id;
 let compareB = DATA.metrics.some(m=>m.id==='cpi_headline') ? 'cpi_headline' : DATA.metrics[1]?.id;
 let compareYears = 5;
 let compareZoomRange = null;
 
+const regimeAvailable = () => group === 'us' || group === 'jp';
 const activeRegimes = () =>
   group && Array.isArray(REGIMES[group]) ? REGIMES[group] : [];
 
@@ -160,7 +165,7 @@ function buildTabs(){
 }
 function renderHome(){
  const cards=GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('');
- const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;color:var(--muted);margin-top:6px">두 지표를 겹쳐 보고 상관관계(동행·역행)를 확인합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본 전체 ${DATA.metrics.length}개 지표 중 자유 선택</span></button>`;
+ const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;color:var(--muted);margin-top:6px">두 지표를 겹쳐 보고 상관관계(동행·역행)를 확인합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본 매크로 ${compareMetrics.length}개 지표 중 자유 선택</span></button>`;
  $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">${cards}${compareCard}</div>`;
  document.querySelectorAll('#home [data-group]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.group});
 }
@@ -171,7 +176,7 @@ function renderCrumb(){
 
 // ---- Compare view ----
 function compareOptions(selectedId){
- return DATA.metrics.map(m=>`<option value="${esc(m.id)}" ${m.id===selectedId?'selected':''}>${esc(m.title)} (${esc(metricGroupLabel[m.id]||'기타')})</option>`).join('');
+ return compareMetrics.map(m=>`<option value="${esc(m.id)}" ${m.id===selectedId?'selected':''}>${esc(m.title)} (${esc(metricGroupLabel[m.id]||'기타')})</option>`).join('');
 }
 function pearson(pairs){
  const n=pairs.length; if(n<3) return null;
@@ -309,14 +314,16 @@ function apply(){
 
 }
 function renderPanel(){const m=DATA.metrics.find(m=>m.id===selected);if(!m){$('panel').innerHTML='<div class="empty">표시할 지표가 없습니다.</div>';return;}const source=m.sources.map(s=>`<div class="source"><div><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.id)} ↗</a><span>${esc(s.origin)}</span></div><div><span>원자료 관측일 ${esc(s.observed||'없음')} · ${esc({daily:'일간',weekly:'주간',monthly:'월간',quarterly:'분기',annual:'연간'}[s.frequency]||s.frequency)}</span><span>수집 ${s.retrieved?esc(new Date(s.retrieved).toLocaleString('ko-KR')):'시각 미확인 · 기존 캐시'}</span><span>관측일 경과 ${s.age??'—'}일 / 유효기간 ${s.maxAge}일${s.fallback?' · 이전 유효 자료 사용':''}</span></div></div>`).join('');
- $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div><div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><span class="regime-source">경기국면 기준 · OECD CLI · ${group==='jp'?'일본':'미국'}</span><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div><div class="chart-wrap" id="chart-wrap"><button type="button" class="zoom-reset" id="zoom-reset" ${zoomRange?'':'hidden'} aria-label="차트 확대 초기화">확대 초기화</button><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
+ $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div>${regimeAvailable()?`<div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><span class="regime-source">경기국면 기준 · OECD CLI · ${group==='jp'?'일본':'미국'}</span><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div>`:''}<div class="chart-wrap" id="chart-wrap"><button type="button" class="zoom-reset" id="zoom-reset" ${zoomRange?'':'hidden'} aria-label="차트 확대 초기화">확대 초기화</button><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
 const regimeToggle = $('regime-toggle');
 
-regimeToggle.onchange = () => {
-  showRegimes = regimeToggle.checked;
-  saveRegimePreference(showRegimes);
-  draw(m);
-};
+if (regimeToggle) {
+  regimeToggle.onchange = () => {
+    showRegimes = regimeToggle.checked;
+    saveRegimePreference(showRegimes);
+    draw(m);
+  };
+}
 const zoomReset = $('zoom-reset');
 
 zoomReset.onclick = () => {
@@ -370,7 +377,7 @@ const alternate = (m.secondary?.points || []).filter(
  const x=d=>xTime(ts(d));
  const y=v=>T+(max-v)/(max-min)*(H-T-B);
  let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.title)} · ${esc(m.unit)} · ${primary[0][0]}부터 ${all[all.length-1][0]}까지"><text x="${L}" y="15" fill="#5e7080" font-size="12">${esc(m.unit)}</text>`;
-  if (showRegimes) {
+  if (showRegimes && regimeAvailable()) {
   for (const [regimeStart, regimeEnd, regime] of activeRegimes()) {
     const clippedStart = Math.max(ts(regimeStart), start);
     const clippedEnd = Math.min(ts(regimeEnd), end);
@@ -395,7 +402,7 @@ svg += `<rect id="zoom-selection" x="${L}" y="${T}" width="0" height="${H-T-B}" 
  const visibleEnd = new Date(end).toISOString().slice(0,10);
  $('chart').innerHTML=svg;$('chart-range').textContent=`표시 기간 ${visibleStart} — ${visibleEnd} · 관측일 기준`;
  const good=primary.filter(p=>p[1]!=null),chart=$('chart').querySelector('svg');
- $('hit').onpointermove=e=>{const rect=chart.getBoundingClientRect(),px=(e.clientX-rect.left)/rect.width*W;let point=good.reduce((a,b)=>Math.abs(x(b[0])-px)<Math.abs(x(a[0])-px)?b:a);const cross=$('cross'),dot=$('dot');cross.setAttribute('x1',x(point[0]));cross.setAttribute('x2',x(point[0]));cross.setAttribute('visibility','visible');dot.setAttribute('cx',x(point[0]));dot.setAttribute('cy',y(point[1]));dot.setAttribute('visibility','visible');const other=alternate.find(p=>p[0]===point[0]);const pointRegime = showRegimes ? regimeAt(point[0]) : null;
+ $('hit').onpointermove=e=>{const rect=chart.getBoundingClientRect(),px=(e.clientX-rect.left)/rect.width*W;let point=good.reduce((a,b)=>Math.abs(x(b[0])-px)<Math.abs(x(a[0])-px)?b:a);const cross=$('cross'),dot=$('dot');cross.setAttribute('x1',x(point[0]));cross.setAttribute('x2',x(point[0]));cross.setAttribute('visibility','visible');dot.setAttribute('cx',x(point[0]));dot.setAttribute('cy',y(point[1]));dot.setAttribute('visibility','visible');const other=alternate.find(p=>p[0]===point[0]);const pointRegime = showRegimes && regimeAvailable() ? regimeAt(point[0]) : null;
 const regimeLabel = pointRegime
   ? REGIME_STYLES[pointRegime]?.label
   : null;$('hover').textContent =
