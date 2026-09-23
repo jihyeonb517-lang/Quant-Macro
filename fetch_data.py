@@ -772,4 +772,3 @@ if __name__ == '__main__':
             logging.error('One or more active sources failed: %s',
                           ', '.join(failures) or 'unknown source')
             raise SystemExit(2)
-
