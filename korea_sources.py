@@ -60,7 +60,7 @@ ECOS = {
     },
     'ECOS_KR_HOUSE_PRICES': {
         'title': ('주택매매가격지수',), 'item': ('총지수', '전국'),
-        'cycle': 'M', 'stat': '901Y062', 'item_exact': '총지수(전국)', 'start': '198601',
+        'cycle': 'M', 'stat': '901Y062', 'item_codes': ['P63A'], 'start': '198601',
     },
 }
 
@@ -204,22 +204,9 @@ def fetch_ecos(sid):
     now = date.today()
     end = (f'{now.year}Q{(now.month - 1) // 3 + 1}' if cycle == 'Q'
            else now.strftime('%Y%m%d' if cycle == 'D' else '%Y%m'))
-    codes = cfg.get('item_codes')
-    if not codes:
-        item_rows = _ecos_rows('StatisticItemList', api_key, stat)
-        if cfg.get('item_exact'):
-            exact = re.sub(r'\s+', '', cfg['item_exact'])
-            matches = [row for row in item_rows if row.get('CYCLE') == cycle and
-                       exact in re.sub(r'\s+', '', row.get('ITEM_NAME', ''))]
-            if len(matches) != 1:
-                preview = [(r.get('ITEM_CODE'), r.get('ITEM_NAME')) for r in item_rows
-                           if r.get('CYCLE') == cycle and
-                           any(term in str(r.get('ITEM_NAME', '')) for term in ('전국', '총지수'))][:20]
-                raise ValueError(f'ECOS 전국 주택가격 계열을 하나로 식별하지 못했습니다: '
-                                 f'{len(matches)}개; 후보={preview}')
-            codes = [matches[0]['ITEM_CODE']]
-        else:
-            codes = _select_ecos_codes(item_rows, cfg)
+    codes = cfg.get('item_codes') or _select_ecos_codes(
+        _ecos_rows('StatisticItemList', api_key, stat), cfg,
+    )
     parts = [stat, cycle, cfg['start'], end, *codes]
     rows = []
     start_row = 1
