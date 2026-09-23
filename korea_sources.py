@@ -278,6 +278,10 @@ def _select_kosis_table(rows, cfg):
             candidates.append((score, recency, row))
     if not candidates:
         raise ValueError('KOSIS 통계표를 찾지 못했습니다: ' + cfg['search'])
+    if cfg['search'] == '품목별 수출입실적':
+        preview = [(r.get('ORG_ID'), r.get('TBL_ID'), r.get('TBL_NM'), r.get('STAT_NM'))
+                   for _, _, r in sorted(candidates, key=lambda pair: (pair[0], pair[1]), reverse=True)[:12]]
+        raise ValueError(f'KOSIS 수출 통계표 후보 확인 필요: {preview}')
     return max(candidates, key=lambda pair: (pair[0], pair[1]))[2]
 
 
@@ -346,7 +350,7 @@ def fetch_kosis(sid):
         if not preferred:
             preferred = [r for r in choices if str(r.get('ITM_NM') or r.get('itmNm') or '').strip()
                          in ('전국', '전체', '총계', '계', '총지수', '광공업', '매매',
-                             '수출', '15세 이상 전체')]
+                             '수출', '15세 이상 전체', '주택매매가격지수')]
         if not preferred:
             names = [str(r.get('ITM_NM') or r.get('itmNm') or '') for r in choices[:12]]
             raise ValueError(f'KOSIS 분류값 불일치: {table_id} {obj}; 값={names}')
