@@ -26,15 +26,16 @@ Edit `manual/index_dcf.csv` whenever the quarterly assumptions change. Keep the
 header and add one row per observation date:
 
 ```csv
-date,index_id,index_level,cf0,stage1_growth_pct,stage1_years,terminal_growth_pct,risk_free_rate_pct,erp_pct
-2026-07-01,sp500,5000,250,6,5,2.5,4.0,5.0
+date,index_id,index_level,eps,stage1_growth_pct,stage1_years,dividend_payout_pct,buyback_payout_pct,risk_free_rate_pct,erp_pct,terminal_growth_pct,long_term_risk_free_rate_pct,long_term_erp_pct,long_term_roe_pct
+2026-07-01,sp500,5000,250,6,5,32,48,4.0,5.0,2.5,3.0,5.0,13.0
 ```
 
 `index_id` must be `sp500`, `nasdaq100`, `nikkei225`, or `topix`. Add one row
-for each index in each quarter. `cf0` is the current annual shareholder cash flow
-in that index's point units. Percentage
-inputs use ordinary percentages (`6` means 6%). The discount rate is calculated as
-the risk-free rate plus ERP and must be greater than the terminal growth rate.
+for each index in each quarter. Percentage inputs use ordinary percentages (`6`
+means 6%). Current shareholder cash flow is calculated as EPS times dividend plus
+buyback payout. The explicit-period discount rate is the risk-free rate plus ERP.
+Terminal payout is calculated as `1 - terminal growth / long-run ROE`, and the
+long-run risk-free rate plus long-run ERP must exceed terminal growth.
 The example above explains the format only; do not copy its assumptions without
 replacing them with the intended data. The committed CSV intentionally starts with
 only the header, so the Index DCF tab remains in a collection-ready state until the

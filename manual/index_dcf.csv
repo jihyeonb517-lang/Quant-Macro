@@ -1,1 +1,1 @@
-date,index_id,index_level,cf0,stage1_growth_pct,stage1_years,terminal_growth_pct,risk_free_rate_pct,erp_pct
+date,index_id,index_level,eps,stage1_growth_pct,stage1_years,dividend_payout_pct,buyback_payout_pct,risk_free_rate_pct,erp_pct,terminal_growth_pct,long_term_risk_free_rate_pct,long_term_erp_pct,long_term_roe_pct
