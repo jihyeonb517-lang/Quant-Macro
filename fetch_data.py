@@ -50,11 +50,15 @@ FREQUENCIES = {
     # --- cycle/bubble-fingerprint additions ---
     'BOGZ1FL883164113Q': 'quarterly', 'GDP': 'quarterly',
     'TDSP': 'quarterly', 'DRTSCILM': 'quarterly',
+    # --- Korea: IMF reserves and BIS household credit / house prices ---
+    'TRESEGKRM052N': 'monthly',
+    'CRDQKRAHABIS': 'quarterly', 'QKRN628BIS': 'quarterly',
 }
 
 CLI_SOURCES = {
     'OECD_CLI_US': 'us',
     'OECD_CLI_JP': 'jp',
+    'OECD_CLI_KR': 'kr',
 }
 
 FREQUENCIES.update({
@@ -62,7 +66,7 @@ FREQUENCIES.update({
     for sid in CLI_SOURCES
 })
 
-MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 140}
+MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 310}
 YAHOO = {'^GSPC', '^NDX', '^N225', '1306.T', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
          'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
 # id, section, title, unit, dependencies, delta lag, comparison label
@@ -106,6 +110,9 @@ SPECS = [
     ('buffett', 'market', '버핏 지표(상장주식 시가총액/GDP)', '%', ['BOGZ1FL883164113Q', 'GDP'], 4, '1년 전 대비'),
     ('household_debt_service', 'economy', '가계부채 상환비율', '%', ['TDSP'], 4, '1년 전 대비'),
     ('bank_lending', 'conditions', '은행 대출태도(순%, 긴축)', '%p', ['DRTSCILM'], 4, '1년 전 대비'),
+    ('kr_reserves', 'korea', '한국 외환보유액(금 제외)', '십억 달러', ['TRESEGKRM052N'], 3, '3개월 전 대비'),
+    ('kr_household_credit', 'korea', '한국 가계신용 잔액', '조 원', ['CRDQKRAHABIS'], 4, '1년 전 대비'),
+    ('kr_house_prices', 'korea', '한국 주택가격지수(명목)', '지수', ['QKRN628BIS'], 4, '1년 전 대비'),
 ]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
@@ -145,6 +152,9 @@ FORMULAS = {
     'buffett': 'BOGZ1FL883164113Q / (GDP × 1000) × 100; 미국 국내 상장주식 시가총액의 분기말 시장가치를 명목 GDP로 나눈 대용 지표',
     'household_debt_service': 'FRED TDSP 분기 수준; 가처분소득 대비 가계부채(모기지+소비자부채) 원리금 상환비율',
     'bank_lending': 'FRED DRTSCILM 분기 수준; SLOOS 설문 기준 대형·중견기업 상업대출에 대한 은행의 순(긴축−완화) 응답 비율',
+    'kr_reserves': 'TRESEGKRM052N / 1000; IMF International Financial Statistics, 금 제외 외환보유액(월간 백만 달러를 십억 달러로 변환)',
+    'kr_household_credit': 'CRDQKRAHABIS / 1000; BIS 가계·가계서비스 비영리기관 신용 잔액(분기말, 구조변화 조정, 십억 원을 조 원으로 변환)',
+    'kr_house_prices': 'QKRN628BIS; BIS 명목 주거용 부동산 가격지수(2010=100), 전국 신규·기존 주택 포함',
 }
 # Shown under the chart for metrics that have no stored note yet.
 FUTURES_NOTE = '선물 근월물 연속 시세이며 현물이 아닙니다. 만기 교체 시점에 가격이 불연속으로 움직일 수 있습니다.'
@@ -161,6 +171,23 @@ NOTES = {
                 '과거 수치가 완전히 같지는 않습니다. 분기 자료이며 개정될 수 있습니다.'),
     'household_debt_service': '가계가 가처분소득 중 부채 원리금 상환에 쓰는 비율입니다. 모기지·소비자부채를 합산한 값입니다.',
     'bank_lending': '연준 SLOOS 설문 기준입니다. 양수(+)는 순 긴축, 음수(-)는 순 완화를 의미하며, 2001년·2008-09년 침체 전 뚜렷한 긴축이 관측된 바 있습니다.',
+    'kr_reserves': ('IMF 국제금융통계의 금 제외 준비자산을 FRED에서 가져옵니다. '
+                    '한국은행이 발표하는 금 포함 외환보유액과 범위가 다르므로 수치를 직접 동일시하지 마세요.'),
+    'kr_household_credit': ('BIS의 가계 및 가계서비스 비영리기관 신용 잔액입니다. '
+                            '대출과 채무증권을 포함하며, 비교 가능한 장기 계열을 위해 구조변화 조정 자료를 사용합니다. '
+                            '한국은행 가계신용 통계와 구성·편제 기준이 완전히 같지는 않습니다.'),
+    'kr_house_prices': ('BIS 전국 주택가격 자료로 신규·기존 주거용 부동산을 포함한 명목 지수입니다. '
+                        '분기 자료이며 한국부동산원의 월간 지수와 표본·산식이 다를 수 있습니다.'),
+}
+
+SOURCE_ORIGINS = {
+    'TRESEGKRM052N': 'IMF International Financial Statistics (FRED 배포)',
+    'CRDQKRAHABIS': 'BIS Credit to the Non-Financial Sector (FRED 배포)',
+    'QKRN628BIS': 'BIS Residential Property Price Database (FRED 배포)',
+    'OECD_CLI_KR': 'OECD Composite Leading Indicator (FRED 배포)',
+}
+SOURCE_URLS = {
+    'OECD_CLI_KR': 'https://fred.stlouisfed.org/series/KORLOLITOAASTSAM',
 }
 
 FREQUENCIES.update(jp.FREQUENCIES)
@@ -400,6 +427,9 @@ def calculate_base(raw):
         ),
         'household_debt_service': s('TDSP'),
         'bank_lending': s('DRTSCILM'),
+        'kr_reserves': transform(s('TRESEGKRM052N'), lambda v: v/1000),
+        'kr_household_credit': transform(s('CRDQKRAHABIS'), lambda v: v/1000),
+        'kr_house_prices': s('QKRN628BIS'),
     }
 
 
@@ -424,6 +454,8 @@ def source_metadata(sid, raw, today):
                    sh.ORIGINS.get(sid) or (
         ('Yahoo Finance', f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/')
         if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}')))
+    origin = SOURCE_ORIGINS.get(sid, origin)
+    url = SOURCE_URLS.get(sid, url)
     return dict(id=sid, url=url,
                 observed=observed, retrieved=entry.get('retrieved'),
                 origin=origin, frequency=frequency,

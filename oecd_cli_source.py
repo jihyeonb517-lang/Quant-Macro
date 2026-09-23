@@ -8,6 +8,7 @@ from datetime import date
 SERIES = {
     'us': 'USALOLITOAASTSAM',
     'jp': 'JPNLOLITOAASTSAM',
+    'kr': 'KORLOLITOAASTSAM',
 }
 
 FRED_CSV_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id={}'

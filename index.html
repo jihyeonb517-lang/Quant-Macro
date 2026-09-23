@@ -74,10 +74,14 @@ const GROUPS=[
 {key:'jp_business',label:'기업 경기·투자',title:'단칸 기업 경기와 설비투자',desc:'대기업 업황·전망 DI와 설비투자 계획을 확인합니다.',ids:['tankan_mfg_now','tankan_mfg_fcst','tankan_nonmfg_now','tankan_nonmfg_fcst','tankan_capex'],read:['tankan_mfg_now','tankan_nonmfg_now','tankan_capex']},
 {key:'jp_activity',label:'생산·소비',title:'생산과 소비',desc:'광공업 생산·재고와 소매판매, 가계소비를 확인합니다.',ids:['jp_ip','jp_inventory','jp_retail','jp_hh_consumption']},
 {key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']}
+]},
+{key:'kr',label:'한국 매크로',tabs:[
+{key:'kr_external',label:'대외 건전성',title:'대외 건전성',desc:'IMF 금 제외 외환보유액의 수준과 최근 변화를 확인합니다.',ids:['kr_reserves']},
+{key:'kr_household',label:'가계·부동산',title:'가계부채와 주택시장',desc:'BIS 분기 가계신용 잔액과 전국 명목 주택가격지수를 확인합니다.',ids:['kr_household_credit','kr_house_prices'],read:['kr_household_credit','kr_house_prices']}
 ]}
 ];
 const ALL=GROUPS.flatMap(g=>g.tabs);
-const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션'};
+const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션',kr:'OECD 경기선행지수 · 외환보유액 · 가계부채 · 주택가격'};
 const $=id=>document.getElementById(id);
 (async () => {
 const response = await fetch('./data.json', {cache: 'no-store'});
@@ -88,9 +92,10 @@ if (!Array.isArray(DATA.metrics) || !DATA.metrics.length) throw new Error('Inval
 const REGIMES =
   DATA.regimes &&
   Array.isArray(DATA.regimes.us) &&
-  Array.isArray(DATA.regimes.jp)
+  Array.isArray(DATA.regimes.jp) &&
+  Array.isArray(DATA.regimes.kr)
     ? DATA.regimes
-    : {us: [], jp: []};
+    : {us: [], jp: [], kr: []};
 
 let showRegimes = false;
 
@@ -102,7 +107,7 @@ try {
 
 let group=null,section=GROUPS[0].tabs[0].key,selected=null,years=5,focusTab=false,zoomRange=null;
 
-// -- Compare ("지표 비교") state: any two metrics, US+JP combined --
+// -- Compare ("지표 비교") state: any two metrics across countries --
 const metricGroupLabel = {};
 GROUPS.forEach(g=>g.tabs.forEach(t=>t.ids.forEach(id=>{ if(!metricGroupLabel[id]) metricGroupLabel[id]=g.label+' · '+t.label; })));
 const compareMetrics = DATA.metrics;
@@ -111,7 +116,7 @@ let compareB = DATA.metrics.some(m=>m.id==='cpi_headline') ? 'cpi_headline' : DA
 let compareYears = 5;
 let compareZoomRange = null;
 
-const regimeAvailable = () => group === 'us' || group === 'jp';
+const regimeAvailable = () => ['us', 'jp', 'kr'].includes(group);
 const activeRegimes = () =>
   group && Array.isArray(REGIMES[group]) ? REGIMES[group] : [];
 
@@ -160,7 +165,7 @@ function buildTabs(){
 }
 function renderHome(){
  const cards=GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('');
- const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;color:var(--muted);margin-top:6px">두 지표를 겹쳐 보고 상관관계(동행·역행)를 확인합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본 매크로 ${compareMetrics.length}개 지표 중 자유 선택</span></button>`;
+ const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;color:var(--muted);margin-top:6px">두 지표를 겹쳐 보고 상관관계(동행·역행)를 확인합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본·한국 매크로 ${compareMetrics.length}개 지표 중 자유 선택</span></button>`;
  const dcfCard=`<button data-page="dcf.html" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">백테스팅</span><span style="display:block;color:var(--muted);margin-top:6px">웹에서 가정을 입력하는 개인 밸류에이션 계산기</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">S&amp;P 500 · NASDAQ-100 · Nikkei 225 · TOPIX</span></button>`;
  $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">${cards}${compareCard}${dcfCard}</div>`;
  document.querySelectorAll('#home [data-group]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.group});
@@ -311,7 +316,7 @@ function apply(){
 
 }
 function renderPanel(){const m=DATA.metrics.find(m=>m.id===selected);if(!m){$('panel').innerHTML='<div class="empty">표시할 지표가 없습니다.</div>';return;}const source=m.sources.map(s=>`<div class="source"><div><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.id)} ↗</a><span>${esc(s.origin)}</span></div><div><span>원자료 관측일 ${esc(s.observed||'없음')} · ${esc({daily:'일간',weekly:'주간',monthly:'월간',quarterly:'분기',annual:'연간'}[s.frequency]||s.frequency)}</span><span>수집 ${s.retrieved?esc(new Date(s.retrieved).toLocaleString('ko-KR')):'시각 미확인 · 기존 캐시'}</span><span>관측일 경과 ${s.age??'—'}일 / 유효기간 ${s.maxAge}일${s.fallback?' · 이전 유효 자료 사용':''}</span></div></div>`).join('');
- $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div>${regimeAvailable()?`<div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><span class="regime-source">경기국면 기준 · OECD CLI · ${group==='jp'?'일본':'미국'}</span><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div>`:''}<div class="chart-wrap" id="chart-wrap"><button type="button" class="zoom-reset" id="zoom-reset" ${zoomRange?'':'hidden'} aria-label="차트 확대 초기화">확대 초기화</button><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
+ $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div>${regimeAvailable()?`<div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><span class="regime-source">경기국면 기준 · OECD CLI · ${{us:'미국',jp:'일본',kr:'한국'}[group]}</span><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div>`:''}<div class="chart-wrap" id="chart-wrap"><button type="button" class="zoom-reset" id="zoom-reset" ${zoomRange?'':'hidden'} aria-label="차트 확대 초기화">확대 초기화</button><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
 const regimeToggle = $('regime-toggle');
 
 if (regimeToggle) {

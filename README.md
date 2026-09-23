@@ -31,6 +31,15 @@ NASDAQ-100, Nikkei 225, and TOPIX, three ERP modes, and a sensitivity grid.
 Because Yahoo's global feed does not publish the TOPIX index series, TOPIX uses
 the 1306.T TOPIX-linked ETF as an explicitly labelled market-price proxy.
 
+## Korea macro indicators
+
+The Korea section adds IMF IFS foreign-exchange reserves excluding gold, BIS
+household credit adjusted for breaks, and the BIS national nominal residential
+property price index. OECD Korea CLI regimes appear as an optional chart
+background in the same way as the US and Japan. These international series use
+different scopes and frequencies from Korea's Bank of Korea and Korea Real Estate
+Board releases; source, frequency, and observation date are shown on each chart.
+
 ## Connect this local folder to a new GitHub repository
 
 1. Sign in at https://github.com/new.
@@ -141,7 +150,7 @@ without downloading data. After the bot has updated the repository, run
   No point is appended using today's date to pretend an old value is current.
 - Status is `ok`, `stale`, or `missing`. Stale/failed retained sources have
   `fallback: true`. Freshness limits are 7 calendar days for daily sources,
-  18 for weekly sources, 75 for monthly sources, and 140 for quarterly sources,
+  18 for weekly sources, 75 for monthly sources, and 310 for quarterly sources,
   measured from observation
   dates. Monthly observation dates commonly precede publication; these thresholds
   are conservative freshness heuristics, not release-calendar guarantees.

@@ -15,7 +15,7 @@ class ArtifactTests(unittest.TestCase):
         )
         self.assertIsNotNone(datetime.fromisoformat(data['generatedAt']).tzinfo)
 
-        self.assertEqual(set(data['regimes']), {'us', 'jp'})
+        self.assertEqual(set(data['regimes']), {'us', 'jp', 'kr'})
         self.assertEqual(set(data['dcfInputs']), {'sp500', 'nasdaq100', 'nikkei225', 'topix'})
         for item in data['dcfInputs'].values():
             self.assertEqual(
@@ -28,7 +28,7 @@ class ArtifactTests(unittest.TestCase):
             'expansion',
             'slowdown',
         }
-        for country in ('us', 'jp'):
+        for country in ('us', 'jp', 'kr'):
             intervals = data['regimes'][country]
             self.assertIsInstance(intervals, list)
             previous_end = None
@@ -68,6 +68,14 @@ class ArtifactTests(unittest.TestCase):
         self.assertNotIn('const DATA={', html)
         self.assertIn('if (!response.ok)', html)
         self.assertIn('})().catch(error =>', html)
+
+    def test_korea_metrics_and_cli_have_seeded_history(self):
+        data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))
+        metrics = {item['id']: item for item in data['metrics']}
+        for metric_id in ('kr_reserves', 'kr_household_credit', 'kr_house_prices'):
+            self.assertTrue(metrics[metric_id]['points'])
+            self.assertIsNotNone(metrics[metric_id]['value'])
+        self.assertTrue(data['regimes']['kr'])
 
     def test_dcf_is_a_browser_calculator(self):
         html = (f.ROOT/'dcf.html').read_text(encoding='utf-8')

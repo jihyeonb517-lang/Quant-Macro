@@ -96,6 +96,21 @@ class FormulaTests(unittest.TestCase):
         )
         self.assertAlmostEqual(f.calculate(data)['buffett'][-1][1], 250)
 
+    def test_korea_metric_unit_conversions(self):
+        data = raw(
+            TRESEGKRM052N=[['2026-08-01', 421_000]],
+            CRDQKRAHABIS=[['2026-04-01', 2_300_000]],
+            QKRN628BIS=[['2026-04-01', 143.2]],
+        )
+        result = f.calculate(data)
+        self.assertEqual(result['kr_reserves'], [['2026-08-01', 421]])
+        self.assertEqual(result['kr_household_credit'], [['2026-04-01', 2300]])
+        self.assertEqual(result['kr_house_prices'], [['2026-04-01', 143.2]])
+
+    def test_korea_cli_source_is_registered(self):
+        self.assertEqual(f.CLI_SOURCES['OECD_CLI_KR'], 'kr')
+        self.assertEqual(f.FREQUENCIES['OECD_CLI_KR'], 'monthly')
+
 class FallbackTests(unittest.TestCase):
     def test_retired_cache_error_does_not_fail_active_sources(self):
         cache = {

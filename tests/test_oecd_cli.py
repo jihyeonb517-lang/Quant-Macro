@@ -67,6 +67,9 @@ class OECDCLITests(unittest.TestCase):
             ],
         )
 
+    def test_korea_cli_series_is_available(self):
+        self.assertEqual(cli.SERIES['kr'], 'KORLOLITOAASTSAM')
+
 
 if __name__ == '__main__':
     unittest.main()
