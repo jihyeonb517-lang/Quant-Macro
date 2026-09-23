@@ -15,8 +15,8 @@ SERIES = {
 
 OECD_DATA_URL = (
     'https://sdmx.oecd.org/public/rest/data/'
-    'OECD.SDD.STES,DSD_STES@DF_CLI,{country}.M.LI...AA...H'
-    '?startPeriod=1950-01'
+    'OECD.SDD.STES,DSD_STES@DF_CLI,4.1/{country}.M.LI...AA...H'
+    '?startPeriod=1950-01&format=genericdata'
 )
 
 
@@ -155,7 +155,6 @@ def fetch_points(country):
     country_code = SERIES[country]
     url = OECD_DATA_URL.format(country=country_code)
     request = Request(url, headers={
-        'Accept': 'application/vnd.sdmx.data+generic-2.1+xml',
         'User-Agent': 'macro-observer/1.0',
     })
     try:
