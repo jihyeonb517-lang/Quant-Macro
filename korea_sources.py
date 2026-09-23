@@ -115,7 +115,12 @@ def _json(url: str, timeout: int = 20):
             explanations = {'10': '인증키 누락', '11': '인증키가 유효하지 않음'}
             detail = explanations.get(code.group(1), '공급자 오류')
             raise ValueError(f'KOSIS API 오류 {code.group(1)}: {detail}') from None
-        raise ValueError('한국 통계 API가 유효한 JSON을 반환하지 않았습니다') from None
+        prefix = data[:64]
+        for secret in (os.environ.get('ECOS_API_KEY', ''), os.environ.get('KOSIS_API_KEY', '')):
+            if secret:
+                prefix = prefix.replace(secret, '[redacted]')
+        prefix = re.sub(r'[A-Za-z0-9+/=]{24,}', '[redacted]', prefix)
+        raise ValueError(f'한국 통계 API가 유효한 JSON을 반환하지 않았습니다 (응답 시작: {prefix!r})') from None
 
 
 def _rows(payload, key):
@@ -207,11 +212,14 @@ def fetch_ecos(sid):
     start_row = 1
     while True:
         stop_row = start_row + 999
-        payload = _json(
-            f"https://ecos.bok.or.kr/api/StatisticSearch/{quote(api_key, safe='')}"
-            f"/json/kr/{start_row}/{stop_row}/" +
-            '/'.join(quote(str(p), safe='') for p in parts),
-        )
+        try:
+            payload = _json(
+                f"https://ecos.bok.or.kr/api/StatisticSearch/{quote(api_key, safe='')}"
+                f"/json/kr/{start_row}/{stop_row}/" +
+                '/'.join(quote(str(p), safe='') for p in parts),
+            )
+        except ValueError as exc:
+            raise ValueError(f'{exc} (ECOS 통계표 {stat}, 항목 {codes})') from None
         page = _rows(payload, 'StatisticSearch')
         rows.extend(page)
         if len(page) < 1000:
