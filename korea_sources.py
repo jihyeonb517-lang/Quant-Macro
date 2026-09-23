@@ -50,21 +50,21 @@ ECOS = {
         'title': ('소비자물가지수(특수분류)',), 'item': ('농산물및석유류제외지수',),
         'cycle': 'M', 'stat': '901Y010', 'item_codes': ['QB'], 'start': '196501',
     },
+    'ECOS_KR_EXPORT_VALUE': {
+        'title': ('수출금액지수',), 'item': ('총지수',),
+        'cycle': 'M', 'stat': '403Y001', 'item_codes': ['*AA'], 'start': '198801',
+    },
+    'ECOS_KR_SEMICONDUCTOR_EXPORT_VALUE': {
+        'title': ('수출금액지수',), 'item': ('반도체',),
+        'cycle': 'M', 'stat': '403Y001', 'item_codes': ['3091AA'], 'start': '198801',
+    },
+    'ECOS_KR_HOUSE_PRICES': {
+        'title': ('주택매매가격지수',), 'item': ('총지수', '전국'),
+        'cycle': 'M', 'stat': '901Y062', 'item_exact': '총지수(전국)', 'start': '198601',
+    },
 }
 
 KOSIS = {
-    'KOSIS_KR_EXPORTS': {
-        'search': '품목별 수출입실적', 'table_terms': ('품목별 수출입실적', '수출입실적'),
-        'item_terms': ('항목',),
-        'output_terms': ('총계', '계', '전체', '전국'),
-        'cycle': 'M', 'start': '200001',
-    },
-    'KOSIS_KR_SEMICONDUCTOR_EXPORTS': {
-        'search': '품목별 수출입실적', 'table_terms': ('품목별 수출입실적', '수출입실적'),
-        'item_terms': ('항목',), 'output_target': '반도체',
-        'output_terms': ('총계', '계', '전체', '전국'),
-        'cycle': 'M', 'start': '200001',
-    },
     'KOSIS_KR_INDUSTRIAL_PRODUCTION': {
         'search': '광공업생산지수', 'table_terms': ('광공업생산지수',),
         'item_terms': ('광공업생산지수', '생산지수'),
@@ -83,12 +83,6 @@ KOSIS = {
         'table_terms': ('경제활동인구총괄', '실업률'),
         'item_terms': ('실업률',), 'output_terms': ('전국', '계', '전체', '15세 이상 전체'),
         'cycle': 'M', 'start': '199906',
-    },
-    'KOSIS_KR_HOUSE_PRICES': {
-        'search': '전국주택가격동향조사 매매가격지수',
-        'table_terms': ('주택가격',), 'item_terms': ('주택가격지수',),
-        'output_terms': ('전국', '매매', '전체', '계'),
-        'cycle': 'M', 'start': '200301',
     },
 }
 
@@ -210,9 +204,18 @@ def fetch_ecos(sid):
     now = date.today()
     end = (f'{now.year}Q{(now.month - 1) // 3 + 1}' if cycle == 'Q'
            else now.strftime('%Y%m%d' if cycle == 'D' else '%Y%m'))
-    codes = cfg.get('item_codes') or _select_ecos_codes(
-        _ecos_rows('StatisticItemList', api_key, stat), cfg,
-    )
+    codes = cfg.get('item_codes')
+    if not codes:
+        item_rows = _ecos_rows('StatisticItemList', api_key, stat)
+        if cfg.get('item_exact'):
+            exact = re.sub(r'\s+', '', cfg['item_exact'])
+            matches = [row for row in item_rows if row.get('CYCLE') == cycle and
+                       exact in re.sub(r'\s+', '', row.get('ITEM_NAME', ''))]
+            if len(matches) != 1:
+                raise ValueError(f'ECOS 전국 주택가격 계열을 하나로 식별하지 못했습니다: {len(matches)}개')
+            codes = [matches[0]['ITEM_CODE']]
+        else:
+            codes = _select_ecos_codes(item_rows, cfg)
     parts = [stat, cycle, cfg['start'], end, *codes]
     rows = []
     start_row = 1
@@ -278,10 +281,6 @@ def _select_kosis_table(rows, cfg):
             candidates.append((score, recency, row))
     if not candidates:
         raise ValueError('KOSIS 통계표를 찾지 못했습니다: ' + cfg['search'])
-    if cfg['search'] == '품목별 수출입실적':
-        preview = [(r.get('ORG_ID'), r.get('TBL_ID'), r.get('TBL_NM'), r.get('STAT_NM'))
-                   for _, _, r in sorted(candidates, key=lambda pair: (pair[0], pair[1]), reverse=True)[:12]]
-        raise ValueError(f'KOSIS 수출 통계표 후보 확인 필요: {preview}')
     return max(candidates, key=lambda pair: (pair[0], pair[1]))[2]
 
 
