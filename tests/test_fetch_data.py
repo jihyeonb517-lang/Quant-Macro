@@ -89,7 +89,23 @@ class FormulaTests(unittest.TestCase):
                                   ['1990-01-03', 'nan'], ['2999-01-01', 5]]),
                          [['1990-01-01', 1.0], ['1990-01-02', None], ['1990-01-03', None]])
 
+    def test_buffett_proxy_converts_market_cap_millions_to_gdp_billions(self):
+        data = raw(
+            BOGZ1FL883164113Q=[['2026-04-01', 80_000_000]],
+            GDP=[['2026-04-01', 32_000]],
+        )
+        self.assertAlmostEqual(f.calculate(data)['buffett'][-1][1], 250)
+
 class FallbackTests(unittest.TestCase):
+    def test_retired_cache_error_does_not_fail_active_sources(self):
+        cache = {
+            'WILL5000IND': {'error': 'HTTP 404'},
+            'GDP': {'error': None},
+            'UNRATE': {'error': 'timeout'},
+        }
+        self.assertEqual(f.active_source_errors(cache, {'GDP'}), [])
+        self.assertEqual(f.active_source_errors(cache, {'GDP', 'UNRATE'}), ['UNRATE'])
+
     def test_provider_timeout_returns_fallback(self):
         with patch.object(
             f.subprocess,

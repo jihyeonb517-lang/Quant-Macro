@@ -155,7 +155,9 @@ NOTES = {
     'dxy': 'Yahoo Finance의 ICE 달러인덱스 종가입니다.',
     'gold': FUTURES_NOTE, 'silver': FUTURES_NOTE, 'copper': FUTURES_NOTE,
     'wti': FUTURES_NOTE, 'brent': FUTURES_NOTE,
-    'buffett': '워런 버핏이 언급한 시가총액/GDP 비율입니다. 절대 임계값(예: 100%)보다 자체 역사 대비 상대적 위치(퍼센타일)로 해석하는 것이 안전합니다. 분기 지표라 갱신이 느립니다.',
+    'buffett': ('연준 금융계정의 미국 국내 상장주식 시가총액을 명목 GDP로 나눈 '
+                '버핏지수 대용치입니다. 기존 Wilshire 5000 기반 계열과 정의가 달라 '
+                '과거 수치가 완전히 같지는 않습니다. 분기 자료이며 개정될 수 있습니다.'),
     'household_debt_service': '가계가 가처분소득 중 부채 원리금 상환에 쓰는 비율입니다. 모기지·소비자부채를 합산한 값입니다.',
     'bank_lending': '연준 SLOOS 설문 기준입니다. 양수(+)는 순 긴축, 음수(-)는 순 완화를 의미하며, 2001년·2008-09년 침체 전 뚜렷한 긴축이 관측된 바 있습니다.',
 }
@@ -358,7 +360,8 @@ def calculate_base(raw):
     spy_dates = dict(s('SPY'))
     ratio = [p for p in ratio if p[0] in spy_dates]
 
-    # Buffett indicator: match Wilshire 5000 to each GDP quarter date.
+    # Buffett-indicator proxy: both inputs are quarterly observations.
+    # The market-cap series is in millions of dollars and GDP is in billions.
     gdp_points = s('GDP')
     return {
         'jobs': transform(lagged(m('PAYEMS'), 3, lambda a, b: a-b), lambda v: v/3),
@@ -384,9 +387,10 @@ def calculate_base(raw):
         'gold': s('GC=F'), 'silver': s('SI=F'), 'copper': s('HG=F'),
         'wti': s('CL=F'), 'brent': s('BZ=F'),
         'pce_secondary': lagged(m('PCEPILFE'), 3, lambda a, b: ((a/b)**4-1)*100 if b > 0 else None),
-        'buffett': aligned([s('BOGZ1FL883164113Q'), gdp_points],lambda market_cap, gdp:
-        market_cap/(gdp*1000)*100 if g > 0 else None
-),
+        'buffett': aligned(
+            [s('BOGZ1FL883164113Q'), gdp_points],
+            lambda market_cap, gdp: market_cap/(gdp*1000)*100 if gdp > 0 else None,
+        ),
         'household_debt_service': s('TDSP'),
         'bank_lending': s('DRTSCILM'),
     }
@@ -519,6 +523,12 @@ def read_json(path, default):
     return json.loads(path.read_text(encoding='utf-8')) if path.exists() else default
 
 
+def active_source_errors(cache_data, frequencies=None):
+    """Return failures only for sources used by the current configuration."""
+    frequencies = FREQUENCIES if frequencies is None else frequencies
+    return [sid for sid in frequencies if cache_data.get(sid, {}).get('error')]
+
+
 def refresh(output=ROOT/'data.json', cache=ROOT/'cache'/'observations.json', offline=False):
     previous = read_json(output, {})
     raw = read_json(cache, {})
@@ -567,7 +577,9 @@ if __name__ == '__main__':
         print(json.dumps(fetch_retry(args.source), ensure_ascii=True, allow_nan=False))
         raise SystemExit(0)
     count = refresh(args.output, args.cache, args.offline)
-    if not args.offline and (count < len(FREQUENCIES) or any(
-            v.get('error') for v in read_json(args.cache, {}).values())):
-        logging.error('One or more sources failed. Fallback status saved; inspect per-source errors.')
-        raise SystemExit(2)
+    if not args.offline:
+        failures = active_source_errors(read_json(args.cache, {}))
+        if count < len(FREQUENCIES) or failures:
+            logging.error('One or more active sources failed: %s',
+                          ', '.join(failures) or 'unknown source')
+            raise SystemExit(2)
