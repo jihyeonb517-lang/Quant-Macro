@@ -8,7 +8,7 @@ clear message if loading fails. No build tool or API key is required.
 
 ```text
 index.html                         Original interface, async JSON loading
-data.json                          Generated dashboard snapshot (59 metrics)
+data.json                          Generated dashboard snapshot
 fetch_data.py                      FRED + Yahoo download and calculations
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps
@@ -19,6 +19,26 @@ tests/                            Formula, fallback, and JSON-contract checks
 The observation cache is committed because GitHub runners are temporary. Only
 `index.html` and `data.json` are included in the Pages artifact. A public repository
 also makes its source files and observation cache public.
+
+## Quarterly Index DCF input
+
+Edit `manual/index_dcf.csv` whenever the quarterly assumptions change. Keep the
+header and add one row per observation date:
+
+```csv
+date,index_id,index_level,cf0,stage1_growth_pct,stage1_years,terminal_growth_pct,risk_free_rate_pct,erp_pct
+2026-07-01,sp500,5000,250,6,5,2.5,4.0,5.0
+```
+
+`index_id` must be `sp500`, `nasdaq100`, `nikkei225`, or `topix`. Add one row
+for each index in each quarter. `cf0` is the current annual shareholder cash flow
+in that index's point units. Percentage
+inputs use ordinary percentages (`6` means 6%). The discount rate is calculated as
+the risk-free rate plus ERP and must be greater than the terminal growth rate.
+The example above explains the format only; do not copy its assumptions without
+replacing them with the intended data. The committed CSV intentionally starts with
+only the header, so the Index DCF tab remains in a collection-ready state until the
+first real row is entered.
 
 ## Connect this local folder to a new GitHub repository
 
@@ -71,10 +91,11 @@ exists, inspect `git remote -v` before changing it.
 The initial push may start a run before you enable Pages. If that run fails at
 Pages configuration, complete step 3 and manually run the workflow again.
 
-The workflow runs daily at **12:00 UTC / 21:00 Korea time**, on manual dispatch,
-and on pushes to `main`. Bot commits made with `GITHUB_TOKEN` do not trigger a
+The workflow runs every six hours at **02:17, 08:17, 14:17, and 20:17 Korea
+time**, on manual dispatch, and on pushes to `main`. Bot commits made with
+`GITHUB_TOKEN` do not trigger a
 second push workflow; deployment happens in the same run. GitHub schedules can
-be delayed, so 12:00 is a requested schedule, not an exact delivery guarantee.
+be delayed, so these are requested times rather than exact delivery guarantees.
 Schedules run from the default branch; keep `main` as the default branch. Public
 repository schedules may be disabled after 60 days without repository activity.
 

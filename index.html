@@ -63,6 +63,8 @@ const GROUPS=[
 {key:'stability',label:'금융 안정',title:'금융 안정',desc:'단기 자금시장의 긴장, 신용 스프레드, 금융 스트레스, 은행 대출태도를 확인합니다.',ids:['repo','credit','nfci','stlfsi','bank_lending'],read:['repo','credit','bank_lending']},
 {key:'rates',label:'미국채',title:'미국채와 정책금리',desc:'국채 금리 수준, 장단기 금리차, 실질금리, 정책금리를 확인합니다.',ids:['ust2','ust10','curve','real','fedtarget'],read:['ust2','ust10','curve']},
 {key:'market',label:'시장',title:'주식시장과 밸류에이션',desc:'S&P 500의 추세와 변동성, 시가총액/GDP 밸류에이션을 확인합니다.',ids:['trend','vix','buffett']},
+{key:'dcf_sp500',label:'DCF · S&P 500',title:'S&P 500 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 S&P 500 적정 지수를 계산합니다.',ids:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_cf0','index_dcf_sp500_stage1_growth','index_dcf_sp500_stage1_years','index_dcf_sp500_discount_rate','index_dcf_sp500_terminal_growth'],read:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_discount_rate']},
+{key:'dcf_nasdaq100',label:'DCF · NASDAQ-100',title:'NASDAQ-100 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 NASDAQ-100 적정 지수를 계산합니다.',ids:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_cf0','index_dcf_nasdaq100_stage1_growth','index_dcf_nasdaq100_stage1_years','index_dcf_nasdaq100_discount_rate','index_dcf_nasdaq100_terminal_growth'],read:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_discount_rate']},
 {key:'fx',label:'환율',title:'환율',desc:'원·달러, 엔·달러, 달러인덱스의 흐름을 확인합니다.',ids:['usdkrw','usdjpy','dxy']},
 {key:'commodities',label:'원자재',title:'원자재',desc:'귀금속, 구리, 원유 선물 가격의 흐름을 확인합니다.',ids:['gold','silver','copper','wti','brent'],read:['gold','copper','wti']}
 ]},
@@ -72,11 +74,13 @@ const GROUPS=[
 {key:'jp_rates',label:'금리',title:'정책금리와 국채 금리',desc:'일본은행 정책금리, 일본 국채 금리, 일본 장단기 금리차와 미·일 금리차를 확인합니다.',ids:['boj_rate','jgb2','jgb10','jp_curve','us_jp_2y','us_jp_10y'],read:['boj_rate','jgb10','us_jp_10y']},
 {key:'jp_business',label:'기업 경기·투자',title:'단칸 기업 경기와 설비투자',desc:'대기업 업황·전망 DI와 설비투자 계획을 확인합니다.',ids:['tankan_mfg_now','tankan_mfg_fcst','tankan_nonmfg_now','tankan_nonmfg_fcst','tankan_capex'],read:['tankan_mfg_now','tankan_nonmfg_now','tankan_capex']},
 {key:'jp_activity',label:'생산·소비',title:'생산과 소비',desc:'광공업 생산·재고와 소매판매, 가계소비를 확인합니다.',ids:['jp_ip','jp_inventory','jp_retail','jp_hh_consumption']},
-{key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']}
+{key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']},
+{key:'dcf_nikkei225',label:'DCF · Nikkei 225',title:'Nikkei 225 Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 Nikkei 225 적정 지수를 계산합니다.',ids:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_cf0','index_dcf_nikkei225_stage1_growth','index_dcf_nikkei225_stage1_years','index_dcf_nikkei225_discount_rate','index_dcf_nikkei225_terminal_growth'],read:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_discount_rate']},
+{key:'dcf_topix',label:'DCF · TOPIX',title:'TOPIX Index DCF',desc:'분기별 현금흐름과 성장률·할인율 가정으로 TOPIX 적정 지수를 계산합니다.',ids:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_cf0','index_dcf_topix_stage1_growth','index_dcf_topix_stage1_years','index_dcf_topix_discount_rate','index_dcf_topix_terminal_growth'],read:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_discount_rate']}
 ]}
 ];
 const ALL=GROUPS.flatMap(g=>g.tabs);
-const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션'};
+const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·Index DCF·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션·Index DCF'};
 const $=id=>document.getElementById(id);
 (async () => {
 const response = await fetch('./data.json', {cache: 'no-store'});

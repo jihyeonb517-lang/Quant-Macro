@@ -26,6 +26,7 @@ import japan_sources as jp
 import estat_sources as es
 import shunto_source as sh
 import oecd_cli_source as cli
+import index_dcf_source as dcf
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
@@ -174,6 +175,10 @@ FREQUENCIES.update(sh.FREQUENCIES)
 SPECS.extend(sh.SPECS)
 FORMULAS.update(sh.FORMULAS)
 NOTES.update(sh.NOTES)
+FREQUENCIES.update(dcf.FREQUENCIES)
+SPECS.extend(dcf.SPECS)
+FORMULAS.update(dcf.FORMULAS)
+NOTES.update(dcf.NOTES)
 MAX_AGE.setdefault('annual', 430)
 
 
@@ -231,6 +236,8 @@ def fetch_series(sid):
         points = jp.fetch_points(sid)
     elif sid in sh.SOURCES:
         points = sh.fetch_points(sid)
+    elif sid in dcf.SOURCES:
+        points = dcf.fetch_points(sid)
     else:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
         # Bound connection setup separately and avoid unusable IPv6 routes on
@@ -249,7 +256,7 @@ def fetch_series(sid):
         if not rows or len(rows[0]) != 2 or rows[0][1] != sid:
             raise ValueError('Unexpected FRED CSV header')
         points = clean(row for row in rows[1:] if len(row) == 2)
-    if not any(finite(v) for _, v in points):
+    if not any(finite(v) for _, v in points) and sid not in dcf.OPTIONAL_SOURCES:
         raise ValueError('No finite observations')
     return {'points': points, 'retrieved': utcnow(), 'error': None}
 
@@ -401,6 +408,7 @@ def calculate(raw):
     result.update(jp.calculate(raw, aligned, calendar, transform))
     result.update(sh.calculate(raw))
     result.update(es.calculate(raw, calendar))
+    result.update(dcf.calculate(raw))
     return result
 
 
@@ -413,9 +421,10 @@ def source_metadata(sid, raw, today):
     age = (today-date.fromisoformat(observed)).days if observed else None
     stale = bool(observed and (age > MAX_AGE[frequency] or points[-1][0] > observed))
     failed = bool(entry.get('error'))
-    origin, url = es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or sh.ORIGINS.get(sid) or (
+    origin, url = (es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or
+                   sh.ORIGINS.get(sid) or dcf.ORIGINS.get(sid) or (
         ('Yahoo Finance', f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/')
-        if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}'))
+        if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}')))
     return dict(id=sid, url=url,
                 observed=observed, retrieved=entry.get('retrieved'),
                 origin=origin, frequency=frequency,
@@ -484,7 +493,10 @@ def build(raw, previous, generated_at, today=None):
         secondary = ({'label': '3개월 연율', 'points': computed['pce_secondary']}
                      if mid == 'pce' else
                      {'label': '하단', 'primaryLabel': '상단', 'points': computed['fedtarget_low']}
-                     if mid == 'fedtarget' else None)
+                     if mid == 'fedtarget' else
+                     {'label': '실제 지수', 'primaryLabel': 'DCF 적정 지수',
+                      'points': computed[dcf.SECONDARY[mid]]}
+                     if mid in dcf.SECONDARY else None)
         text = None
         if mid == 'fedtarget' and usable:
             low = dict(computed['fedtarget_low']).get(last[0])
