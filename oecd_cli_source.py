@@ -1,5 +1,7 @@
 """Download OECD amplitude-adjusted CLI data directly from OECD SDMX."""
 
+import csv
+import io
 import math
 import xml.etree.ElementTree as ET
 from datetime import date
@@ -16,7 +18,7 @@ SERIES = {
 OECD_DATA_URL = (
     'https://sdmx.oecd.org/public/rest/data/'
     'OECD.SDD.STES,DSD_STES@DF_CLI,4.1/{country}.M.LI...AA...H'
-    '?startPeriod=1950-01&format=genericdata'
+    '?startPeriod=1990-01&format=csvfile'
 )
 
 
@@ -165,7 +167,21 @@ def fetch_points(country):
     except Exception as exc:
         raise RuntimeError(f'OECD CLI request failed ({type(exc).__name__})') from None
 
-    points = parse_oecd_sdmx_xml(payload, country_code)
+    rows = csv.DictReader(io.StringIO(payload))
+    points = []
+    for row in rows:
+        if row.get('REF_AREA') != country_code:
+            continue
+        period = row.get('TIME_PERIOD', '')
+        if len(period) != 7 or period[4] != '-':
+            continue
+        try:
+            value = float(row['OBS_VALUE'])
+            day = date.fromisoformat(period + '-01').isoformat()
+        except (KeyError, TypeError, ValueError):
+            continue
+        points.append([day, value])
+    points.sort(key=lambda pair: pair[0])
 
     if not any(value is not None for _, value in points):
         raise ValueError(f'No usable OECD CLI observations for {country}')
