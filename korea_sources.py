@@ -40,6 +40,7 @@ ECOS = {
     'ECOS_KR_CCSI': {
         'title': ('소비자동향조사', '소비자심리지수'),
         'item': ('소비자심리지수',), 'cycle': 'M', 'start': '200801',
+        'stat': '511Y002', 'item_codes': ['FME', '99988'],
     },
 }
 
@@ -321,7 +322,9 @@ def fetch_kosis(sid):
     org_id = str(table.get('ORG_ID') or table.get('orgId') or '101')
     table_id = table.get('TBL_ID') or table.get('tblId')
     items = _kosis_meta(api_key, org_id, table_id, 'ITM')
-    item_choices = [row for row in items if row.get('ITM_ID') or row.get('itmId')]
+    item_choices = [row for row in items
+                    if (row.get('ITM_ID') or row.get('itmId'))
+                    and str(row.get('OBJ_ID', 'ITEM')).upper() == 'ITEM']
     if not item_choices:
         raise ValueError('KOSIS 통계표에서 항목 메타데이터를 찾지 못했습니다: ' + cfg['search'])
     item = max(item_choices, key=lambda r: _score_text(
@@ -330,29 +333,44 @@ def fetch_kosis(sid):
     if not _score_text(item.get('ITM_NM') or item.get('itmNm') or '', cfg['item_terms']):
         raise ValueError('KOSIS 표에서 지정한 항목을 찾지 못했습니다: ' + cfg['search'])
     item_id = item.get('ITM_ID') or item.get('itmId')
-    # The parameterized-data API requires objL1 even for one-dimensional
-    # aggregate tables. ALL requests every available classifier value; the
-    # response filter below keeps only the national/total series.
-    dimensions = ['ALL']
+    # KOSIS needs a concrete code for every classifier. ALL is not a valid
+    # substitute for the table's own national/total classification code.
+    groups = {}
+    for row in items:
+        obj = str(row.get('OBJ_ID', ''))
+        if obj and obj.upper() != 'ITEM' and (row.get('ITM_ID') or row.get('itmId')):
+            groups.setdefault(obj, []).append(row)
+    dimensions = []
+    for obj, choices in sorted(groups.items(), key=lambda entry: entry[0]):
+        target = cfg.get('output_target', '')
+        preferred = [r for r in choices
+                     if str(r.get('ITM_NM') or r.get('itmNm') or '').strip() == target] if target else []
+        if not preferred:
+            preferred = [r for r in choices if str(r.get('ITM_NM') or r.get('itmNm') or '').strip()
+                         in ('전국', '전체', '총계', '계', '총지수', '광공업', '매매')]
+        if not preferred:
+            raise ValueError(f'KOSIS 분류값을 선택하지 못했습니다: {table_id} {obj}')
+        dimensions.append(str(preferred[0].get('ITM_ID') or preferred[0].get('itmId')))
+    if not dimensions:
+        raise ValueError(f'KOSIS 분류 메타데이터가 없습니다: {table_id}')
     cycle = cfg['cycle']
     now = date.today()
     end = now.strftime('%Y%m' if cycle == 'M' else '%Y')
-    rows = _kosis_data(api_key, org_id, table_id, item_id, dimensions,
-                       cycle, cfg['start'], end)
+    try:
+        rows = _kosis_data(api_key, org_id, table_id, item_id, dimensions,
+                           cycle, cfg['start'], end)
+    except ValueError as exc:
+        raise ValueError(f'{exc} (표 {table_id}, 항목 {item_id}, 분류 {dimensions})') from None
     points = []
     for row in rows:
         labels = [str(row.get(f'C{i}_NM') or row.get(f'OBJ_NM{i}') or '').strip()
                   for i in range(1, 9)]
         labels = [label for label in labels if label]
-        terms = {re.sub(r'\s+', '', term).lower()
-                 for term in cfg.get('output_terms', ('전국', '총지수', '총계'))}
         normalized = [re.sub(r'\s+', '', label).lower() for label in labels]
         target = re.sub(r'\s+', '', cfg.get('output_target', '')).lower()
-        # Do not accept a merely containing label: e.g. matching "계" inside
-        # "가계" can silently pick a household series instead of a national total.
-        accepted = (not normalized or all(label in terms or label == target
-                                          for label in normalized))
-        if accepted and (not target or target in normalized):
+        codes_match = all(str(row.get(f'C{i}', '')) == code
+                          for i, code in enumerate(dimensions, 1))
+        if codes_match and (not target or target in normalized):
             dt = row.get('PRD_DE') or row.get('prdDe')
             value = row.get('DT') or row.get('dt')
             points.extend(_points([{'TIME': dt, 'DATA_VALUE': value}], 'TIME', 'DATA_VALUE', cycle))
