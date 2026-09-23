@@ -17,7 +17,7 @@
 .compare-swap{background:white;border:1px solid var(--line);padding:10px 14px;font-weight:700}
 .compare-swap:hover{background:#eff5f7}
 .corr-line{font-weight:700;font-size:15px;margin:14px 0 4px}
-.metric-section{padding:9px 14px;background:#f0f4f6;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--navy);letter-spacing:.04em}.dcf-structure{margin:18px 0 24px;display:grid;gap:14px}.dcf-block{border:1px solid var(--line);background:#fff}.dcf-block h4{margin:0;padding:10px 13px;background:#f0f4f6;font-size:14px}.dcf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.dcf-cell{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-top:1px solid var(--line);font-size:13px}.dcf-cell b{font-variant-numeric:tabular-nums}.dcf-result{background:#edf8f2;color:#146c43}.dcf-sensitivity-wrap{overflow:auto}.dcf-sensitivity{width:100%;border-collapse:collapse;font-size:12px;text-align:right}.dcf-sensitivity th,.dcf-sensitivity td{padding:7px 9px;border:1px solid var(--line)}.dcf-sensitivity th{background:#f0f4f6}.dcf-sensitivity td.mid{background:#dcefeb;font-weight:700}.dcf-sensitivity td.low{background:#f7dddd}.dcf-sensitivity td.high{background:#d7eee2}
+.metric-section{padding:9px 14px;background:#f0f4f6;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--navy);letter-spacing:.04em}
 </style></head><body>
 <header><div class="head"><div><div class="eyebrow">Macro data</div><h1>매크로 데이터</h1></div><div class="stamp" id="stamp"></div></div></header> 
 <main class="wrap"><div id="home"></div><div id="crumb" style="display:none"></div><div id="compareView" style="display:none"></div><nav class="tabs" id="tabs" role="tablist" aria-label="매크로 화면" style="display:none"></nav>
@@ -74,16 +74,10 @@ const GROUPS=[
 {key:'jp_business',label:'기업 경기·투자',title:'단칸 기업 경기와 설비투자',desc:'대기업 업황·전망 DI와 설비투자 계획을 확인합니다.',ids:['tankan_mfg_now','tankan_mfg_fcst','tankan_nonmfg_now','tankan_nonmfg_fcst','tankan_capex'],read:['tankan_mfg_now','tankan_nonmfg_now','tankan_capex']},
 {key:'jp_activity',label:'생산·소비',title:'생산과 소비',desc:'광공업 생산·재고와 소매판매, 가계소비를 확인합니다.',ids:['jp_ip','jp_inventory','jp_retail','jp_hh_consumption']},
 {key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']}
-]},
-{key:'backtest',label:'백테스트',tabs:[
-{key:'dcf_sp500',label:'S&P 500',title:'S&P 500 Index DCF',desc:'EPS·주주환원·할인율·종료가치 가정으로 S&P 500 적정 지수를 계산합니다.',ids:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_eps','index_dcf_sp500_stage1_growth','index_dcf_sp500_stage1_years','index_dcf_sp500_dividend_payout','index_dcf_sp500_buyback_payout','index_dcf_sp500_shareholder_payout','index_dcf_sp500_cf0','index_dcf_sp500_risk_free_rate','index_dcf_sp500_erp','index_dcf_sp500_discount_rate','index_dcf_sp500_terminal_growth','index_dcf_sp500_long_risk_free_rate','index_dcf_sp500_long_erp','index_dcf_sp500_long_roe','index_dcf_sp500_terminal_payout','index_dcf_sp500_terminal_cf','index_dcf_sp500_explicit_pv','index_dcf_sp500_terminal_pv','index_dcf_sp500_implied_pe'],read:['index_dcf_sp500','index_dcf_sp500_gap','index_dcf_sp500_implied_pe']},
-{key:'dcf_nasdaq100',label:'NASDAQ-100',title:'NASDAQ-100 Index DCF',desc:'EPS·주주환원·할인율·종료가치 가정으로 NASDAQ-100 적정 지수를 계산합니다.',ids:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_eps','index_dcf_nasdaq100_stage1_growth','index_dcf_nasdaq100_stage1_years','index_dcf_nasdaq100_dividend_payout','index_dcf_nasdaq100_buyback_payout','index_dcf_nasdaq100_shareholder_payout','index_dcf_nasdaq100_cf0','index_dcf_nasdaq100_risk_free_rate','index_dcf_nasdaq100_erp','index_dcf_nasdaq100_discount_rate','index_dcf_nasdaq100_terminal_growth','index_dcf_nasdaq100_long_risk_free_rate','index_dcf_nasdaq100_long_erp','index_dcf_nasdaq100_long_roe','index_dcf_nasdaq100_terminal_payout','index_dcf_nasdaq100_terminal_cf','index_dcf_nasdaq100_explicit_pv','index_dcf_nasdaq100_terminal_pv','index_dcf_nasdaq100_implied_pe'],read:['index_dcf_nasdaq100','index_dcf_nasdaq100_gap','index_dcf_nasdaq100_implied_pe']},
-{key:'dcf_nikkei225',label:'Nikkei 225',title:'Nikkei 225 Index DCF',desc:'EPS·주주환원·할인율·종료가치 가정으로 Nikkei 225 적정 지수를 계산합니다.',ids:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_eps','index_dcf_nikkei225_stage1_growth','index_dcf_nikkei225_stage1_years','index_dcf_nikkei225_dividend_payout','index_dcf_nikkei225_buyback_payout','index_dcf_nikkei225_shareholder_payout','index_dcf_nikkei225_cf0','index_dcf_nikkei225_risk_free_rate','index_dcf_nikkei225_erp','index_dcf_nikkei225_discount_rate','index_dcf_nikkei225_terminal_growth','index_dcf_nikkei225_long_risk_free_rate','index_dcf_nikkei225_long_erp','index_dcf_nikkei225_long_roe','index_dcf_nikkei225_terminal_payout','index_dcf_nikkei225_terminal_cf','index_dcf_nikkei225_explicit_pv','index_dcf_nikkei225_terminal_pv','index_dcf_nikkei225_implied_pe'],read:['index_dcf_nikkei225','index_dcf_nikkei225_gap','index_dcf_nikkei225_implied_pe']},
-{key:'dcf_topix',label:'TOPIX',title:'TOPIX Index DCF',desc:'EPS·주주환원·할인율·종료가치 가정으로 TOPIX 적정 지수를 계산합니다.',ids:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_eps','index_dcf_topix_stage1_growth','index_dcf_topix_stage1_years','index_dcf_topix_dividend_payout','index_dcf_topix_buyback_payout','index_dcf_topix_shareholder_payout','index_dcf_topix_cf0','index_dcf_topix_risk_free_rate','index_dcf_topix_erp','index_dcf_topix_discount_rate','index_dcf_topix_terminal_growth','index_dcf_topix_long_risk_free_rate','index_dcf_topix_long_erp','index_dcf_topix_long_roe','index_dcf_topix_terminal_payout','index_dcf_topix_terminal_cf','index_dcf_topix_explicit_pv','index_dcf_topix_terminal_pv','index_dcf_topix_implied_pe'],read:['index_dcf_topix','index_dcf_topix_gap','index_dcf_topix_implied_pe']}
 ]}
 ];
 const ALL=GROUPS.flatMap(g=>g.tabs);
-const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션',backtest:'S&P 500·NASDAQ-100·Nikkei 225·TOPIX Index DCF'};
+const DESC={us:'고용·물가·경기·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·엔 포지션'};
 const $=id=>document.getElementById(id);
 (async () => {
 const response = await fetch('./data.json', {cache: 'no-store'});
@@ -111,8 +105,7 @@ let group=null,section=GROUPS[0].tabs[0].key,selected=null,years=5,focusTab=fals
 // -- Compare ("지표 비교") state: any two metrics, US+JP combined --
 const metricGroupLabel = {};
 GROUPS.forEach(g=>g.tabs.forEach(t=>t.ids.forEach(id=>{ if(!metricGroupLabel[id]) metricGroupLabel[id]=g.label+' · '+t.label; })));
-const backtestIds = new Set(GROUPS.find(g=>g.key==='backtest').tabs.flatMap(t=>t.ids));
-const compareMetrics = DATA.metrics.filter(m=>!backtestIds.has(m.id));
+const compareMetrics = DATA.metrics;
 let compareA = DATA.metrics.some(m=>m.id==='unemployment') ? 'unemployment' : DATA.metrics[0]?.id;
 let compareB = DATA.metrics.some(m=>m.id==='cpi_headline') ? 'cpi_headline' : DATA.metrics[1]?.id;
 let compareYears = 5;
@@ -158,27 +151,6 @@ const deltaUnit=m=>m.unit==='%'?'%p':m.unit;
 const changeText=m=>m.delta==null?'비교 자료 부족':`${m.delta>0?'+':''}${num(m.delta,2)} ${deltaUnit(m)}`;
 const dateText=m=>m.sources.every(s=>s.frequency==='monthly')?m.date?.slice(0,7):m.date;
 const metricValue=id=>DATA.metrics.find(m=>m.id===id)?.value;
-function dcfPrefix(){return group==='backtest'?`index_dcf_${section.replace(/^dcf_/,'')}`:null;}
-function dcfCell(label,value,unit='',extra=''){
- return `<div class="dcf-cell ${extra}"><span>${esc(label)}</span><b>${value==null?'—':esc(num(value,2))}${value==null?'':` ${esc(unit)}`}</b></div>`;
-}
-function dcfCalculation(prefix,discountRate,terminalGrowth){
- const get=s=>metricValue(prefix+s),eps=get('_eps'),growth=get('_stage1_growth'),years=get('_stage1_years'),payout=get('_shareholder_payout'),longRf=get('_long_risk_free_rate'),longErp=get('_long_erp'),roe=get('_long_roe');
- if([eps,growth,years,payout,discountRate,terminalGrowth,longRf,longErp,roe].some(v=>v==null))return null;
- const g=growth/100,r=discountRate/100,tg=terminalGrowth/100,tr=(longRf+longErp)/100,lr=roe/100,n=Math.round(years),po=payout/100;
- if(tr<=tg||lr<=tg||r<=-1)return null;
- let explicit=0;for(let t=1;t<=n;t++)explicit+=eps*(1+g)**t*po/(1+r)**t;
- const terminalCash=eps*(1+g)**n*(1+tg)*(1-tg/lr);
- return explicit+(terminalCash/(tr-tg))/(1+r)**n;
-}
-function dcfStructureHTML(){
- const prefix=dcfPrefix();if(!prefix)return '';
- const v=s=>metricValue(prefix+s),base=DATA.metrics.find(m=>m.id===prefix);
- const market=base?.secondary?.points?.filter(p=>p[1]!=null).slice(-1)[0]?.[1]??null;
- const fair=v(''),centerDiscount=v('_discount_rate'),centerGrowth=v('_terminal_growth');
- const deltas=[-1,-.5,0,.5,1],sensitivity=centerDiscount==null||centerGrowth==null?'':`<div class="dcf-block"><h4>3 · 민감도 분석 — 행: 영구성장률 / 열: 할인율</h4><div class="dcf-sensitivity-wrap"><table class="dcf-sensitivity"><thead><tr><th>g∞ / r</th>${deltas.map(d=>`<th>${num(centerDiscount+d,2)}%</th>`).join('')}</tr></thead><tbody>${deltas.map(gd=>`<tr><th>${num(centerGrowth+gd,2)}%</th>${deltas.map(rd=>{const value=dcfCalculation(prefix,centerDiscount+rd,centerGrowth+gd),cls=gd===0&&rd===0?'mid':value!=null&&fair!=null&&value<fair?'low':'high';return `<td class="${cls}">${value==null?'—':num(value,2)}</td>`}).join('')}</tr>`).join('')}</tbody></table></div></div>`;
- return `<div class="dcf-structure"><div class="dcf-block"><h4>1 · 추정 입력값 조정 — 현금흐름</h4><div class="dcf-grid">${dcfCell('EPS',v('_eps'),'지수')}${dcfCell('EPS 성장률',v('_stage1_growth'),'%')}${dcfCell('성장기간',v('_stage1_years'),'년')}${dcfCell('배당성향',v('_dividend_payout'),'%')}${dcfCell('바이백성향',v('_buyback_payout'),'%')}${dcfCell('주주환원성향',v('_shareholder_payout'),'%')}${dcfCell('주주환원 현금흐름',v('_cf0'),'지수')}</div></div><div class="dcf-block"><h4>할인율 추정</h4><div class="dcf-grid">${dcfCell('무위험수익률',v('_risk_free_rate'),'%')}${dcfCell('주식시장 위험 프리미엄',v('_erp'),'%')}${dcfCell('할인율',v('_discount_rate'),'%')}</div></div><div class="dcf-block"><h4>종료가치 계산</h4><div class="dcf-grid">${dcfCell('영구성장률',v('_terminal_growth'),'%')}${dcfCell('장기 무위험수익률',v('_long_risk_free_rate'),'%')}${dcfCell('장기 ERP',v('_long_erp'),'%')}${dcfCell('장기 ROE',v('_long_roe'),'%')}${dcfCell('종료연도 주주환원성향',v('_terminal_payout'),'%')}${dcfCell('종료연도 현금흐름',v('_terminal_cf'),'지수')}</div></div><div class="dcf-block"><h4>2 · 적정 가치 추정</h4><div class="dcf-grid">${dcfCell('명시적 기간 현재가치',v('_explicit_pv'),'지수')}${dcfCell('종료가치 현재가치',v('_terminal_pv'),'지수')}${dcfCell('DCF 적정 지수',fair,'지수','dcf-result')}${dcfCell('실제 지수',market,'지수')}${dcfCell('고평가율',v('_gap'),'%')}${dcfCell('내재 PER',v('_implied_pe'),'배')}</div></div>${sensitivity}</div>`;
-}
 function directional(id){const m=DATA.metrics.find(m=>m.id===id);if(!m||m.delta==null)return `${m?.title||id}: 비교 자료 부족`;return `${m.title} ${changeText(m)} (${m.period})${m.status==='stale'?' · 자료 지연':''}`;}
 function reading(){const t=tabOf(section),list=listFor(section),have=id=>list.some(m=>m.id===id);if(!list.length)return hiddenFor(section).length?'표시할 최신 자료가 없습니다.':'이 탭의 지표는 아직 수집 준비 중입니다.';let ids=(t.read||t.ids).filter(have).slice(0,3);if(!ids.length)ids=list.slice(0,3).map(m=>m.id);return ids.map(directional).join(' · ');}
 function buildTabs(){
@@ -189,8 +161,10 @@ function buildTabs(){
 function renderHome(){
  const cards=GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('');
  const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;color:var(--muted);margin-top:6px">두 지표를 겹쳐 보고 상관관계(동행·역행)를 확인합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본 매크로 ${compareMetrics.length}개 지표 중 자유 선택</span></button>`;
- $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">${cards}${compareCard}</div>`;
+ const dcfCard=`<button data-page="dcf.html" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">Index DCF</span><span style="display:block;color:var(--muted);margin-top:6px">웹에서 가정을 입력하는 개인 밸류에이션 계산기</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">S&amp;P 500 · NASDAQ-100 · Nikkei 225 · TOPIX</span></button>`;
+ $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">${cards}${compareCard}${dcfCard}</div>`;
  document.querySelectorAll('#home [data-group]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.group});
+ document.querySelectorAll('#home [data-page]').forEach(b=>b.onclick=()=>{location.href=b.dataset.page});
 }
 function renderCrumb(){
  $('crumb').innerHTML=`<div style="padding:22px 0 0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap"><button id="back" style="background:none;border:0;padding:0;color:var(--accent);font-weight:700;font-size:14px">← 전체</button><span style="font-size:22px;font-weight:700">${groupOf(group).label}</span></div>`;

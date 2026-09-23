@@ -17,29 +17,19 @@ tests/                            Formula, fallback, and JSON-contract checks
 ```
 
 The observation cache is committed because GitHub runners are temporary. Only
-`index.html` and `data.json` are included in the Pages artifact. A public repository
+`index.html`, `dcf.html`, and `data.json` are included in the Pages artifact. A public repository
 also makes its source files and observation cache public.
 
-## Quarterly Index DCF input
+## Browser-based Index DCF calculator
 
-Edit `manual/index_dcf.csv` whenever the quarterly assumptions change. Keep the
-header and add one row per observation date:
-
-```csv
-date,index_id,index_level,eps,stage1_growth_pct,stage1_years,dividend_payout_pct,buyback_payout_pct,risk_free_rate_pct,erp_pct,terminal_growth_pct,long_term_risk_free_rate_pct,long_term_erp_pct,long_term_roe_pct
-2026-07-01,sp500,5000,250,6,5,32,48,4.0,5.0,2.5,3.0,5.0,13.0
-```
-
-`index_id` must be `sp500`, `nasdaq100`, `nikkei225`, or `topix`. Add one row
-for each index in each quarter. Percentage inputs use ordinary percentages (`6`
-means 6%). Current shareholder cash flow is calculated as EPS times dividend plus
-buyback payout. The explicit-period discount rate is the risk-free rate plus ERP.
-Terminal payout is calculated as `1 - terminal growth / long-run ROE`, and the
-long-run risk-free rate plus long-run ERP must exceed terminal growth.
-The example above explains the format only; do not copy its assumptions without
-replacing them with the intended data. The committed CSV intentionally starts with
-only the header, so the Index DCF tab remains in a collection-ready state until the
-first real row is entered.
+Open `dcf.html` from the dashboard to use the personal Index DCF calculator. It
+reads current index levels and 10-year government yields from `data.json`, while
+EPS, growth, payout, ERP, and terminal assumptions are entered in the browser.
+Assumptions are stored only in that browser with `localStorage`; they are not
+committed by the automated data workflow. The calculator supports S&P 500,
+NASDAQ-100, Nikkei 225, and TOPIX, three ERP modes, and a sensitivity grid.
+Because Yahoo's global feed does not publish the TOPIX index series, TOPIX uses
+the 1306.T TOPIX-linked ETF as an explicitly labelled market-price proxy.
 
 ## Connect this local folder to a new GitHub repository
 

@@ -64,7 +64,7 @@ jobs:
       - name: Stage public files only
         run: |
           mkdir -p _site
-          cp index.html data.json _site/
+          cp index.html dcf.html data.json _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

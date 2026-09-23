@@ -11,11 +11,17 @@ class ArtifactTests(unittest.TestCase):
         data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))
         self.assertEqual(
             set(data),
-            {'generatedAt', 'method', 'metrics', 'regimes'},
+            {'generatedAt', 'method', 'metrics', 'regimes', 'dcfInputs'},
         )
         self.assertIsNotNone(datetime.fromisoformat(data['generatedAt']).tzinfo)
 
         self.assertEqual(set(data['regimes']), {'us', 'jp'})
+        self.assertEqual(set(data['dcfInputs']), {'sp500', 'nasdaq100', 'nikkei225', 'topix'})
+        for item in data['dcfInputs'].values():
+            self.assertEqual(
+                set(item),
+                {'label', 'indexPoints', 'riskFreePoints', 'indexSource', 'riskFreeSource'},
+            )
         valid_regimes = {
             'contraction',
             'recovery',
@@ -62,6 +68,13 @@ class ArtifactTests(unittest.TestCase):
         self.assertNotIn('const DATA={', html)
         self.assertIn('if (!response.ok)', html)
         self.assertIn('})().catch(error =>', html)
+
+    def test_dcf_is_a_browser_calculator(self):
+        html = (f.ROOT/'dcf.html').read_text(encoding='utf-8')
+        self.assertIn("fetch('./data.json'", html)
+        self.assertIn('localStorage', html)
+        self.assertIn('implied', html)
+        self.assertNotIn('index_dcf.csv', html)
 
 
 if __name__ == '__main__':

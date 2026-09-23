@@ -26,7 +26,6 @@ import japan_sources as jp
 import estat_sources as es
 import shunto_source as sh
 import oecd_cli_source as cli
-import index_dcf_source as dcf
 
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
@@ -37,6 +36,7 @@ FREQUENCIES = {
     'M2SL': 'monthly', 'SOFR': 'daily', 'IORB': 'daily',
     'BAMLH0A0HYM2': 'daily', 'VIXCLS': 'daily', 'DFII10': 'daily',
     'DGS10': 'daily', 'DGS2': 'daily', '^GSPC': 'daily',
+    '^NDX': 'daily', '^N225': 'daily', '1306.T': 'daily',
     'RSP': 'daily', 'SPY': 'daily',
     # --- phase 1: US (FRED) ---
     'RSAFS': 'monthly', 'DGORDER': 'monthly', 'CPIAUCSL': 'monthly',
@@ -63,7 +63,7 @@ FREQUENCIES.update({
 })
 
 MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 140}
-YAHOO = {'^GSPC', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
+YAHOO = {'^GSPC', '^NDX', '^N225', '1306.T', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
          'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
 # id, section, title, unit, dependencies, delta lag, comparison label
 SPECS = [
@@ -175,10 +175,6 @@ FREQUENCIES.update(sh.FREQUENCIES)
 SPECS.extend(sh.SPECS)
 FORMULAS.update(sh.FORMULAS)
 NOTES.update(sh.NOTES)
-FREQUENCIES.update(dcf.FREQUENCIES)
-SPECS.extend(dcf.SPECS)
-FORMULAS.update(dcf.FORMULAS)
-NOTES.update(dcf.NOTES)
 MAX_AGE.setdefault('annual', 430)
 
 
@@ -220,12 +216,18 @@ def fetch_series(sid):
                             multi_level_index=False)
         if frame is None or frame.empty:
             raise ValueError('Yahoo returned no prices')
-        # US equities may use today's close after 16:00 New York time.
-        # FX and futures retain the previous-day cutoff.
-        now_ny = datetime.now(ZoneInfo('America/New_York'))
-        completed_day = (now_ny.date()
-                         if sid in {'^GSPC', 'SPY', 'RSP'} and now_ny.hour >= 16
-                         else now_ny.date() - timedelta(days=1))
+        # Keep only completed local-market sessions, using each exchange's clock.
+        if sid in {'^N225', '1306.T'}:
+            local_now = datetime.now(ZoneInfo('Asia/Tokyo'))
+            completed_day = (local_now.date()
+                             if (local_now.hour, local_now.minute) >= (15, 30)
+                             else local_now.date() - timedelta(days=1))
+        elif sid in {'^GSPC', '^NDX', 'SPY', 'RSP'}:
+            local_now = datetime.now(ZoneInfo('America/New_York'))
+            completed_day = (local_now.date() if local_now.hour >= 16
+                             else local_now.date() - timedelta(days=1))
+        else:
+            completed_day = datetime.now(timezone.utc).date() - timedelta(days=1)
         points = clean(((d.strftime('%Y-%m-%d'), v) for d, v in frame['Close'].items()),
                        today=completed_day)
     elif sid in CLI_SOURCES:
@@ -236,8 +238,6 @@ def fetch_series(sid):
         points = jp.fetch_points(sid)
     elif sid in sh.SOURCES:
         points = sh.fetch_points(sid)
-    elif sid in dcf.SOURCES:
-        points = dcf.fetch_points(sid)
     else:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
         # Bound connection setup separately and avoid unusable IPv6 routes on
@@ -256,7 +256,7 @@ def fetch_series(sid):
         if not rows or len(rows[0]) != 2 or rows[0][1] != sid:
             raise ValueError('Unexpected FRED CSV header')
         points = clean(row for row in rows[1:] if len(row) == 2)
-    if not any(finite(v) for _, v in points) and sid not in dcf.OPTIONAL_SOURCES:
+    if not any(finite(v) for _, v in points):
         raise ValueError('No finite observations')
     return {'points': points, 'retrieved': utcnow(), 'error': None}
 
@@ -408,7 +408,6 @@ def calculate(raw):
     result.update(jp.calculate(raw, aligned, calendar, transform))
     result.update(sh.calculate(raw))
     result.update(es.calculate(raw, calendar))
-    result.update(dcf.calculate(raw))
     return result
 
 
@@ -422,7 +421,7 @@ def source_metadata(sid, raw, today):
     stale = bool(observed and (age > MAX_AGE[frequency] or points[-1][0] > observed))
     failed = bool(entry.get('error'))
     origin, url = (es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or
-                   sh.ORIGINS.get(sid) or dcf.ORIGINS.get(sid) or (
+                   sh.ORIGINS.get(sid) or (
         ('Yahoo Finance', f'https://finance.yahoo.com/quote/{quote(sid, safe="")}/history/')
         if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}')))
     return dict(id=sid, url=url,
@@ -494,9 +493,7 @@ def build(raw, previous, generated_at, today=None):
                      if mid == 'pce' else
                      {'label': '하단', 'primaryLabel': '상단', 'points': computed['fedtarget_low']}
                      if mid == 'fedtarget' else
-                     {'label': '실제 지수', 'primaryLabel': 'DCF 적정 지수',
-                      'points': computed[dcf.SECONDARY[mid]]}
-                     if mid in dcf.SECONDARY else None)
+                     None)
         text = None
         if mid == 'fedtarget' and usable:
             low = dict(computed['fedtarget_low']).get(last[0])
@@ -513,6 +510,21 @@ def build(raw, previous, generated_at, today=None):
         generatedAt=generated_at,
         metrics=metrics,
         regimes=build_regimes(raw, previous),
+        dcfInputs={
+            key: {
+                'label': label,
+                'indexPoints': copy.deepcopy(raw.get(index_sid, {}).get('points', []))[-2600:],
+                'riskFreePoints': copy.deepcopy(raw.get(rate_sid, {}).get('points', []))[-2600:],
+                'indexSource': source_metadata(index_sid, raw, today),
+                'riskFreeSource': source_metadata(rate_sid, raw, today),
+            }
+            for key, label, index_sid, rate_sid in (
+                ('sp500', 'S&P 500', '^GSPC', 'DGS10'),
+                ('nasdaq100', 'NASDAQ-100', '^NDX', 'DGS10'),
+                ('nikkei225', 'Nikkei 225', '^N225', 'JGB10'),
+                ('topix', 'TOPIX (1306.T 대용)', '1306.T', 'JGB10'),
+            )
+        },
         method=(
             '차트는 관측 기준일과 현재 제공되는 수정자료를 사용합니다. '
             '당시 공개정보를 복원한 백테스트가 아닙니다. '
