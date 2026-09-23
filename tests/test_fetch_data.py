@@ -150,6 +150,18 @@ class FallbackTests(unittest.TestCase):
             self.assertEqual(result['generatedAt'], timestamp)
             self.assertEqual(result['metrics'][1]['value'], 4.2)
 
+    def test_refresh_accepts_empty_optional_manual_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, cache = Path(directory)/'data.json', Path(directory)/'raw.json'
+            entry = {'points': [], 'retrieved': None, 'error': None}
+            with patch.object(f, 'download_all', return_value=[
+                ('INDEX_DCF_SP500_VALUE', entry, None),
+            ]):
+                self.assertEqual(f.refresh(output, cache), 1)
+            stored = json.loads(cache.read_text(encoding='utf-8'))
+            self.assertEqual(stored['INDEX_DCF_SP500_VALUE']['points'], [])
+            self.assertIsNone(stored['INDEX_DCF_SP500_VALUE']['error'])
+
     def test_stale_daily_source_and_empty_bootstrap(self):
         data = raw(VIXCLS=[['2026-01-01', 18]])
         result = f.build(data, {}, None, date(2026, 9, 7))

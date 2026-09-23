@@ -551,14 +551,15 @@ def refresh(output=ROOT/'data.json', cache=ROOT/'cache'/'observations.json', off
                 existing = raw.get(sid, {}).get('points', [])
                 # Preserve older history when providers limit their downloadable window.
                 # New observations (including nulls/revisions) are authoritative within it.
-                first, last = entry['points'][0][0], entry['points'][-1][0]
-                old_valid = [d for d, v in existing if finite(v)]
-                new_valid = [d for d, v in entry['points'] if finite(v)]
-                if old_valid and new_valid[-1] < old_valid[-1]:
-                    entry['error'] = 'Provider response ends before retained observations'
-                merged = {d: v for d, v in existing if d < first or d > last}
-                merged.update(dict(entry['points']))
-                entry['points'] = [[d, v] for d, v in sorted(merged.items())]
+                if entry['points']:
+                    first, last = entry['points'][0][0], entry['points'][-1][0]
+                    old_valid = [d for d, v in existing if finite(v)]
+                    new_valid = [d for d, v in entry['points'] if finite(v)]
+                    if old_valid and new_valid[-1] < old_valid[-1]:
+                        entry['error'] = 'Provider response ends before retained observations'
+                    merged = {d: v for d, v in existing if d < first or d > last}
+                    merged.update(dict(entry['points']))
+                    entry['points'] = [[d, v] for d, v in sorted(merged.items())]
                 raw[sid] = entry
                 successes += 1
                 logging.info('%s: downloaded', sid)
