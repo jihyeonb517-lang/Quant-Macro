@@ -23,6 +23,10 @@ jobs:
       # Used by the Japan e-Stat adapter. The value is never written to the
       # repository or dashboard artifacts.
       ESTAT_APP_ID: ${{ secrets.ESTAT_APP_ID }}
+      # Provider credentials stay in GitHub Actions secrets and are never
+      # written to the repository or public dashboard artifacts.
+      ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+      KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
     permissions:
       contents: write
       pages: write
@@ -78,3 +82,4 @@ jobs:
         run: |
           echo '::error::Refresh failed. Preserved data was deployed; inspect source errors above.'
           exit 1
+
