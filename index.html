@@ -8,13 +8,18 @@
 .zoom-reset[hidden]{display:none}
 .chart{touch-action:pan-y}
 .chart.is-selecting{cursor:col-resize;user-select:none}
-  
+
 .tip{position:absolute;display:none;pointer-events:none;z-index:5;background:var(--navy);color:white;padding:8px 12px;font-size:14px;line-height:1.5;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .tip b{display:block;font-size:12px;font-weight:400;color:#72d1ce}
 .regime-source{color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
+
+.compare-select{width:100%;padding:10px;border:1px solid var(--line);font:inherit;background:white;color:var(--ink)}
+.compare-swap{background:white;border:1px solid var(--line);padding:10px 14px;font-weight:700}
+.compare-swap:hover{background:#eff5f7}
+.corr-line{font-weight:700;font-size:15px;margin:14px 0 4px}
 </style></head><body>
 <header><div class="head"><div><div class="eyebrow">Macro data</div><h1>매크로 데이터</h1></div><div class="stamp" id="stamp"></div></div></header> 
-<main class="wrap"><div id="home"></div><div id="crumb" style="display:none"></div><nav class="tabs" id="tabs" role="tablist" aria-label="매크로 화면" style="display:none"></nav>
+<main class="wrap"><div id="home"></div><div id="crumb" style="display:none"></div><div id="compareView" style="display:none"></div><nav class="tabs" id="tabs" role="tablist" aria-label="매크로 화면" style="display:none"></nav>
 <section id="content" role="tabpanel" style="display:none"><div class="intro"><div><h2 id="section-title"></h2><p id="section-description"></p></div><span class="badge" id="coverage" style="display:none"></span></div><div class="reading"><strong>최근 변화</strong><p id="reading"></p></div><div class="workspace"><div class="metric-list" id="metrics" aria-label="지표 선택"></div><article class="panel" id="panel"></article></div></section>
 <div class="method"><strong>읽는 기준</strong><br>점수 하나로 시장을 판정하지 않습니다. 수준과 최근 변화, 서로 다른 지표의 방향을 함께 확인하세요. <span id="method"></span> 자료가 오래되거나 없으면 이전 값을 현재 값으로 바꾸지 않고 상태를 표시합니다.</div><footer class="foot"><span>원자료 → 계산 → 표시를 분리한 매크로 관측 도구</span><span>하루 2회(한국시간 08:17·20:17) 자동 수집 · 실제 관측일과 자료 상태를 확인하세요.</span></footer></main><noscript>이 대시보드에는 JavaScript가 필요합니다.</noscript>
 </main><noscript>이 대시보드에는 JavaScript가 필요합니다.</noscript>
@@ -96,6 +101,13 @@ try {
 
 let group=null,section=GROUPS[0].tabs[0].key,selected=null,years=5,focusTab=false,zoomRange=null;
 
+// -- Compare ("지표 비교") state: any two metrics, US+JP combined --
+const metricGroupLabel = {};
+GROUPS.forEach(g=>g.tabs.forEach(t=>t.ids.forEach(id=>{ if(!metricGroupLabel[id]) metricGroupLabel[id]=g.label+' · '+t.label; })));
+let compareA = DATA.metrics.some(m=>m.id==='unemployment') ? 'unemployment' : DATA.metrics[0]?.id;
+let compareB = DATA.metrics.some(m=>m.id==='cpi_headline') ? 'cpi_headline' : DATA.metrics[1]?.id;
+let compareYears = 5;
+
 const activeRegimes = () =>
   group && Array.isArray(REGIMES[group]) ? REGIMES[group] : [];
 
@@ -142,21 +154,119 @@ function buildTabs(){
  items.forEach((b,i)=>{b.onclick=()=>{location.hash=group+'/'+b.dataset.section};b.onkeydown=e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();focusTab=true;items[(i+(e.key==='ArrowRight'?1:items.length-1))%items.length].click();}}});
 }
 function renderHome(){
- $('home').innerHTML=`<div style="padding:34px 0 8px"><h2>지역 선택</h2><p style="color:var(--muted);margin:6px 0 24px">지역을 선택하면 해당 지역의 지표 탭이 열립니다.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">`+GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('')+`</div>`;
- $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">`+GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('')+`</div>`;
+ const cards=GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('');
+ const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;color:var(--muted);margin-top:6px">두 지표를 겹쳐 보고 상관관계(동행·역행)를 확인합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본 전체 ${DATA.metrics.length}개 지표 중 자유 선택</span></button>`;
+ $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">${cards}${compareCard}</div>`;
  document.querySelectorAll('#home [data-group]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.group});
 }
 function renderCrumb(){
  $('crumb').innerHTML=`<div style="padding:22px 0 0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap"><button id="back" style="background:none;border:0;padding:0;color:var(--accent);font-weight:700;font-size:14px">← 전체</button><span style="font-size:22px;font-weight:700">${groupOf(group).label}</span></div>`;
  $('back').onclick=()=>{location.hash='home'};
 }
+
+// ---- Compare view ----
+function compareOptions(selectedId){
+ return DATA.metrics.map(m=>`<option value="${esc(m.id)}" ${m.id===selectedId?'selected':''}>${esc(m.title)} (${esc(metricGroupLabel[m.id]||'기타')})</option>`).join('');
+}
+function pearson(pairs){
+ const n=pairs.length; if(n<3) return null;
+ const xs=pairs.map(p=>p[0]), ys=pairs.map(p=>p[1]);
+ const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
+ const mx=mean(xs), my=mean(ys);
+ let numer=0,dx=0,dy=0;
+ for(let i=0;i<n;i++){numer+=(xs[i]-mx)*(ys[i]-my);dx+=(xs[i]-mx)**2;dy+=(ys[i]-my)**2;}
+ return (dx&&dy)?numer/Math.sqrt(dx*dy):null;
+}
+function monthlyLast(points){
+ const out={};
+ for(const [d,v] of points){ if(v==null) continue; const key=d.slice(0,7); if(!(key in out)||d>out[key][0]) out[key]=[d,v]; }
+ const m={}; for(const k in out) m[k]=out[k][1]; return m;
+}
+function corrLabel(r){
+ if(r==null) return {text:'공통으로 겹치는 관측월이 부족해 상관계수를 계산할 수 없습니다.',tone:'muted'};
+ const abs=Math.abs(r), dir=r>=0?'동행':'역행';
+ const strength=abs>=0.6?'강한':abs>=0.3?'약한':'뚜렷하지 않은';
+ return {text:`상관계수 r = ${r.toFixed(2)} · ${strength} ${dir} (${r>=0?'같은 방향으로 함께 움직임':'반대 방향으로 움직임'})`,tone:abs<0.3?'muted':(r>=0?'accent':'warn')};
+}
+function renderCompare(){
+ const wrap=$('compareView');
+ wrap.innerHTML=`
+  <div style="padding:22px 0 0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+   <button id="compare-back" style="background:none;border:0;padding:0;color:var(--accent);font-weight:700;font-size:14px">← 전체</button>
+   <span style="font-size:22px;font-weight:700">지표 비교</span>
+  </div>
+  <p style="color:var(--muted);margin:8px 0 22px">두 지표를 선택하면 각 지표를 표시 구간 내 최소~최대 기준으로 0~100 정규화해 같은 축에 겹쳐 보여줍니다. 상관계수는 공통 관측월의 월말값으로 계산합니다.</p>
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:end;margin-bottom:18px">
+   <label style="display:block"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">지표 A</span>
+    <select id="compare-a" class="compare-select">${compareOptions(compareA)}</select></label>
+   <button id="compare-swap" class="compare-swap" title="지표 A/B 바꾸기">⇄</button>
+   <label style="display:block"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">지표 B</span>
+    <select id="compare-b" class="compare-select">${compareOptions(compareB)}</select></label>
+  </div>
+  <article class="panel" id="compare-panel"></article>`;
+ $('compare-back').onclick=()=>{location.hash='home'};
+ $('compare-a').onchange=e=>{compareA=e.target.value;drawCompare();};
+ $('compare-b').onchange=e=>{compareB=e.target.value;drawCompare();};
+ $('compare-swap').onclick=()=>{const t=compareA;compareA=compareB;compareB=t;$('compare-a').value=compareA;$('compare-b').value=compareB;drawCompare();};
+ drawCompare();
+}
+function drawCompare(){
+ const mA=DATA.metrics.find(m=>m.id===compareA), mB=DATA.metrics.find(m=>m.id===compareB);
+ const panel=$('compare-panel');
+ if(!mA||!mB){panel.innerHTML='<div class="empty">비교할 지표 두 개를 선택하세요.</div>';return;}
+ if(mA.id===mB.id){panel.innerHTML='<div class="empty">서로 다른 두 지표를 선택하세요.</div>';return;}
+ const ts=d=>Date.parse(d+'T00:00:00Z');
+ const ptsA=mA.points.filter(p=>p[1]!=null), ptsB=mB.points.filter(p=>p[1]!=null);
+ if(!ptsA.length||!ptsB.length){panel.innerHTML='<div class="empty">표시할 관측 자료가 없습니다.</div>';return;}
+ const fullEnd=Math.max(ts(ptsA[ptsA.length-1][0]), ts(ptsB[ptsB.length-1][0]));
+ const cut=compareYears?fullEnd-compareYears*365.25*86400000:-Infinity;
+ const inRange=pts=>pts.filter(p=>ts(p[0])>=cut&&ts(p[0])<=fullEnd);
+ let visA=inRange(ptsA), visB=inRange(ptsB);
+ if(visA.length<2) visA=ptsA.slice(-2);
+ if(visB.length<2) visB=ptsB.slice(-2);
+ const normalize=pts=>{const vs=pts.map(p=>p[1]);const min=Math.min(...vs),max=Math.max(...vs),span=(max-min)||1;return pts.map(([d,v])=>[d,(v-min)/span*100]);};
+ const normA=normalize(visA), normB=normalize(visB);
+ const start=Math.min(ts(normA[0][0]), ts(normB[0][0]));
+ const end=Math.max(ts(normA[normA.length-1][0]), ts(normB[normB.length-1][0]));
+ const span=(end-start)||86400000;
+ const W=850,H=345,L=46,R=20,T=26,B=40;
+ const x=d=>L+(ts(d)-start)/span*(W-L-R);
+ const y=v=>T+(100-v)/100*(H-T-B);
+ let svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(mA.title)} 대 ${esc(mB.title)} 정규화 비교 차트">`;
+ for(let i=0;i<5;i++){const v=i*25,yy=y(v);svg+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="#e2e9ee"/><text x="${L-8}" y="${yy+4}" text-anchor="end" fill="#5e7080" font-size="12">${v}</text>`;}
+ for(let i=0;i<5;i++){const d=new Date(start+span*i/4).toISOString().slice(0,10);svg+=`<text x="${L+(W-L-R)*i/4}" y="${H-12}" text-anchor="${i===0?'start':i===4?'end':'middle'}" fill="#5e7080" font-size="12">${d.slice(0,7)}</text>`;}
+ const path=(pts,color)=>{let p='';pts.forEach(([d,v],i)=>{p+=(i?'L':'M')+x(d).toFixed(2)+','+y(v).toFixed(2)+' ';});return `<path d="${p}" stroke="${color}" fill="none" stroke-width="2" vector-effect="non-scaling-stroke"/>`;};
+ svg+=path(normA,'#007d83')+path(normB,'#a36c22')+'</svg>';
+ const mapA=monthlyLast(visA), mapB=monthlyLast(visB);
+ const pairs=Object.keys(mapA).filter(k=>k in mapB).sort().map(k=>[mapA[k],mapB[k]]);
+ const r=pearson(pairs);
+ const label=corrLabel(r);
+ const toneColor={muted:'var(--muted)',accent:'var(--accent)',warn:'var(--warn)'}[label.tone];
+ panel.innerHTML=`
+  <div class="panel-top">
+   <div><h3>${esc(mA.title)} vs ${esc(mB.title)}</h3>
+    <div class="delta">0~100 정규화 · 표시 구간 내 최소~최대 기준</div></div>
+   <div class="periods" aria-label="비교 기간">${[1,3,5,10,0].map(n=>`<button data-cyears="${n}" class="${compareYears===n?'active':''}">${n?n+'년':'전체'}</button>`).join('')}</div>
+  </div>
+  <div class="legend"><span><i class="key"></i>${esc(mA.title)}</span><span><i class="key alt"></i>${esc(mB.title)}</span></div>
+  <div class="chart-wrap"><div id="compare-chart">${svg}</div></div>
+  <p class="corr-line" style="color:${toneColor}">${esc(label.text)}</p>
+  <p class="note">공통 관측월 ${pairs.length}개 기준 · 상관계수는 함께 움직인 정도를 나타낼 뿐 인과관계를 의미하지 않습니다.</p>`;
+ document.querySelectorAll('[data-cyears]').forEach(b=>b.onclick=()=>{compareYears=+b.dataset.cyears;drawCompare();});
+}
+
 function render(){
- const home=group===null;
- $('home').style.display=home?'':'none';$('crumb').style.display=home?'none':'';$('tabs').style.display=home?'none':'';$('content').style.display=home?'none':'';
+ const home=group===null, compareMode=group==='compare';
+ $('home').style.display=home?'':'none';
+ $('crumb').style.display=(home||compareMode)?'none':'';
+ $('compareView').style.display=compareMode?'':'none';
+ $('tabs').style.display=(home||compareMode)?'none':'';
+ $('content').style.display=(home||compareMode)?'none':'';
  if(home){renderHome();return;}
- renderCrumb();
+ if(compareMode){renderCompare();return;}
  document.querySelectorAll('#tabs [data-section]').forEach(b=>{const yes=b.dataset.section===section;b.setAttribute('aria-selected',yes);b.tabIndex=yes?0:-1});
  $('content').setAttribute('aria-labelledby','tab-'+section);
+ renderCrumb();
  const tab=tabOf(section),hid=hiddenFor(section);$('section-title').textContent=tab.title;$('section-description').textContent=tab.desc+(hid.length?' · 자료가 오래되어 숨긴 지표: '+hid.map(m=>m.title).join(', '):'');
  const list=listFor(section),valid=list.filter(m=>m.status==='ok').length;
  if(!list.some(m=>m.id===selected))selected=list[0]?.id;
@@ -167,10 +277,11 @@ function render(){
 }
 function apply(){
  const [g,s]=location.hash.slice(1).split('/'),prev=group;
+ if(g==='compare'){group='compare';render();window.scrollTo(0,0);return;}
  group=GROUPS.some(x=>x.key===g)?g:null;
  if(group){const tabs=groupOf(group).tabs,next=tabs.some(t=>t.key===s)?s:tabs[0].key;if(next!==section||prev!==group){selected=null;zoomRange=null;}section=next;if(prev!==group)buildTabs();}
  render();window.scrollTo(0,0);
- if(focusTab){focusTab=false;const el=group&&$('tab-'+section);if(el)el.focus();}
+ if(focusTab){focusTab=false;const el=group&&group!=='compare'&&$('tab-'+section);if(el)el.focus();}
 
 }
 function renderPanel(){const m=DATA.metrics.find(m=>m.id===selected);if(!m){$('panel').innerHTML='<div class="empty">표시할 지표가 없습니다.</div>';return;}const source=m.sources.map(s=>`<div class="source"><div><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.id)} ↗</a><span>${esc(s.origin)}</span></div><div><span>원자료 관측일 ${esc(s.observed||'없음')} · ${esc({daily:'일간',weekly:'주간',monthly:'월간',quarterly:'분기',annual:'연간'}[s.frequency]||s.frequency)}</span><span>수집 ${s.retrieved?esc(new Date(s.retrieved).toLocaleString('ko-KR')):'시각 미확인 · 기존 캐시'}</span><span>관측일 경과 ${s.age??'—'}일 / 유효기간 ${s.maxAge}일${s.fallback?' · 이전 유효 자료 사용':''}</span></div></div>`).join('');
@@ -355,7 +466,6 @@ tip.innerHTML =
  });
 }
 $('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString('ko-KR');$('method').textContent=DATA.method;
-$('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString('ko-KR');
 window.addEventListener('hashchange',apply);apply();
 })().catch(error => {
  console.error(error);
