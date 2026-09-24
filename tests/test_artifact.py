@@ -91,6 +91,12 @@ class ArtifactTests(unittest.TestCase):
                           'KORSLRTTO01GYSAM', 'LRUNTTTTKRM156S'} & korea_sources)
         self.assertTrue(data['regimes']['kr'])
 
+    def test_footer_has_deep_links_for_individual_metrics(self):
+        html = (f.ROOT/'index.html').read_text(encoding='utf-8')
+        self.assertIn('id="footer-nav"', html)
+        self.assertIn('const [g,s,metricId]', html)
+        self.assertIn('function renderFooterNav()', html)
+
     def test_dcf_is_a_browser_calculator(self):
         html = (f.ROOT/'dcf.html').read_text(encoding='utf-8')
         self.assertIn("fetch('./data.json'", html)
