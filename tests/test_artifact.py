@@ -92,9 +92,14 @@ class ArtifactTests(unittest.TestCase):
         self.assertTrue(data['regimes']['kr'])
 
     def test_fx_pairs_and_yen_quotation(self):
-        raw = {'JPYKRW=X': {'points': [['2026-09-23', 8.7]]}}
+        raw = {
+            'JPYKRW=X': {'points': [['2026-09-23', 8.7]]},
+            'KRW=X': {'points': [['2026-09-23', 1400.0]]},
+            'CNY=X': {'points': [['2026-09-23', 7.0]]},
+        }
         calculated = f.calculate_base(raw)
-        self.assertEqual(calculated['jpykrw_100'], [['2026-09-23', 870.0]])
+        self.assertAlmostEqual(calculated['jpykrw_100'][0][1], 870.0)
+        self.assertAlmostEqual(calculated['cnykrw'][0][1], 200.0)
         fx_ids = {spec[0] for spec in f.SPECS if spec[1] == 'fx'}
         self.assertTrue({'eurusd', 'gbpusd', 'eurgbp', 'usdjpy', 'usdkrw', 'usdcny',
                          'gbpjpy', 'eurjpy', 'gbpkrw', 'eurkrw', 'jpykrw_100', 'cnykrw', 'dxy'} <= fx_ids)
