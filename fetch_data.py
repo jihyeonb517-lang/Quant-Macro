@@ -29,16 +29,20 @@ import shunto_source as sh
 import oecd_cli_source as cli
 import korea_sources as kr
 
+DCF_INDEXES = (
+    ('sp500', 'S&P 500', '^GSPC', 'DGS10'),
+    ('nikkei225', 'Nikkei 225', '^N225', 'JGB10'),
+)
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
     # --- existing FRED / Yahoo sources ---
-    'PAYEMS': 'monthly', 'UNRATE': 'monthly', 'PCEPILFE': 'monthly',
+    'PAYEMS': 'monthly', 'USPRIV': 'monthly', 'USGOVT': 'monthly', 'UNRATE': 'monthly', 'PCEPILFE': 'monthly',
     'CPILFESL': 'monthly', 'ICSA': 'weekly', 'WALCL': 'weekly',
     'WTREGEN': 'weekly', 'WRESBAL': 'weekly', 'RRPONTSYD': 'daily',
     'M2SL': 'monthly', 'SOFR': 'daily', 'IORB': 'daily',
     'BAMLH0A0HYM2': 'daily', 'VIXCLS': 'daily', 'DFII10': 'daily',
     'DGS10': 'daily', 'DGS2': 'daily', '^GSPC': 'daily',
-    '^NDX': 'daily', '^N225': 'daily', '1306.T': 'daily',
+    '^N225': 'daily',
     'RSP': 'daily', 'SPY': 'daily',
     # --- phase 1: US (FRED) ---
     'RSAFS': 'monthly', 'DGORDER': 'monthly', 'CPIAUCSL': 'monthly',
@@ -80,16 +84,16 @@ FREQUENCIES.update({
 FREQUENCIES.update({sid: 'monthly' for sid in kr.KOSIS})
 
 MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 310}
-YAHOO = {'^GSPC', '^NDX', '^N225', '1306.T', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
+YAHOO = {'^GSPC', '^N225', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
          'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
 # id, section, title, unit, dependencies, delta lag, comparison label
 SPECS = [
     # First 16 keep their original positions (tests index metrics by position); new metrics are appended.
-    ('jobs', 'economy', '비농업 고용 증가', '천 명', ['PAYEMS'], 3, '직전 3개월 평균 대비'),
+    ('jobs', 'economy', '비농업 고용 증가(전체)', '천 명', ['PAYEMS'], 3, '직전 3개월 평균 대비'),
     ('unemployment', 'economy', '실업률', '%', ['UNRATE'], 3, '3개월 전 대비'),
     ('pce', 'economy', '근원 PCE 상승률', '%', ['PCEPILFE'], 3, '3개월 전 대비'),
     ('cpi', 'economy', '근원 CPI 상승률', '%', ['CPILFESL'], 3, '3개월 전 대비'),
-    ('claims', 'economy', '신규 실업수당 청구', '천 건', ['ICSA'], 4, '4주 전 대비'),
+    ('claims', 'economy', '신규 실업수당 청구(4주 평균)', '천 건', ['ICSA'], 4, '4주 전 대비'),
     ('netliq', 'conditions', '연준 순유동성 참고치', '십억 달러', ['WALCL', 'WTREGEN', 'RRPONTSYD'], 4, '4주 전 대비'),
     ('reserves', 'conditions', '은행 지준금', '십억 달러', ['WRESBAL'], 4, '4주 전 대비'),
     ('tga', 'conditions', '재무부 일반계좌(TGA) 잔고', '십억 달러', ['WTREGEN'], 4, '4주 전 대비'),
@@ -147,15 +151,21 @@ SPECS = [
     ('kr_household_credit_bok', 'korea', '한국은행 가계신용 잔액', '조 원', ['ECOS_KR_HOUSEHOLD_CREDIT'], 4, '1년 전 대비'),
     ('kr_bsi_bok', 'korea', '한국은행 기업경기실사지수(BSI)', '지수', ['ECOS_KR_BSI'], 1, '전월 대비'),
     ('kr_ccsi', 'korea', '한국은행 소비자심리지수(CCSI)', '지수', ['ECOS_KR_CCSI'], 1, '전월 대비'),
+    ('jobs_private', 'economy', '비농업 고용 증가(민간)', '천 명', ['USPRIV'], 3, '직전 3개월 평균 대비'),
+    ('jobs_government', 'economy', '비농업 고용 증가(정부)', '천 명', ['USGOVT'], 3, '직전 3개월 평균 대비'),
+    ('claims_weekly', 'economy', '신규 실업수당 청구(주간)', '천 건', ['ICSA'], 1, '전주 대비'),
 ]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
+    'jobs_private': '(USPRIV[t] − USPRIV[t−3 calendar months]) / 3; thousands',
+    'jobs_government': '(USGOVT[t] − USGOVT[t−3 calendar months]) / 3; thousands',
     'unemployment': 'UNRATE (%)',
     'pce': '(PCEPILFE[t]/PCEPILFE[t−12 months]−1)×100; secondary: ((PCEPILFE[t]/PCEPILFE[t−3 months])^4−1)×100',
     'pce_headline': '(PCEPI[t]/PCEPI[t−12 months]−1)×100; no interpolation',
     'cpi': '(CPILFESL[t]/CPILFESL[t−12 months]−1)×100; no interpolation',
     'cpi_headline': '(CPIAUCSL[t]/CPIAUCSL[t−12 months]−1)×100; seasonally adjusted index, no interpolation',
     'ppi_core': '(PPIFES[t]/PPIFES[t−12 months]−1)×100; final demand less foods and energy, seasonally adjusted',
+    'claims_weekly': 'ICSA / 1000; weekly initial claims, thousands',
     'claims': 'Mean of 4 consecutive calendar weeks of ICSA / 1000',
     'retail': '(RSAFS[t]/RSAFS[t−12 months]−1)×100; advance retail sales, seasonally adjusted, nominal',
     'durable': '(DGORDER[t]/DGORDER[t−12 months]−1)×100; new orders for durable goods, nominal',
@@ -507,9 +517,12 @@ def calculate_base(raw):
     gdp_points = s('GDP')
     return {
         'jobs': transform(lagged(m('PAYEMS'), 3, lambda a, b: a-b), lambda v: v/3),
+        'jobs_private': transform(lagged(m('USPRIV'), 3, lambda a, b: a-b), lambda v: v/3),
+        'jobs_government': transform(lagged(m('USGOVT'), 3, lambda a, b: a-b), lambda v: v/3),
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
         'pce_headline': yoy('PCEPI'), 'cpi_headline': yoy('CPIAUCSL'),
         'ppi_core': yoy('PPIFES'), 'retail': yoy('RSAFS'), 'durable': yoy('DGORDER'),
+        'claims_weekly': transform(calendar(s('ICSA'), weekly=True), lambda v: v/1000),
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
         'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
         'reserves': transform(calendar(s('WRESBAL'), weekly=True), lambda v: v/1000),
@@ -679,12 +692,7 @@ def build(raw, previous, generated_at, today=None):
                 'indexSource': source_metadata(index_sid, raw, today),
                 'riskFreeSource': source_metadata(rate_sid, raw, today),
             }
-            for key, label, index_sid, rate_sid in (
-                ('sp500', 'S&P 500', '^GSPC', 'DGS10'),
-                ('nasdaq100', 'NASDAQ-100', '^NDX', 'DGS10'),
-                ('nikkei225', 'Nikkei 225', '^N225', 'JGB10'),
-                ('topix', 'TOPIX (1306.T 대용)', '1306.T', 'JGB10'),
-            )
+            for key, label, index_sid, rate_sid in DCF_INDEXES
         },
         method=(
             '차트는 관측 기준일과 현재 제공되는 수정자료를 사용합니다. '

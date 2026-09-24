@@ -17,6 +17,26 @@ def raw(**series):
 
 
 class FormulaTests(unittest.TestCase):
+    def test_payroll_total_private_and_government_use_comparable_three_month_changes(self):
+        data = raw(
+            PAYEMS=[['2026-01-01', 1000], ['2026-02-01', 1010], ['2026-03-01', 1020], ['2026-04-01', 1030]],
+            USPRIV=[['2026-01-01', 800], ['2026-02-01', 808], ['2026-03-01', 816], ['2026-04-01', 824]],
+            USGOVT=[['2026-01-01', 200], ['2026-02-01', 202], ['2026-03-01', 204], ['2026-04-01', 206]],
+        )
+        calculated = f.calculate(data)
+        self.assertEqual(calculated['jobs'][-1], ['2026-04-01', 10])
+        self.assertEqual(calculated['jobs_private'][-1], ['2026-04-01', 8])
+        self.assertEqual(calculated['jobs_government'][-1], ['2026-04-01', 2])
+
+    def test_claims_weekly_and_four_week_average_are_both_exposed(self):
+        data = raw(ICSA=[
+            ['2026-01-07', 100000], ['2026-01-14', 200000],
+            ['2026-01-21', 300000], ['2026-01-28', 400000],
+        ])
+        calculated = f.calculate(data)
+        self.assertEqual(calculated['claims_weekly'][-1], ['2026-01-28', 400])
+        self.assertEqual(calculated['claims'][-1], ['2026-01-28', 250])
+
     def test_boj_dates_and_cgpi_yoy(self):
         self.assertEqual(jp._boj_date(20260918, 'daily'), '2026-09-18')
         self.assertEqual(jp._boj_date(202608, 'monthly'), '2026-08-01')

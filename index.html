@@ -57,9 +57,10 @@ const REGIME_STYLES = {
 
 const GROUPS=[
 {key:'us',label:'미국 매크로',tabs:[
-{key:'jobs',label:'고용·실업',title:'고용과 실업',desc:'노동시장의 강도와 변화를 확인합니다.',ids:['unemployment','jobs','claims']},
+{key:'jobs',label:'고용·실업',title:'고용과 실업',desc:'노동시장의 강도와 변화를 확인합니다.',ids:['unemployment','jobs','jobs_private','jobs_government','claims_weekly','claims']},
 {key:'prices',label:'물가',title:'물가 상승 속도',desc:'소비자·생산자 물가와 애틀랜타·댈러스 연은의 보조 근원물가 지표를 함께 봅니다.',ids:['cpi_headline','cpi','pce_headline','pce','ppi_core','sticky_cpi','trimmed_pce'],read:['cpi_headline','pce_headline','ppi_core','sticky_cpi','trimmed_pce']},
-{key:'growth',label:'경기·소비',title:'실질 성장과 소비·심리',desc:'GDP와 실질 소비 증가율, 제조업 설문, 소비자 심리로 수요의 강도를 확인합니다.',ids:['us_real_gdp','real_pce','real_pce_nondurable','real_pce_durable','real_pce_services','philly_fed','umich_sentiment','retail','durable','household_debt_service'],read:['us_real_gdp','real_pce','philly_fed','umich_sentiment']},
+{key:'growth',label:'경기',title:'경기와 수요',desc:'실질 GDP, 제조업 설문, 소비자 심리와 판매 지표로 경기 흐름을 확인합니다.',ids:['us_real_gdp','philly_fed','umich_sentiment','retail','durable','household_debt_service'],read:['us_real_gdp','philly_fed','umich_sentiment']},
+{key:'consumption',label:'소비',title:'실질 개인소비지출',desc:'실질 개인소비지출과 비내구재·내구재·서비스 지출의 흐름을 확인합니다.',ids:['real_pce','real_pce_nondurable','real_pce_durable','real_pce_services'],read:['real_pce','real_pce_nondurable','real_pce_durable']},
 {key:'liquidity',label:'유동성',title:'유동성',desc:'재무부 계좌·지준금·연준 순유동성으로 자금의 양을 확인합니다.',ids:['tga','reserves','netliq','m2'],read:['tga','reserves','netliq']},
 {key:'stability',label:'금융 안정',title:'금융 안정',desc:'단기 자금시장의 긴장, 신용 스프레드, 금융 스트레스, 은행 대출태도를 확인합니다.',ids:['repo','credit','nfci','stlfsi','bank_lending'],read:['repo','credit','bank_lending']},
 {key:'rates',label:'미국채',title:'미국채와 정책금리',desc:'국채 금리 수준, 장단기 금리차, 실질금리, 정책금리를 확인합니다.',ids:['ust2','ust10','curve','real','fedtarget'],read:['ust2','ust10','curve']},
@@ -85,7 +86,6 @@ const GROUPS=[
 ]}
 ];
 const ALL=GROUPS.flatMap(g=>g.tabs);
-const DESC={us:'고용·물가·실질 성장·소비·심리·유동성·금융 안정·미국채·시장·환율·원자재',jp:'물가·임금·금리·단칸 기업 경기·생산·GDP·엔 포지션',kr:'수출·산업생산·소비·물가·고용·기준금리·가계신용·주택가격·OECD 경기선행지수'};
 const $=id=>document.getElementById(id);
 (async () => {
 const response = await fetch('./data.json', {cache: 'no-store'});
@@ -168,10 +168,10 @@ function buildTabs(){
  items.forEach((b,i)=>{b.onclick=()=>{location.hash=group+'/'+b.dataset.section};b.onkeydown=e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();focusTab=true;items[(i+(e.key==='ArrowRight'?1:items.length-1))%items.length].click();}}});
 }
 function renderHome(){
- const cards=GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;color:var(--muted);margin-top:6px">${esc(DESC[g.key]||'')}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('');
- const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;color:var(--muted);margin-top:6px">두 지표를 겹쳐 보고 상관관계(동행·역행)를 확인합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본·한국 매크로 ${compareMetrics.length}개 지표 중 자유 선택</span></button>`;
- const cycleCard=`<button data-group="cycle" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">마켓 사이클</span><span style="display:block;color:var(--muted);margin-top:6px">2000년형·2008년형 역사적 시장 지문과 현재를 비교합니다</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">두 개의 독립 유사도 · expanding percentile</span></button>`;
- const dcfCard=`<button data-page="dcf.html" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">백테스팅</span><span style="display:block;color:var(--muted);margin-top:6px">웹에서 가정을 입력하는 개인 밸류에이션 계산기</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">S&amp;P 500 · NASDAQ-100 · Nikkei 225 · TOPIX</span></button>`;
+ const cards=GROUPS.map(g=>{const ids=[...new Set(g.tabs.flatMap(t=>t.ids))],have=ids.filter(id=>DATA.metrics.some(m=>m.id===id)).length;return `<button data-group="${g.key}" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">${g.label}</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">${g.tabs.length}개 탭 · 지표 ${have}/${ids.length}${have<ids.length?' · 일부 수집 준비 중':''}</span></button>`}).join('');
+ const compareCard=`<button data-group="compare" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">지표 비교</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">미국·일본·한국 매크로 ${compareMetrics.length}개 지표 중 자유 선택</span></button>`;
+ const cycleCard=`<button data-group="cycle" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--warn);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">마켓 사이클</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">두 개의 독립 유사도 · expanding percentile</span></button>`;
+ const dcfCard=`<button data-page="dcf.html" style="text-align:left;background:white;border:1px solid var(--line);border-left:4px solid var(--accent);padding:26px 28px;color:var(--ink)"><span style="display:block;font-size:24px;font-weight:700">INDEX DCF</span><span style="display:block;font-size:13px;color:var(--muted);margin-top:14px">S&amp;P 500 · Nikkei 225</span></button>`;
  $('home').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;padding-top:34px">${cards}${compareCard}${cycleCard}${dcfCard}</div>`;
  document.querySelectorAll('#home [data-group]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.group});
  document.querySelectorAll('#home [data-page]').forEach(b=>b.onclick=()=>{location.href=b.dataset.page});
