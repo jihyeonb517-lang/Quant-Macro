@@ -61,7 +61,7 @@ FREQUENCIES = {
     'JPY=X': 'daily', 'KRW=X': 'daily', 'DX-Y.NYB': 'daily',
     'EURUSD=X': 'daily', 'GBPUSD=X': 'daily', 'EURGBP=X': 'daily', 'CNY=X': 'daily',
     'GBPJPY=X': 'daily', 'EURJPY=X': 'daily', 'GBPKRW=X': 'daily', 'EURKRW=X': 'daily',
-    'JPYKRW=X': 'daily', 'CNYKRW=X': 'daily',
+    'JPYKRW=X': 'daily',
     'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
     'CL=F': 'daily', 'BZ=F': 'daily',
     # --- cycle/bubble-fingerprint additions ---
@@ -88,7 +88,7 @@ FREQUENCIES.update({sid: 'monthly' for sid in kr.KOSIS})
 
 MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 310}
 YAHOO = {'^GSPC', '^N225', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB', 'EURUSD=X', 'GBPUSD=X', 'EURGBP=X', 'CNY=X',
-         'GBPJPY=X', 'EURJPY=X', 'GBPKRW=X', 'EURKRW=X', 'JPYKRW=X', 'CNYKRW=X',
+         'GBPJPY=X', 'EURJPY=X', 'GBPKRW=X', 'EURKRW=X', 'JPYKRW=X',
          'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
 # id, section, title, unit, dependencies, delta lag, comparison label
 SPECS = [
@@ -167,7 +167,7 @@ SPECS = [
     ('gbpkrw', 'fx', 'GBP/KRW', '원/파운드', ['GBPKRW=X'], 20, '20거래일 전 대비'),
     ('eurkrw', 'fx', 'EUR/KRW', '원/유로', ['EURKRW=X'], 20, '20거래일 전 대비'),
     ('jpykrw_100', 'fx', 'JPY/KRW · 100엔', '원/100엔', ['JPYKRW=X'], 20, '20거래일 전 대비'),
-    ('cnykrw', 'fx', 'CNY/KRW', '원/위안', ['CNYKRW=X'], 20, '20거래일 전 대비'),
+    ('cnykrw', 'fx', 'CNY/KRW', '원/위안', ['KRW=X', 'CNY=X'], 20, '20거래일 전 대비'),
 ]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
@@ -211,7 +211,7 @@ FORMULAS = {
     'gbpkrw': 'Yahoo GBPKRW=X Close; KRW per GBP',
     'eurkrw': 'Yahoo EURKRW=X Close; KRW per EUR',
     'jpykrw_100': 'Yahoo JPYKRW=X Close × 100; KRW per 100 JPY',
-    'cnykrw': 'Yahoo CNYKRW=X Close; KRW per CNY',
+    'cnykrw': 'KRW=X / CNY=X; same-date ratio = KRW per CNY',
     'gold': 'Yahoo GC=F Close; COMEX futures, continuous front month (not spot)',
     'silver': 'Yahoo SI=F Close; COMEX futures, continuous front month (not spot)',
     'copper': 'Yahoo HG=F Close; COMEX futures, continuous front month (not spot)',
@@ -570,7 +570,7 @@ def calculate_base(raw):
         'usdcny': s('CNY=X'), 'gbpjpy': s('GBPJPY=X'), 'eurjpy': s('EURJPY=X'),
         'gbpkrw': s('GBPKRW=X'), 'eurkrw': s('EURKRW=X'),
         'jpykrw_100': transform(s('JPYKRW=X'), lambda value: value*100),
-        'cnykrw': s('CNYKRW=X'),
+        'cnykrw': aligned([s('KRW=X'), s('CNY=X')], lambda krw_per_usd, cny_per_usd: krw_per_usd/cny_per_usd if cny_per_usd > 0 else None),
         'gold': s('GC=F'), 'silver': s('SI=F'), 'copper': s('HG=F'),
         'wti': s('CL=F'), 'brent': s('BZ=F'),
         'pce_secondary': lagged(m('PCEPILFE'), 3, lambda a, b: ((a/b)**4-1)*100 if b > 0 else None),
