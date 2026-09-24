@@ -236,8 +236,7 @@ function renderCycle(){
   const pts=m.points.filter(p=>Array.isArray(p)&&p.length>1&&p[1]!=null&&series.has(p[0])).slice().sort((a,b)=>a[0].localeCompare(b[0]));
   if(!pts.length)return {p:null,date:null,status:'missing'};
   const last=pts[pts.length-1];
-  if(m.status!=='ok')return {p:null,date:last[0],status:m.status||'stale'};
-  return {p:series.get(last[0]),date:last[0],status:'ok'};
+  return {p:series.get(last[0]),date:last[0],status:m.status||'ok'};
  };
  const anchorInfo=(id,profile)=>{
   const series=expanding(metricById.get(id));if(!series)return null;
@@ -279,11 +278,8 @@ function renderCycle(){
  const ordered=allIds.map(id=>results[0].rows.find(x=>x.id===id)||results[1].rows.find(x=>x.id===id)).sort((a,b)=>a.id==='credit_block'?-1:b.id==='credit_block'?1:a.label.localeCompare(b.label,'ko'));
  const get=(r,id)=>r.rows.find(x=>x.id===id);
  const pctCell=(r,key)=>{
-  if(!r||r[key]==null){
-   if(key==='current'&&r?.currentStatus==='stale')return '<td style="text-align:right;color:var(--warn)">자료 지연<small style="display:block">'+esc(r.currentDate||'')+'</small></td>';
-   return '<td style="text-align:right;color:var(--muted)">자료 없음</td>';
-  }
-  const sub=r.id==='credit_block'?'<small style="display:block;color:var(--muted)">'+r.creditCount+'/2 신호</small>':'';
+  if(!r||r[key]==null)return '<td style="text-align:right;color:var(--muted)">자료 없음</td>';
+  const sub=key==='current'&&r.currentDate?'<small style="display:block;color:var(--muted)">관측 '+esc(r.currentDate)+'</small>':r.id==='credit_block'?'<small style="display:block;color:var(--muted)">'+r.creditCount+'/2 신호</small>':'';
   return '<td style="text-align:right;font-variant-numeric:tabular-nums">'+r[key].toFixed(1)+'%'+sub+'</td>';
  };
  const weightCell=r=>!r||r.weight==null?'<td style="text-align:right;color:var(--muted)">—</td>':'<td style="text-align:right;font-variant-numeric:tabular-nums">'+(r.weight*100).toFixed(1)+'%</td>';
@@ -291,12 +287,12 @@ function renderCycle(){
   const a=get(results[0],meta.id),b=get(results[1],meta.id);
   return '<tr><th scope="row" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">'+esc(meta.label)+'</th>'+pctCell(a,'anchor')+pctCell(a,'current')+weightCell(a)+pctCell(b,'anchor')+pctCell(b,'current')+weightCell(b)+'</tr>';
  }).join('');
- const table='<div style="overflow-x:auto;margin-top:18px"><table style="width:100%;border-collapse:collapse;min-width:800px;font-size:13px"><thead><tr><th rowspan="2" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지표</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2000년형 지문</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2008년형 지문</th></tr><tr><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">현재 퍼센타일</th><th style="padding:7px">가중치</th><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">현재 퍼센타일</th><th style="padding:7px">가중치</th></tr></thead><tbody>'+tableRows+'</tbody></table></div>';
+ const table='<div style="overflow-x:auto;margin-top:18px"><table style="width:100%;border-collapse:collapse;min-width:800px;font-size:13px"><thead><tr><th rowspan="2" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지표</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2000년형 지문</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2008년형 지문</th></tr><tr><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">최근 관측 퍼센타일</th><th style="padding:7px">가중치</th><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">현재 퍼센타일</th><th style="padding:7px">가중치</th></tr></thead><tbody>'+tableRows+'</tbody></table></div>';
  wrap.innerHTML='<div style="padding:22px 0 0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap"><button id="cycle-back" style="background:none;border:0;padding:0;color:var(--accent);font-weight:700;font-size:14px">← 전체</button><span style="font-size:22px;font-weight:700">마켓 사이클</span></div>'+
   '<p style="color:var(--muted);margin:8px 0 20px">2000년 3월과 2007년 10월의 시장 고점 부근 지문을 현재와 각각 비교합니다. 두 점수는 하나로 합치지 않습니다.</p>'+
   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">'+results.map(scoreCard).join('')+'</div>'+
   '<h3 style="font-size:18px;margin:24px 0 0">그때와 지금의 지표 비교</h3>'+table+
-  '<p style="color:var(--muted);font-size:13px;margin:16px 0 0">퍼센타일은 각 관측일까지의 과거 분포로 계산합니다. 가중치는 앵커 극단성 × 이론적 관련성으로 산출해 지문별로 정규화했습니다. 현재 자료가 오래되었거나 없으면 현재값으로 쓰지 않고 표시합니다. 신용 블록은 공통 관측 신호만 사용합니다. 원자료의 발표 시차와 사후 수정 이력을 복원하지 않으므로 당시 공개정보 기준 백테스트는 아닙니다.</p>'+
+  '<p style="color:var(--muted);font-size:13px;margin:16px 0 0">퍼센타일은 각 관측일까지의 과거 분포로 계산합니다. 가중치는 앵커 극단성 × 이론적 관련성으로 산출해 지문별로 정규화했습니다. 각 지표의 가장 최근 유효 관측값을 비교에 사용하고 실제 관측일을 표에 표시합니다. 신용 블록은 두 신호의 최근 관측 퍼센타일 평균입니다. 원자료의 발표 시차와 사후 수정 이력을 복원하지 않으므로 당시 공개정보 기준 백테스트는 아닙니다.</p>'+
   '<p style="background:#f4f7fa;border-left:3px solid var(--warn);padding:14px 16px;margin-top:14px;font-size:13px">이 점수는 과거 두 사례와의 유사도를 나타낼 뿐 예측이 아닙니다. 표본이 2개뿐이라 통계적 신뢰도가 낮고, 각 위기는 서로 다른 원인으로 발생했습니다. 투자 판단의 근거로 단독 사용하지 마세요.</p>';
  $('cycle-back').onclick=()=>{location.hash='home';};
 }
