@@ -18,11 +18,13 @@
 .compare-swap:hover{background:#eff5f7}
 .corr-line{font-weight:700;font-size:15px;margin:14px 0 4px}
 .metric-section{padding:9px 14px;background:#f0f4f6;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--navy);letter-spacing:.04em}
+\n.site-footer{margin-top:72px;background:#111b24;color:#d9e3eb}.site-footer-inner{max-width:1440px;margin:auto;padding:48px 36px}.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:34px}.footer-column h2{font-size:15px;margin:0 0 18px}.footer-column h2 a{color:#f4f7fa;text-decoration:none}.footer-topic{margin:0 0 19px}.footer-topic-title{display:inline-block;margin-bottom:8px;color:#83d5d0;font-size:13px;font-weight:700;text-decoration:none}.footer-topic ul{list-style:none;margin:0;padding:0 0 0 1px;display:grid;gap:5px}.footer-topic li a,.footer-tool{color:#bdc9d3;text-decoration:none;font-size:13px}.footer-topic li a:hover,.footer-tool:hover,.footer-column h2 a:hover,.footer-topic-title:hover{color:#fff;text-decoration:underline}.footer-tools{display:grid;align-content:start;gap:9px}.footer-tools h2{margin-bottom:9px}@media(max-width:900px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.site-footer-inner{padding:34px 20px}.footer-grid{grid-template-columns:1fr 1fr;gap:24px}}
 </style></head><body>
 <header><div class="head"><div><div class="eyebrow">Macro data</div><h1>매크로 데이터</h1></div><div class="stamp" id="stamp"></div></div></header> 
 <main class="wrap"><div id="home"></div><div id="crumb" style="display:none"></div><div id="compareView" style="display:none"></div><nav class="tabs" id="tabs" role="tablist" aria-label="매크로 화면" style="display:none"></nav>
 <section id="content" role="tabpanel" style="display:none"><div class="intro"><div><h2 id="section-title"></h2><p id="section-description"></p></div><span class="badge" id="coverage" style="display:none"></span></div><div class="reading"><strong>최근 변화</strong><p id="reading"></p></div><div class="workspace"><div class="metric-list" id="metrics" aria-label="지표 선택"></div><article class="panel" id="panel"></article></div></section>
-</main><noscript>이 대시보드에는 JavaScript가 필요합니다.</noscript>
+</main><footer class="site-footer"><div class="site-footer-inner"><nav id="footer-nav" class="footer-grid" aria-label="사이트 지표 목차"></nav></div></footer>
+<noscript>이 대시보드에는 JavaScript가 필요합니다.</noscript>
 </main><noscript>이 대시보드에는 JavaScript가 필요합니다.</noscript>
 <script>
 'use strict';
@@ -404,14 +406,30 @@ function render(){
  $('metrics').innerHTML=list.map(m=>`<button class="metric" data-metric="${esc(m.id)}" aria-pressed="${m.id===selected}"><span class="name">${esc(m.title)}</span><span class="value">${fmt(m)}<span class="unit">${esc(m.unit)}</span></span><span class="meta"><span>${esc(dateText(m)||'기준일 없음')}</span><span>${m.status==='ok'?esc(changeText(m)):m.status==='stale'?'오래된 자료':'자료 없음'}</span></span></button>`).join('');
  document.querySelectorAll('[data-metric]').forEach(b=>b.onclick=()=>{zoomRange=null;selected=b.dataset.metric;render()});renderPanel();
 }
+function renderFooterNav(){
+ const columns=GROUPS.filter(g=>['us','jp','kr'].includes(g.key)).map(g=>{
+  const topics=g.tabs.map(tab=>{
+   const links=tab.ids.map(id=>DATA.metrics.find(m=>m.id===id)).filter(Boolean).map(m=>`<li><a href="#${g.key}/${tab.key}/${m.id}">${esc(m.title)}</a></li>`).join('');
+   return `<section class="footer-topic"><a class="footer-topic-title" href="#${g.key}/${tab.key}">${esc(tab.label)}</a>${links?`<ul>${links}</ul>`:''}</section>`;
+  }).join('');
+  return `<div class="footer-column"><h2><a href="#${g.key}">${esc(g.label)}</a></h2>${topics}</div>`;
+ }).join('');
+ const tools=`<div class="footer-column footer-tools"><h2>분석 도구</h2><a class="footer-tool" href="#compare">지표 비교</a><a class="footer-tool" href="#cycle">마켓 사이클</a><a class="footer-tool" href="./dcf.html">INDEX DCF</a></div>`;
+ $('footer-nav').innerHTML=columns+tools;
+}
 function apply(){
- const [g,s]=location.hash.slice(1).split('/'),prev=group;
+ const [g,s,metricId]=location.hash.slice(1).split('/'),prev=group;
  if(g==='compare'||g==='cycle'){group=g;render();window.scrollTo(0,0);return;}
  group=GROUPS.some(x=>x.key===g)?g:null;
- if(group){const tabs=groupOf(group).tabs,next=tabs.some(t=>t.key===s)?s:tabs[0].key;if(next!==section||prev!==group){selected=null;zoomRange=null;}section=next;if(prev!==group)buildTabs();}
+ if(group){
+  const tabs=groupOf(group).tabs,next=tabs.some(t=>t.key===s)?s:tabs[0].key,tab=tabs.find(t=>t.key===next);
+  if(next!==section||prev!==group)zoomRange=null;
+  section=next;
+  selected=tab.ids.includes(metricId)&&DATA.metrics.some(m=>m.id===metricId)?metricId:null;
+  if(prev!==group)buildTabs();
+ }
  render();window.scrollTo(0,0);
  if(focusTab){focusTab=false;const el=group&&group!=='compare'&&$('tab-'+section);if(el)el.focus();}
-
 }
 function renderPanel(){const m=DATA.metrics.find(m=>m.id===selected);if(!m){$('panel').innerHTML='<div class="empty">표시할 지표가 없습니다.</div>';return;}const source=m.sources.map(s=>`<div class="source"><div><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.id)} ↗</a><span>${esc(s.origin)}</span></div><div><span>원자료 관측일 ${esc(s.observed||'없음')} · ${esc({daily:'일간',weekly:'주간',monthly:'월간',quarterly:'분기',annual:'연간'}[s.frequency]||s.frequency)}</span><span>수집 ${s.retrieved?esc(new Date(s.retrieved).toLocaleString('ko-KR')):'시각 미확인 · 기존 캐시'}</span><span>관측일 경과 ${s.age??'—'}일 / 유효기간 ${s.maxAge}일${s.fallback?' · 이전 유효 자료 사용':''}</span></div></div>`).join('');
  $('panel').innerHTML=`<div class="panel-top"><div><h3>${esc(m.title)}</h3><div class="latest">${esc(fmt(m))}<small>${esc(m.unit)}</small></div><div class="delta">${esc(m.period)} ${esc(changeText(m))} · 기준 ${esc(dateText(m)||'없음')}</div></div><div class="periods" aria-label="차트 기간">${[0.25,1,3,5,10,0].map(n=>`<button data-years="${n}" aria-pressed="${years===n}" class="${years===n?'active':''}">${n?(n<1?Math.round(n*12)+'개월':n+'년'):'전체'}</button>`).join('')}</div></div><div class="legend"><span><i class="key"></i>${m.secondary?esc(m.secondary.primaryLabel||'전년 대비'):esc(m.title)}</span>${m.secondary?`<span><i class="key alt"></i>${esc(m.secondary.label)}</span>`:''}</div>${regimeAvailable()?`<div class="regime-tools"><label class="regime-toggle"><input type="checkbox" id="regime-toggle" ${showRegimes?'checked':''} aria-controls="chart">경기국면 표시</label><span class="regime-source">경기국면 기준 · OECD CLI · ${{us:'미국',jp:'일본',kr:'한국'}[group]}</span><div class="regime-legend" aria-label="OECD 경기국면 범례">${regimeLegendHTML()}</div></div>`:''}<div class="chart-wrap" id="chart-wrap"><button type="button" class="zoom-reset" id="zoom-reset" ${zoomRange?'':'hidden'} aria-label="차트 확대 초기화">확대 초기화</button><div class="hover" id="hover" aria-live="off">차트 위에서 날짜별 값을 확인하세요.</div><div id="chart"></div><div class="tip" id="tip"></div><div class="chart-range" id="chart-range"></div>${m.status!=='ok'?`<p class="quality">${m.status==='stale'?'최신성을 확인할 수 없어 마지막 관측값을 참고용으로 표시합니다.':'필수 자료가 없어 값을 계산하지 않았습니다.'}</p>`:''}<p class="note">${esc(m.note)}</p><details class="sources"><summary>계산식·출처·자료 상태</summary><div class="formula">${esc(m.formula)}</div>${source}</details>`;
@@ -597,7 +615,8 @@ tip.innerHTML =
  });
 }
 $('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString('ko-KR');
-window.addEventListener('hashchange',apply);apply();
+window.addEventListener('hashchange',apply);renderFooterNav();
+apply();
 })().catch(error => {
  console.error(error);
  document.getElementById('stamp').textContent = '자료를 불러오지 못했습니다.';
