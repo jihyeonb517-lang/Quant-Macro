@@ -67,7 +67,7 @@ const GROUPS=[
 {key:'stability',label:'금융 안정',title:'금융 안정',desc:'단기 자금시장의 긴장, 신용 스프레드, 금융 스트레스, 은행 대출태도를 확인합니다.',ids:['repo','credit','nfci','stlfsi','bank_lending'],read:['repo','credit','bank_lending']},
 {key:'rates',label:'미국채',title:'미국채와 정책금리',desc:'국채 금리 수준, 장단기 금리차, 실질금리, 정책금리를 확인합니다.',ids:['ust2','ust10','curve','real','fedtarget'],read:['ust2','ust10','curve']},
 {key:'market',label:'시장',title:'주식시장과 밸류에이션',desc:'S&P 500의 추세와 변동성, 시가총액/GDP 밸류에이션을 확인합니다.',ids:['trend','vix','buffett']},
-{key:'fx',label:'환율',title:'환율',desc:'원·달러, 엔·달러, 달러인덱스의 흐름을 확인합니다.',ids:['usdkrw','usdjpy','dxy']},
+
 {key:'commodities',label:'원자재',title:'원자재',desc:'귀금속, 구리, 원유 선물 가격의 흐름을 확인합니다.',ids:['gold','silver','copper','wti','brent'],read:['gold','copper','wti']}
 ]},
 {key:'jp',label:'일본 매크로',tabs:[
@@ -77,14 +77,18 @@ const GROUPS=[
 {key:'jp_business',label:'기업 경기·투자',title:'단칸 기업 경기와 설비투자',desc:'대기업 업황·전망 DI와 설비투자 계획을 확인합니다.',ids:['tankan_mfg_now','tankan_mfg_fcst','tankan_nonmfg_now','tankan_nonmfg_fcst','tankan_capex'],read:['tankan_mfg_now','tankan_nonmfg_now','tankan_capex']},
 {key:'jp_activity',label:'생산·소비',title:'생산과 소비',desc:'광공업 생산·재고와 소매판매, 가계소비를 확인합니다.',ids:['jp_ip','jp_inventory','jp_retail','jp_hh_consumption']},
 {key:'jp_growth',label:'GDP',title:'실질 GDP 성장률',desc:'일본 내각부 국민계정 기반 실질 GDP를 전년 동기와 비교합니다.',ids:['jp_real_gdp'],read:['jp_real_gdp']},
-{key:'jp_yen',label:'엔 포지션',title:'엔화와 투기 포지션',desc:'USD/JPY와 CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['usdjpy','cftc_legacy','cftc_tff']}
+{key:'jp_cftc',label:'CFTC',title:'엔화 투기 포지션',desc:'CFTC 엔화 순포지션(Legacy·TFF, 서로 다른 분류)을 확인합니다.',ids:['cftc_legacy','cftc_tff']}
 ]},
 {key:'kr',label:'한국 매크로',tabs:[
-{key:'kr_external',label:'대외·수출',title:'대외 건전성과 수출',desc:'한국은행 외환보유액, 전체·반도체 수출과 환율로 대외 부문을 확인합니다.',ids:['kr_reserves_bok','kr_exports','kr_semiconductor_exports','usdkrw'],read:['kr_reserves_bok','kr_exports','kr_semiconductor_exports']},
+{key:'kr_external',label:'대외·수출',title:'대외 건전성과 수출',desc:'한국은행 외환보유액과 전체·반도체 수출로 대외 부문을 확인합니다.',ids:['kr_reserves_bok','kr_exports','kr_semiconductor_exports'],read:['kr_reserves_bok','kr_exports','kr_semiconductor_exports']},
 {key:'kr_activity',label:'경기·고용',title:'생산·소비·고용·GDP',desc:'실질 GDP, 산업생산, 소매판매와 실업률로 경기의 현재 상태를 살펴봅니다.',ids:['kr_real_gdp','kr_industrial_production','kr_retail','kr_unemployment'],read:['kr_real_gdp','kr_industrial_production','kr_retail']},
 {key:'kr_prices',label:'물가·금리',title:'소비자물가와 기준금리',desc:'헤드라인·근원 물가와 한국은행 기준금리를 함께 봅니다.',ids:['kr_cpi_ecos','kr_core_cpi_ecos','kr_base_rate'],read:['kr_cpi_ecos','kr_core_cpi_ecos','kr_base_rate']},
 {key:'kr_household',label:'가계·부동산',title:'가계부채와 주택시장',desc:'한국은행 가계신용과 ECOS의 KB 주택매매가격지수를 확인합니다.',ids:['kr_household_credit_bok','kr_house_prices_ecos'],read:['kr_household_credit_bok','kr_house_prices_ecos']},
 {key:'kr_surveys',label:'심리·설문',title:'기업과 소비자 심리',desc:'한국은행 기업경기실사지수(BSI)와 소비자심리지수(CCSI)를 확인합니다.',ids:['kr_bsi_bok','kr_ccsi'],read:['kr_bsi_bok','kr_ccsi']}
+]},
+{key:'fx',label:'환율',tabs:[
+{key:'pairs',label:'주요 통화쌍',title:'주요국 환율',desc:'주요 통화쌍과 달러인덱스를 확인합니다.',ids:['eurusd','gbpusd','eurgbp','usdjpy','usdkrw','usdcny','gbpjpy','eurjpy','gbpkrw','eurkrw','jpykrw_100','cnykrw','dxy'],read:['eurusd','gbpusd','usdjpy','usdkrw','dxy']}
+]}
 ]}
 ];
 const ALL=GROUPS.flatMap(g=>g.tabs);
@@ -407,7 +411,7 @@ function render(){
  document.querySelectorAll('[data-metric]').forEach(b=>b.onclick=()=>{zoomRange=null;selected=b.dataset.metric;render()});renderPanel();
 }
 function renderFooterNav(){
- const columns=GROUPS.filter(g=>['us','jp','kr'].includes(g.key)).map(g=>{
+ const columns=GROUPS.filter(g=>['us','jp','kr','fx'].includes(g.key)).map(g=>{
   const topics=g.tabs.map(tab=>{
    const links=tab.ids.map(id=>DATA.metrics.find(m=>m.id===id)).filter(Boolean).map(m=>`<li><a href="#${g.key}/${tab.key}/${m.id}">${esc(m.title)}</a></li>`).join('');
    return `<section class="footer-topic"><a class="footer-topic-title" href="#${g.key}/${tab.key}">${esc(tab.label)}</a>${links?`<ul>${links}</ul>`:''}</section>`;

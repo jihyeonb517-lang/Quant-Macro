@@ -91,6 +91,14 @@ class ArtifactTests(unittest.TestCase):
                           'KORSLRTTO01GYSAM', 'LRUNTTTTKRM156S'} & korea_sources)
         self.assertTrue(data['regimes']['kr'])
 
+    def test_fx_pairs_and_yen_quotation(self):
+        raw = {'JPYKRW=X': {'points': [['2026-09-23', 8.7]]}}
+        calculated = f.calculate_base(raw)
+        self.assertEqual(calculated['jpykrw_100'], [['2026-09-23', 870.0]])
+        fx_ids = {spec[0] for spec in f.SPECS if spec[1] == 'fx'}
+        self.assertTrue({'eurusd', 'gbpusd', 'eurgbp', 'usdjpy', 'usdkrw', 'usdcny',
+                         'gbpjpy', 'eurjpy', 'gbpkrw', 'eurkrw', 'jpykrw_100', 'cnykrw', 'dxy'} <= fx_ids)
+
     def test_footer_has_deep_links_for_individual_metrics(self):
         html = (f.ROOT/'index.html').read_text(encoding='utf-8')
         self.assertIn('id="footer-nav"', html)

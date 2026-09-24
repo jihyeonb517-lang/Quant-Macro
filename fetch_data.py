@@ -59,6 +59,9 @@ FREQUENCIES = {
     # --- Korea official sources (Bank of Korea ECOS / Statistics Korea KOSIS) ---
     # --- phase 1: FX, dollar index, commodity futures (Yahoo) ---
     'JPY=X': 'daily', 'KRW=X': 'daily', 'DX-Y.NYB': 'daily',
+    'EURUSD=X': 'daily', 'GBPUSD=X': 'daily', 'EURGBP=X': 'daily', 'CNY=X': 'daily',
+    'GBPJPY=X': 'daily', 'EURJPY=X': 'daily', 'GBPKRW=X': 'daily', 'EURKRW=X': 'daily',
+    'JPYKRW=X': 'daily', 'CNYKRW=X': 'daily',
     'GC=F': 'daily', 'SI=F': 'daily', 'HG=F': 'daily',
     'CL=F': 'daily', 'BZ=F': 'daily',
     # --- cycle/bubble-fingerprint additions ---
@@ -84,7 +87,8 @@ FREQUENCIES.update({
 FREQUENCIES.update({sid: 'monthly' for sid in kr.KOSIS})
 
 MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 310}
-YAHOO = {'^GSPC', '^N225', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB',
+YAHOO = {'^GSPC', '^N225', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB', 'EURUSD=X', 'GBPUSD=X', 'EURGBP=X', 'CNY=X',
+         'GBPJPY=X', 'EURJPY=X', 'GBPKRW=X', 'EURKRW=X', 'JPYKRW=X', 'CNYKRW=X',
          'GC=F', 'SI=F', 'HG=F', 'CL=F', 'BZ=F'}
 # id, section, title, unit, dependencies, delta lag, comparison label
 SPECS = [
@@ -115,8 +119,8 @@ SPECS = [
     ('ust2', 'market', '미국 국채 2년 금리', '%', ['DGS2'], 20, '20관측일 전 대비'),
     ('ust10', 'market', '미국 국채 10년 금리', '%', ['DGS10'], 20, '20관측일 전 대비'),
     ('fedtarget', 'market', '연방기금 목표금리', '%', ['DFEDTARU', 'DFEDTARL'], 20, '20관측일 전 대비'),
-    ('usdjpy', 'fx', 'USD/JPY', '엔', ['JPY=X'], 20, '20거래일 전 대비'),
-    ('usdkrw', 'fx', 'USD/KRW', '원', ['KRW=X'], 20, '20거래일 전 대비'),
+    ('usdjpy', 'fx', 'USD/JPY', '엔/달러', ['JPY=X'], 20, '20거래일 전 대비'),
+    ('usdkrw', 'fx', 'USD/KRW', '원/달러', ['KRW=X'], 20, '20거래일 전 대비'),
     ('dxy', 'fx', '달러인덱스(DXY)', '지수', ['DX-Y.NYB'], 20, '20거래일 전 대비'),
     ('gold', 'fx', '금 선물', '달러/트로이온스', ['GC=F'], 20, '20거래일 전 대비'),
     ('silver', 'fx', '은 선물', '달러/트로이온스', ['SI=F'], 20, '20거래일 전 대비'),
@@ -154,6 +158,16 @@ SPECS = [
     ('jobs_private', 'economy', '비농업 고용 증가(민간)', '천 명', ['USPRIV'], 3, '직전 3개월 평균 대비'),
     ('jobs_government', 'economy', '비농업 고용 증가(정부)', '천 명', ['USGOVT'], 3, '직전 3개월 평균 대비'),
     ('claims_weekly', 'economy', '신규 실업수당 청구(주간)', '천 건', ['ICSA'], 1, '전주 대비'),
+    ('eurusd', 'fx', 'EUR/USD', '달러/유로', ['EURUSD=X'], 20, '20거래일 전 대비'),
+    ('gbpusd', 'fx', 'GBP/USD', '달러/파운드', ['GBPUSD=X'], 20, '20거래일 전 대비'),
+    ('eurgbp', 'fx', 'EUR/GBP', '파운드/유로', ['EURGBP=X'], 20, '20거래일 전 대비'),
+    ('usdcny', 'fx', 'USD/CNY', '위안/달러', ['CNY=X'], 20, '20거래일 전 대비'),
+    ('gbpjpy', 'fx', 'GBP/JPY', '엔/파운드', ['GBPJPY=X'], 20, '20거래일 전 대비'),
+    ('eurjpy', 'fx', 'EUR/JPY', '엔/유로', ['EURJPY=X'], 20, '20거래일 전 대비'),
+    ('gbpkrw', 'fx', 'GBP/KRW', '원/파운드', ['GBPKRW=X'], 20, '20거래일 전 대비'),
+    ('eurkrw', 'fx', 'EUR/KRW', '원/유로', ['EURKRW=X'], 20, '20거래일 전 대비'),
+    ('jpykrw_100', 'fx', 'JPY/KRW · 100엔', '원/100엔', ['JPYKRW=X'], 20, '20거래일 전 대비'),
+    ('cnykrw', 'fx', 'CNY/KRW', '원/위안', ['CNYKRW=X'], 20, '20거래일 전 대비'),
 ]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
@@ -188,6 +202,16 @@ FORMULAS = {
     'usdjpy': 'Yahoo JPY=X Close (yen per US dollar); auto_adjust=False',
     'usdkrw': 'Yahoo KRW=X Close (won per US dollar); auto_adjust=False',
     'dxy': 'Yahoo DX-Y.NYB Close (ICE US Dollar Index); auto_adjust=False',
+    'eurusd': 'Yahoo EURUSD=X Close; USD per EUR',
+    'gbpusd': 'Yahoo GBPUSD=X Close; USD per GBP',
+    'eurgbp': 'Yahoo EURGBP=X Close; GBP per EUR',
+    'usdcny': 'Yahoo CNY=X Close; CNY per USD',
+    'gbpjpy': 'Yahoo GBPJPY=X Close; JPY per GBP',
+    'eurjpy': 'Yahoo EURJPY=X Close; JPY per EUR',
+    'gbpkrw': 'Yahoo GBPKRW=X Close; KRW per GBP',
+    'eurkrw': 'Yahoo EURKRW=X Close; KRW per EUR',
+    'jpykrw_100': 'Yahoo JPYKRW=X Close × 100; KRW per 100 JPY',
+    'cnykrw': 'Yahoo CNYKRW=X Close; KRW per CNY',
     'gold': 'Yahoo GC=F Close; COMEX futures, continuous front month (not spot)',
     'silver': 'Yahoo SI=F Close; COMEX futures, continuous front month (not spot)',
     'copper': 'Yahoo HG=F Close; COMEX futures, continuous front month (not spot)',
@@ -228,6 +252,9 @@ NOTES = {
     'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
     'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
     'usdjpy': FX_NOTE, 'usdkrw': FX_NOTE,
+    'eurusd': FX_NOTE, 'gbpusd': FX_NOTE, 'eurgbp': FX_NOTE, 'usdcny': FX_NOTE,
+    'gbpjpy': FX_NOTE, 'eurjpy': FX_NOTE, 'gbpkrw': FX_NOTE, 'eurkrw': FX_NOTE,
+    'jpykrw_100': 'JPY/KRW Yahoo 환율에 100을 곱한 원/100엔입니다.', 'cnykrw': FX_NOTE,
     'dxy': 'Yahoo Finance의 ICE 달러인덱스 종가입니다.',
     'gold': FUTURES_NOTE, 'silver': FUTURES_NOTE, 'copper': FUTURES_NOTE,
     'wti': FUTURES_NOTE, 'brent': FUTURES_NOTE,
@@ -539,6 +566,11 @@ def calculate_base(raw):
         'fedtarget': aligned([s('DFEDTARU'), s('DFEDTARL')], lambda u, l: u),
         'fedtarget_low': aligned([s('DFEDTARU'), s('DFEDTARL')], lambda u, l: l),
         'usdjpy': s('JPY=X'), 'usdkrw': s('KRW=X'), 'dxy': s('DX-Y.NYB'),
+        'eurusd': s('EURUSD=X'), 'gbpusd': s('GBPUSD=X'), 'eurgbp': s('EURGBP=X'),
+        'usdcny': s('CNY=X'), 'gbpjpy': s('GBPJPY=X'), 'eurjpy': s('EURJPY=X'),
+        'gbpkrw': s('GBPKRW=X'), 'eurkrw': s('EURKRW=X'),
+        'jpykrw_100': transform(s('JPYKRW=X'), lambda value: value*100),
+        'cnykrw': s('CNYKRW=X'),
         'gold': s('GC=F'), 'silver': s('SI=F'), 'copper': s('HG=F'),
         'wti': s('CL=F'), 'brent': s('BZ=F'),
         'pce_secondary': lagged(m('PCEPILFE'), 3, lambda a, b: ((a/b)**4-1)*100 if b > 0 else None),
