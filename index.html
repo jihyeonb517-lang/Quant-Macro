@@ -18,7 +18,7 @@
 .compare-swap:hover{background:#eff5f7}
 .corr-line{font-weight:700;font-size:15px;margin:14px 0 4px}
 .metric-section{padding:9px 14px;background:#f1eee8;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--navy);letter-spacing:.04em}
-.site-footer{margin-top:64px;background:#111;color:#e7e4dd}.site-footer-inner{max-width:1440px;margin:auto;padding:40px 36px 48px}.footer-brand{display:block;color:#f7f4ee;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:2px;padding-bottom:18px;margin-bottom:28px;border-bottom:1px solid #333;width:100%}.footer-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:30px}.footer-column h2{font-size:15px;margin:0 0 18px}.footer-column h2 a{color:#f7f4ee;text-decoration:none}.footer-topic{margin:0 0 19px}.footer-topic-title{display:inline-block;margin-bottom:8px;color:#78c9c0;font-size:13px;font-weight:700;text-decoration:none}.footer-topic ul{list-style:none;margin:0;padding:0 0 0 1px;display:grid;gap:5px}.footer-topic li a,.footer-tool{color:#c4c0b8;text-decoration:none;font-size:13px}.footer-topic li a:hover,.footer-tool:hover,.footer-column h2 a:hover,.footer-topic-title:hover{color:#fff;text-decoration:underline}.footer-tools{display:grid;align-content:start;gap:9px}.footer-tools h2{margin-bottom:9px}@media(max-width:1050px){.footer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:700px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}}@media(max-width:560px){.site-footer-inner{padding:34px 20px}.footer-grid{grid-template-columns:1fr 1fr;gap:22px}}@media(max-width:380px){.footer-grid{grid-template-columns:1fr}}
+.site-footer{margin-top:64px;background:#141413;color:#d0d0ca}.site-footer-inner{max-width:1440px;margin:auto;padding:40px 36px 48px}.footer-brand{display:block;color:#f5f5f3;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:2px;padding-bottom:18px;margin-bottom:28px;border-bottom:1px solid #343432;width:100%}.footer-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:30px}.footer-column h2{font-size:14px;margin:0 0 18px;color:#f5f5f3}.footer-column h2 a{color:#f5f5f3;text-decoration:none}.footer-topic{margin:0 0 14px}.footer-topic-title{display:inline-block;margin:0;color:#d0d0ca;font-size:13px;font-weight:400;text-decoration:none}.footer-tool{color:#d0d0ca;text-decoration:none;font-size:13px}.footer-tool:hover,.footer-column h2 a:hover,.footer-topic-title:hover{color:#fff;text-decoration:underline}.footer-tools{display:grid;align-content:start;gap:12px}.footer-tools h2{margin-bottom:9px}@media(max-width:1050px){.footer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:700px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}}@media(max-width:560px){.site-footer-inner{padding:34px 20px}.footer-grid{grid-template-columns:1fr 1fr;gap:22px}}@media(max-width:380px){.footer-grid{grid-template-columns:1fr}}
 
 /* Q&M editorial landing page */
 .brand-link{color:inherit;text-decoration:none}.brand-link h1{margin-top:2px}
@@ -465,10 +465,9 @@ function render(){
 }
 function renderFooterNav(){
  const columns=GROUPS.filter(g=>['us','jp','kr','fx'].includes(g.key)).map(g=>{
-  const topics=g.tabs.map(tab=>{
-   const links=tab.ids.map(id=>DATA.metrics.find(m=>m.id===id)).filter(Boolean).map(m=>`<li><a href="#${g.key}/${tab.key}/${m.id}">${esc(m.title)}</a></li>`).join('');
-   return `<section class="footer-topic"><a class="footer-topic-title" href="#${g.key}/${tab.key}">${esc(tab.label)}</a>${links?`<ul>${links}</ul>`:''}</section>`;
-  }).join('');
+  const topics=g.tabs.map(tab=>
+   `<section class="footer-topic"><a class="footer-topic-title" href="#${g.key}/${tab.key}">${esc(tab.label)}</a></section>`
+  ).join('');
   return `<div class="footer-column"><h2><a href="#${g.key}">${esc(g.label)}</a></h2>${topics}</div>`;
  }).join('');
  const tools=`<div class="footer-column footer-tools"><h2>분석 도구</h2><a class="footer-tool" href="#compare">지표 비교</a><a class="footer-tool" href="#cycle">마켓 사이클</a><a class="footer-tool" href="./dcf.html">INDEX DCF</a></div>`;
