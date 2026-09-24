@@ -17,6 +17,26 @@ def raw(**series):
 
 
 class FormulaTests(unittest.TestCase):
+    def test_payroll_total_private_and_government_use_comparable_three_month_changes(self):
+        data = raw(
+            PAYEMS=[['2026-01-01', 1000], ['2026-02-01', 1010], ['2026-03-01', 1020], ['2026-04-01', 1030]],
+            USPRIV=[['2026-01-01', 800], ['2026-02-01', 808], ['2026-03-01', 816], ['2026-04-01', 824]],
+            USGOVT=[['2026-01-01', 200], ['2026-02-01', 202], ['2026-03-01', 204], ['2026-04-01', 206]],
+        )
+        calculated = f.calculate(data)
+        self.assertEqual(calculated['jobs'][-1], ['2026-04-01', 10])
+        self.assertEqual(calculated['jobs_private'][-1], ['2026-04-01', 8])
+        self.assertEqual(calculated['jobs_government'][-1], ['2026-04-01', 2])
+
+    def test_claims_weekly_and_four_week_average_are_both_exposed(self):
+        data = raw(ICSA=[
+            ['2026-01-07', 100000], ['2026-01-14', 200000],
+            ['2026-01-21', 300000], ['2026-01-28', 400000],
+        ])
+        calculated = f.calculate(data)
+        self.assertEqual(calculated['claims_weekly'][-1], ['2026-01-28', 400])
+        self.assertEqual(calculated['claims'][-1], ['2026-01-28', 250])
+
     def test_boj_dates_and_cgpi_yoy(self):
         self.assertEqual(jp._boj_date(20260918, 'daily'), '2026-09-18')
         self.assertEqual(jp._boj_date(202608, 'monthly'), '2026-08-01')
@@ -40,25 +60,6 @@ class FormulaTests(unittest.TestCase):
     def test_jobs_exact_three_month_difference(self):
         data = raw(PAYEMS=[['2026-01-01', 100], ['2026-04-01', 130]])
         self.assertEqual(f.calculate(data)['jobs'][-1][1], 10)
-
-    def test_payroll_total_private_and_government_use_comparable_three_month_changes(self):
-        dates = ['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01']
-        data = raw(
-            PAYEMS=[[d, v] for d, v in zip(dates, [1000, 1005, 1015, 1030])],
-            USPRIV=[[d, v] for d, v in zip(dates, [800, 804, 812, 824])],
-            USGOVT=[[d, v] for d, v in zip(dates, [200, 201, 203, 206])],
-        )
-        result = f.calculate(data)
-        self.assertEqual(result['jobs'][-1][1], 10)
-        self.assertEqual(result['jobs_private'][-1][1], 8)
-        self.assertEqual(result['jobs_government'][-1][1], 2)
-
-    def test_claims_weekly_and_four_week_average_are_both_exposed(self):
-        dates = ['2026-08-01', '2026-08-08', '2026-08-15', '2026-08-22']
-        data = raw(ICSA=[[d, v] for d, v in zip(dates, [100000, 200000, 300000, 400000])])
-        result = f.calculate(data)
-        self.assertEqual(result['claims_weekly'], [[dates[-1], 400]])
-        self.assertEqual(result['claims'], [[dates[-1], 250]])
 
     def test_pce_yoy_and_annualization(self):
         data = raw(PCEPILFE=[['2025-01-01', 100], ['2025-10-01', 104], ['2026-01-01', 108]])
