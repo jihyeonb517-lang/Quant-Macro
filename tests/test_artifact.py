@@ -16,7 +16,8 @@ class ArtifactTests(unittest.TestCase):
         self.assertIsNotNone(datetime.fromisoformat(data['generatedAt']).tzinfo)
 
         self.assertEqual(set(data['regimes']), {'us', 'jp', 'kr'})
-        self.assertEqual(set(data['dcfInputs']), {'sp500', 'nasdaq100', 'nikkei225', 'topix'})
+        self.assertTrue({'sp500', 'nikkei225'}.issubset(data['dcfInputs']))
+        self.assertLessEqual(set(data['dcfInputs']), {'sp500', 'nasdaq100', 'nikkei225', 'topix'})
         for item in data['dcfInputs'].values():
             self.assertEqual(
                 set(item),
@@ -96,6 +97,8 @@ class ArtifactTests(unittest.TestCase):
         self.assertIn('localStorage', html)
         self.assertIn('implied', html)
         self.assertNotIn('index_dcf.csv', html)
+        self.assertEqual({row[0] for row in f.DCF_INDEXES}, {'sp500', 'nikkei225'})
+        self.assertIn("const indexIds=['sp500','nikkei225'];", html)
 
 
 if __name__ == '__main__':
