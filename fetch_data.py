@@ -32,7 +32,7 @@ import korea_sources as kr
 ROOT = Path(__file__).resolve().parent
 FREQUENCIES = {
     # --- existing FRED / Yahoo sources ---
-    'PAYEMS': 'monthly', 'USPRIV': 'monthly', 'USGOVT': 'monthly',
+    'PAYEMS': 'monthly', 'UNRATE': 'monthly', 'PCEPILFE': 'monthly',    'PAYEMS': 'monthly', 'USPRIV': 'monthly', 'USGOVT': 'monthly',
     'UNRATE': 'monthly', 'PCEPILFE': 'monthly',
     'CPILFESL': 'monthly', 'ICSA': 'weekly', 'WALCL': 'weekly',
     'WTREGEN': 'weekly', 'WRESBAL': 'weekly', 'RRPONTSYD': 'daily',
@@ -151,19 +151,17 @@ SPECS = [
     # U.S. payroll components; CES levels are seasonally adjusted thousands of persons.
     ('jobs_private', 'economy', '민간 비농업 고용 증가', '천 명', ['USPRIV'], 3, '직전 3개월 평균 대비'),
     ('jobs_government', 'economy', '정부 고용 증가', '천 명', ['USGOVT'], 3, '직전 3개월 평균 대비'),
-    ('claims_weekly', 'economy', '신규 실업수당 청구 · 주간', '천 건', ['ICSA'], 1, '1주 전 대비'),
-]
+    ('claims_weekly', 'economy', '신규 실업수당 청구 · 주간', '천 건', ['ICSA'], 1, '1주 전 대비'),]
 FORMULAS = {
     'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; total nonfarm payrolls, thousands',
     'jobs_private': '(USPRIV[t] − USPRIV[t−3 calendar months]) / 3; private payrolls, thousands',
-    'jobs_government': '(USGOVT[t] − USGOVT[t−3 calendar months]) / 3; government payrolls, thousands',
-    'unemployment': 'UNRATE (%)',
+    'jobs_government': '(USGOVT[t] − USGOVT[t−3 calendar months]) / 3; government payrolls, thousands',    'unemployment': 'UNRATE (%)',
     'pce': '(PCEPILFE[t]/PCEPILFE[t−12 months]−1)×100; secondary: ((PCEPILFE[t]/PCEPILFE[t−3 months])^4−1)×100',
     'pce_headline': '(PCEPI[t]/PCEPI[t−12 months]−1)×100; no interpolation',
     'cpi': '(CPILFESL[t]/CPILFESL[t−12 months]−1)×100; no interpolation',
     'cpi_headline': '(CPIAUCSL[t]/CPIAUCSL[t−12 months]−1)×100; seasonally adjusted index, no interpolation',
     'ppi_core': '(PPIFES[t]/PPIFES[t−12 months]−1)×100; final demand less foods and energy, seasonally adjusted',
-    'claims': 'Mean of 4 consecutive weekly ICSA observations / 1000; thousands',
+    'claims': 'Mean of 4 consecutive calendar weeks of ICSA / 1000',    'claims': 'Mean of 4 consecutive weekly ICSA observations / 1000; thousands',
     'claims_weekly': 'ICSA weekly seasonally adjusted initial claims / 1000; thousands',
     'retail': '(RSAFS[t]/RSAFS[t−12 months]−1)×100; advance retail sales, seasonally adjusted, nominal',
     'durable': '(DGORDER[t]/DGORDER[t−12 months]−1)×100; new orders for durable goods, nominal',
@@ -227,8 +225,7 @@ NOTES = {
     'jobs_private': 'BLS 사업체조사의 민간 비농업 고용자 수(USPRIV)로 계산한 월간 고용 증가 속도입니다. 최근 3개월간 총변화를 3으로 나눈 값입니다.',
     'jobs_government': 'BLS 사업체조사의 정부 고용자 수(USGOVT)로 계산한 월간 고용 증가 속도입니다. 최근 3개월간 총변화를 3으로 나눈 값입니다.',
     'claims': '계절조정 주간 신규 실업수당 청구(ICSA)의 연속 4주 평균입니다. 단위는 천 건입니다.',
-    'claims_weekly': '계절조정 신규 실업수당 청구(ICSA)의 주간 관측값입니다. 주간 변동성이 커 4주 평균과 함께 보는 것을 권합니다.',
-    'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
+    'claims_weekly': '계절조정 신규 실업수당 청구(ICSA)의 주간 관측값입니다. 주간 변동성이 커 4주 평균과 함께 보는 것을 권합니다.'    'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
     'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
     'usdjpy': FX_NOTE, 'usdkrw': FX_NOTE,
     'dxy': 'Yahoo Finance의 ICE 달러인덱스 종가입니다.',
@@ -521,13 +518,11 @@ def calculate_base(raw):
     return {
         'jobs': transform(lagged(m('PAYEMS'), 3, lambda a, b: a-b), lambda v: v/3),
         'jobs_private': transform(lagged(m('USPRIV'), 3, lambda a, b: a-b), lambda v: v/3),
-        'jobs_government': transform(lagged(m('USGOVT'), 3, lambda a, b: a-b), lambda v: v/3),
-        'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
+        'jobs_government': transform(lagged(m('USGOVT'), 3, lambda a, b: a-b), lambda v: v/3),        'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
         'pce_headline': yoy('PCEPI'), 'cpi_headline': yoy('CPIAUCSL'),
         'ppi_core': yoy('PPIFES'), 'retail': yoy('RSAFS'), 'durable': yoy('DGORDER'),
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
-        'claims_weekly': transform(calendar(s('ICSA'), weekly=True), lambda v: v/1000),
-        'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
+        'claims_weekly': transform(calendar(s('ICSA'), weekly=True), lambda v: v/1000),        'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
         'reserves': transform(calendar(s('WRESBAL'), weekly=True), lambda v: v/1000),
         'tga': transform(calendar(s('WTREGEN'), weekly=True), lambda v: v/1000),
         'm2': yoy('M2SL'),
