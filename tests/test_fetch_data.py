@@ -41,6 +41,25 @@ class FormulaTests(unittest.TestCase):
         data = raw(PAYEMS=[['2026-01-01', 100], ['2026-04-01', 130]])
         self.assertEqual(f.calculate(data)['jobs'][-1][1], 10)
 
+    def test_payroll_total_private_and_government_use_comparable_three_month_changes(self):
+        dates = ['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01']
+        data = raw(
+            PAYEMS=[[d, v] for d, v in zip(dates, [1000, 1005, 1015, 1030])],
+            USPRIV=[[d, v] for d, v in zip(dates, [800, 804, 812, 824])],
+            USGOVT=[[d, v] for d, v in zip(dates, [200, 201, 203, 206])],
+        )
+        result = f.calculate(data)
+        self.assertEqual(result['jobs'][-1][1], 10)
+        self.assertEqual(result['jobs_private'][-1][1], 8)
+        self.assertEqual(result['jobs_government'][-1][1], 2)
+
+    def test_claims_weekly_and_four_week_average_are_both_exposed(self):
+        dates = ['2026-08-01', '2026-08-08', '2026-08-15', '2026-08-22']
+        data = raw(ICSA=[[d, v] for d, v in zip(dates, [100000, 200000, 300000, 400000])])
+        result = f.calculate(data)
+        self.assertEqual(result['claims_weekly'], [[dates[-1], 400]])
+        self.assertEqual(result['claims'], [[dates[-1], 250]])
+
     def test_pce_yoy_and_annualization(self):
         data = raw(PCEPILFE=[['2025-01-01', 100], ['2025-10-01', 104], ['2026-01-01', 108]])
         result = f.calculate(data)
