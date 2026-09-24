@@ -53,7 +53,7 @@ logs. If either provider is unavailable, the last good observation cache is used
 ## Connect this local folder to a new GitHub repository
 
 1. Sign in at https://github.com/new.
-2. Choose the repository name `us-macro-dashboard` (or another name) and **Public**.
+2. Choose the repository name `Quant-Macro` (or another name) and **Public**.
 3. Do **not** initialize it with a README, .gitignore, or license; this folder already
    contains files. Click **Create repository**.
 4. Open PowerShell in this folder. Replace `YOUR_USERNAME` in the URL below:
@@ -63,7 +63,7 @@ cd "C:\Users\jihye\OneDrive\Desktop\us-macro-github-pages"
 git init -b main
 git add .
 git commit -m "Add self-updating macro dashboard"
-git remote add origin https://github.com/YOUR_USERNAME/us-macro-dashboard.git
+git remote add origin https://github.com/YOUR_USERNAME/Quant-Macro.git
 git push -u origin main
 ```
 
@@ -96,7 +96,7 @@ exists, inspect `git remote -v` before changing it.
    `main`, then click **Run workflow**.
 5. Wait for the run to finish. The `github-pages` deployment link and **Settings →
    Pages** show the live URL, normally
-   `https://YOUR_USERNAME.github.io/us-macro-dashboard/`.
+   `https://YOUR_USERNAME.github.io/Quant-Macro/`.
 
 The initial push may start a run before you enable Pages. If that run fails at
 Pages configuration, complete step 3 and manually run the workflow again.
