@@ -67,6 +67,14 @@ class FormulaTests(unittest.TestCase):
         self.assertAlmostEqual(result['pce'][-1][1], 8)
         self.assertAlmostEqual(result['pce_secondary'][-1][1], ((108/104)**4-1)*100)
 
+    def test_census_error_detail_redacts_raw_and_url_encoded_keys(self):
+        class Response:
+            text = 'invalid request: key=ABC123 and key=%41BC123'
+
+        detail = f.census_error_detail(Response(), 'ABC123')
+        self.assertNotIn('ABC123', detail)
+        self.assertIn('[REDACTED]', detail)
+
     def test_census_marts_parser_and_direct_month_over_month_series(self):
         payload = [
             ['data_type_code', 'time_slot_id', 'seasonally_adj', 'category_code',
