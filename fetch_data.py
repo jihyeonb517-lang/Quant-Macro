@@ -35,8 +35,12 @@ DCF_INDEXES = (
 )
 ROOT = Path(__file__).resolve().parent
 CENSUS_SOURCES = {
-    'CENSUS_MARTS_SM': 'SM',
-    'CENSUS_MARTS_MPCSM': 'MPCSM',
+    'CENSUS_MARTS_SM': ('SM', '44X72'),
+    'CENSUS_MARTS_MPCSM': ('MPCSM', '44X72'),
+    'CENSUS_MARTS_MPCSM_441': ('MPCSM', '441'),
+    'CENSUS_MARTS_MPCSM_445': ('MPCSM', '445'),
+    'CENSUS_MARTS_MPCSM_454': ('MPCSM', '454'),
+    'CENSUS_MARTS_MPCSM_722': ('MPCSM', '722'),
 }
 FREQUENCIES = {
     # --- existing FRED / Yahoo sources ---
@@ -51,13 +55,14 @@ FREQUENCIES = {
     # --- phase 1: US macro sources ---
     'DGORDER': 'monthly', 'CPIAUCSL': 'monthly',
     'CENSUS_MARTS_SM': 'monthly', 'CENSUS_MARTS_MPCSM': 'monthly',
+    'CENSUS_MARTS_MPCSM_441': 'monthly', 'CENSUS_MARTS_MPCSM_445': 'monthly',
+    'CENSUS_MARTS_MPCSM_454': 'monthly', 'CENSUS_MARTS_MPCSM_722': 'monthly',
     'PCEPI': 'monthly', 'PPIFES': 'monthly',
     'NFCI': 'weekly', 'STLFSI4': 'weekly',
     'DFEDTARL': 'daily', 'DFEDTARU': 'daily',
     # --- additional US growth, demand, inflation and survey indicators ---
     'GDPC1': 'quarterly', 'GACDFSA066MSFRBPHI': 'monthly',
-    'UMCSENT': 'monthly', 'PCECC96': 'quarterly',
-    'PCNDGC96': 'quarterly', 'PCDGCC96': 'quarterly', 'PCESVC96': 'quarterly',
+    'UMCSENT': 'monthly',
     'CORESTICKM159SFRBATL': 'monthly', 'PCETRIM12M159SFRBDAL': 'monthly',
     # --- Japan real GDP (Cabinet Office series distributed by FRED) ---
     'JPNRGDPEXP': 'quarterly',
@@ -139,10 +144,6 @@ SPECS = [
     ('us_real_gdp', 'economy', '미국 실질 GDP 증가율', '%', ['GDPC1'], 4, '1년 전 대비'),
     ('philly_fed', 'economy', '필라델피아 연은 제조업 경기', '지수', ['GACDFSA066MSFRBPHI'], 1, '전월 대비'),
     ('umich_sentiment', 'economy', '미시간대 소비자심리지수', '지수', ['UMCSENT'], 1, '전월 대비'),
-    ('real_pce', 'economy', '실질 개인소비지출 증가율', '%', ['PCECC96'], 4, '1년 전 대비'),
-    ('real_pce_nondurable', 'economy', '실질 비내구재 소비 증가율', '%', ['PCNDGC96'], 4, '1년 전 대비'),
-    ('real_pce_durable', 'economy', '실질 내구재 소비 증가율', '%', ['PCDGCC96'], 4, '1년 전 대비'),
-    ('real_pce_services', 'economy', '실질 서비스 소비 증가율', '%', ['PCESVC96'], 4, '1년 전 대비'),
     ('sticky_cpi', 'economy', '애틀랜타 연은 Sticky CPI', '%', ['CORESTICKM159SFRBATL'], 3, '3개월 전 대비'),
     ('trimmed_pce', 'economy', '댈러스 연은 절사평균 PCE', '%', ['PCETRIM12M159SFRBDAL'], 3, '3개월 전 대비'),
     ('jp_real_gdp', 'japan', '일본 실질 GDP 증가율', '%', ['JPNRGDPEXP'], 4, '1년 전 대비'),
@@ -163,7 +164,11 @@ SPECS = [
     ('jobs_private', 'economy', '비농업 고용 증가(민간)', '천 명', ['USPRIV'], 3, '직전 3개월 평균 대비'),
     ('jobs_government', 'economy', '비농업 고용 증가(정부)', '천 명', ['USGOVT'], 3, '직전 3개월 평균 대비'),
     ('claims_weekly', 'economy', '신규 실업수당 청구(주간)', '천 건', ['ICSA'], 1, '전주 대비'),
-    ('retail_mom', 'economy', '미국 소매판매 증가율 (MoM)', '%', ['CENSUS_MARTS_MPCSM'], 1, '1개월 전 대비'),
+    ('retail_mom', 'economy', '소매·음식서비스 판매 증가율 (MoM)', '%', ['CENSUS_MARTS_MPCSM'], 1, '1개월 전 대비'),
+    ('retail_auto_mom', 'economy', '자동차·부품 판매 MoM', '%', ['CENSUS_MARTS_MPCSM_441'], 1, '1개월 전 대비'),
+    ('retail_food_mom', 'economy', '식품·음료점 판매 MoM', '%', ['CENSUS_MARTS_MPCSM_445'], 1, '1개월 전 대비'),
+    ('retail_nonstore_mom', 'economy', '무점포 소매판매 MoM', '%', ['CENSUS_MARTS_MPCSM_454'], 1, '1개월 전 대비'),
+    ('food_services_mom', 'economy', '음식서비스 판매 MoM', '%', ['CENSUS_MARTS_MPCSM_722'], 1, '1개월 전 대비'),
     ('eurusd', 'fx', 'EUR/USD', '달러/유로', ['EURUSD=X'], 20, '20거래일 전 대비'),
     ('gbpusd', 'fx', 'GBP/USD', '달러/파운드', ['GBPUSD=X'], 20, '20거래일 전 대비'),
     ('eurgbp', 'fx', 'EUR/GBP', '파운드/유로', ['EURGBP=X'], 20, '20거래일 전 대비'),
@@ -188,7 +193,11 @@ FORMULAS = {
     'claims_weekly': 'ICSA / 1000; weekly initial claims, thousands',
     'claims': 'Mean of 4 consecutive calendar weeks of ICSA / 1000',
     'retail': '(CENSUS_MARTS_SM[t]/CENSUS_MARTS_SM[t−12 months]−1)×100; MARTS 44X72 retail and food services sales, seasonally adjusted, nominal',
-    'retail_mom': 'CENSUS_MARTS_MPCSM; official MARTS 44X72 monthly percent change (MPCSM), seasonally adjusted, nominal',
+    'retail_mom': 'CENSUS_MARTS_MPCSM; MARTS 44X72 retail and food services total, official monthly percent change (MPCSM), seasonally adjusted nominal sales',
+    'retail_auto_mom': 'CENSUS_MARTS_MPCSM_441; MARTS 441 motor vehicle and parts dealers, official MPCSM (%)',
+    'retail_food_mom': 'CENSUS_MARTS_MPCSM_445; MARTS 445 food and beverage stores, official MPCSM (%)',
+    'retail_nonstore_mom': 'CENSUS_MARTS_MPCSM_454; MARTS 454 nonstore retailers, official MPCSM (%)',
+    'food_services_mom': 'CENSUS_MARTS_MPCSM_722; MARTS 722 food services and drinking places, official MPCSM (%)',
     'durable': '(DGORDER[t]/DGORDER[t−12 months]−1)×100; new orders for durable goods, nominal',
     'netliq': 'WALCL/1000 − WTREGEN/1000 − RRPONTSYD; exact same observation date, no forward fill',
     'reserves': 'WRESBAL (millions) / 1000 = billions',
@@ -230,10 +239,6 @@ FORMULAS = {
     'us_real_gdp': '(GDPC1[t]/GDPC1[t−4 quarters]−1)×100; 실질 GDP 전년동기 대비',
     'philly_fed': 'GACDFSA066MSFRBPHI; 필라델피아 연은 제조업 일반 경기활동 확산지수, 0 초과는 개선 응답 우세',
     'umich_sentiment': 'UMCSENT; 미시간대 소비자심리지수 원계열',
-    'real_pce': '(PCECC96[t]/PCECC96[t−4 quarters]−1)×100; 실질 PCE 전년동기 대비',
-    'real_pce_nondurable': '(PCNDGC96[t]/PCNDGC96[t−4 quarters]−1)×100; 실질 비내구재 PCE 전년동기 대비',
-    'real_pce_durable': '(PCDGCC96[t]/PCDGCC96[t−4 quarters]−1)×100; 실질 내구재 PCE 전년동기 대비',
-    'real_pce_services': '(PCESVC96[t]/PCESVC96[t−4 quarters]−1)×100; 실질 서비스 PCE 전년동기 대비',
     'sticky_cpi': 'CORESTICKM159SFRBATL; 애틀랜타 연은 Sticky Price CPI 전년 대비 상승률(원자료)',
     'trimmed_pce': 'PCETRIM12M159SFRBDAL; 댈러스 연은 Trimmed Mean PCE 전년 대비 상승률(원자료)',
     'jp_real_gdp': '(JPNRGDPEXP[t]/JPNRGDPEXP[t−4 quarters]−1)×100; Cabinet Office real GDP, FRED 배포 계열의 전년동기 대비',
@@ -259,7 +264,11 @@ NOTES = {
     'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
     'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
     'retail': '미국 Census Bureau MARTS의 소매·음식서비스 전체(44X72) 계절조정 판매액(SM) 전년 대비 증가율입니다. 명목 지표이며 개정될 수 있습니다.',
-    'retail_mom': '미국 Census Bureau MARTS의 소매·음식서비스 전체(44X72) 공식 전월 대비 증가율(MPCSM)입니다. 계절조정 명목 지표이며 개정될 수 있습니다.',
+    'retail_mom': 'Census MARTS 소매·음식서비스 전체(44X72)의 공식 전월 대비 판매액 변화율입니다. 계절조정된 명목 지표라 가격 변동을 차감하지 않으며 개정될 수 있습니다.',
+    'retail_auto_mom': 'Census MARTS 자동차·부품 판매(441)의 공식 MoM입니다. 계절조정 명목 판매액으로, 가격 변동을 차감하지 않으며 개정될 수 있습니다.',
+    'retail_food_mom': 'Census MARTS 식품·음료점 판매(445)의 공식 MoM입니다. 계절조정 명목 판매액으로, 가격 변동을 차감하지 않으며 개정될 수 있습니다.',
+    'retail_nonstore_mom': 'Census MARTS 무점포 소매판매(454)의 공식 MoM입니다. 계절조정 명목 판매액으로, 가격 변동을 차감하지 않으며 개정될 수 있습니다.',
+    'food_services_mom': 'Census MARTS 음식서비스·주점(722)의 공식 MoM입니다. 계절조정 명목 판매액으로, 가격 변동을 차감하지 않으며 개정될 수 있습니다.',
     'usdjpy': FX_NOTE, 'usdkrw': FX_NOTE,
     'eurusd': FX_NOTE, 'gbpusd': FX_NOTE, 'eurgbp': FX_NOTE, 'usdcny': FX_NOTE,
     'gbpjpy': FX_NOTE, 'eurjpy': FX_NOTE, 'gbpkrw': FX_NOTE, 'eurkrw': FX_NOTE,
@@ -274,10 +283,6 @@ NOTES = {
     'bank_lending': '연준 SLOOS 설문 기준입니다. 양수(+)는 순 긴축, 음수(-)는 순 완화를 의미하며, 2001년·2008-09년 침체 전 뚜렷한 긴축이 관측된 바 있습니다.',
     'philly_fed': '월간 필라델피아 연은 제조업 설문 일반 경기활동 확산지수입니다. 0을 웃돌면 개선 응답이 악화 응답보다 많습니다.',
     'umich_sentiment': '미시간대 조사로 측정한 소비자심리지수입니다. 수준과 추세를 함께 보세요.',
-    'real_pce': 'BEA 실질 PCE 연쇄달러 기준의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
-    'real_pce_nondurable': 'BEA 실질 비내구재 상품 소비의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
-    'real_pce_durable': 'BEA 실질 내구재 상품 소비의 전년동기 대비 증가율입니다. 분기 자료이며 변동성이 큽니다.',
-    'real_pce_services': 'BEA 실질 서비스 소비의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
     'sticky_cpi': '애틀랜타 연은이 가격 조정 빈도가 낮은 항목을 묶은 물가지수의 전년 대비 상승률입니다.',
     'trimmed_pce': '댈러스 연은이 월별 극단값을 절사해 계산한 근원 PCE 물가의 전년 대비 상승률입니다.',
     'jp_real_gdp': '일본 내각부 국민계정 기반 실질 GDP의 FRED 배포 계열입니다. 분기 자료이며 개정될 수 있습니다.',
@@ -301,6 +306,10 @@ SOURCE_ORIGINS = {
     'OECD_CLI_KR': 'OECD Composite Leading Indicator (OECD SDMX API)',
     'CENSUS_MARTS_SM': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
     'CENSUS_MARTS_MPCSM': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
+    'CENSUS_MARTS_MPCSM_722': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
+    'CENSUS_MARTS_MPCSM_454': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
+    'CENSUS_MARTS_MPCSM_445': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
+    'CENSUS_MARTS_MPCSM_441': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
     **{sid: 'Bank of Korea ECOS Open API' for sid in kr.ECOS},
     **{sid: 'Statistics Korea KOSIS Open API' for sid in kr.KOSIS},
 }
@@ -308,6 +317,10 @@ SOURCE_URLS = {
     'OECD_CLI_KR': 'https://data-explorer.oecd.org/vis?df%5Bag%5D=OECD.SDD.STES&df%5Bds%5D=dsDisseminateFinalDMZ&df%5Bid%5D=DSD_STES%40DF_CLI',
     'CENSUS_MARTS_SM': 'https://www.census.gov/retail/marts/',
     'CENSUS_MARTS_MPCSM': 'https://www.census.gov/retail/marts/',
+    'CENSUS_MARTS_MPCSM_722': 'https://www.census.gov/retail/marts/',
+    'CENSUS_MARTS_MPCSM_454': 'https://www.census.gov/retail/marts/',
+    'CENSUS_MARTS_MPCSM_445': 'https://www.census.gov/retail/marts/',
+    'CENSUS_MARTS_MPCSM_441': 'https://www.census.gov/retail/marts/',
     **{sid: 'https://ecos.bok.or.kr/' for sid in kr.ECOS},
     **{sid: 'https://kosis.kr/' for sid in kr.KOSIS},
 }
@@ -356,7 +369,7 @@ def clean(rows, today=None):
     return [[d, v] for d, v in sorted(result.items())]
 
 
-def parse_census_marts(payload, expected_data_type):
+def parse_census_marts(payload, expected_data_type, expected_category_code='44X72'):
     """Parse a Census EITS/MARTS JSON table into clean monthly observations."""
     if not isinstance(payload, list) or len(payload) < 2 or not isinstance(payload[0], list):
         raise ValueError('Unexpected Census MARTS response')
@@ -377,7 +390,7 @@ def parse_census_marts(payload, expected_data_type):
             continue
         values = {name: str(row[index]).strip()
                   for name, index in indexes.items()}
-        if (values['category_code'] != '44X72'
+        if (values['category_code'] != expected_category_code
                 or values['data_type_code'].upper() != expected_data_type
                 or values['seasonally_adj'].lower() != 'yes'
                 or values['error_data'].lower() != 'no'):
@@ -409,7 +422,7 @@ def census_error_detail(response, api_key):
     return detail[:240]
 
 
-def fetch_census_marts(data_type_code):
+def fetch_census_marts(data_type_code, category_code='44X72'):
     api_key = os.environ.get('CENSUS_API_KEY', '').strip()
     if not api_key:
         raise ValueError('CENSUS_API_KEY is not configured')
@@ -417,7 +430,7 @@ def fetch_census_marts(data_type_code):
 
     params = {
         'get': 'data_type_code,seasonally_adj,category_code,cell_value,error_data,time_slot_id,time_slot_date',
-        'category_code': '44X72',
+        'category_code': category_code,
         'data_type_code': data_type_code,
         'seasonally_adj': 'yes',
         'error_data': 'no',
@@ -450,7 +463,7 @@ def fetch_census_marts(data_type_code):
         raise ValueError(
             f'Census MARTS {data_type_code} returned invalid JSON{suffix}'
         ) from None
-    return parse_census_marts(payload, data_type_code)
+    return parse_census_marts(payload, data_type_code, category_code)
 
 
 def fetch_series(sid):
@@ -477,7 +490,7 @@ def fetch_series(sid):
         points = clean(((d.strftime('%Y-%m-%d'), v) for d, v in frame['Close'].items()),
                        today=completed_day)
     elif sid in CENSUS_SOURCES:
-        points = fetch_census_marts(CENSUS_SOURCES[sid])
+        points = fetch_census_marts(*CENSUS_SOURCES[sid])
     elif sid in CLI_SOURCES:
         points = cli.fetch_points(CLI_SOURCES[sid])
     elif sid in es.SOURCES:
@@ -662,7 +675,12 @@ def calculate_base(raw):
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
         'pce_headline': yoy('PCEPI'), 'cpi_headline': yoy('CPIAUCSL'),
         'ppi_core': yoy('PPIFES'), 'retail': yoy('CENSUS_MARTS_SM'),
-        'retail_mom': m('CENSUS_MARTS_MPCSM'), 'durable': yoy('DGORDER'),
+        'retail_mom': m('CENSUS_MARTS_MPCSM'),
+        'retail_auto_mom': m('CENSUS_MARTS_MPCSM_441'),
+        'retail_food_mom': m('CENSUS_MARTS_MPCSM_445'),
+        'retail_nonstore_mom': m('CENSUS_MARTS_MPCSM_454'),
+        'food_services_mom': m('CENSUS_MARTS_MPCSM_722'),
+        'durable': yoy('DGORDER'),
         'claims_weekly': transform(calendar(s('ICSA'), weekly=True), lambda v: v/1000),
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
         'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
@@ -697,10 +715,6 @@ def calculate_base(raw):
         'us_real_gdp': quarterly_yoy('GDPC1'),
         'philly_fed': s('GACDFSA066MSFRBPHI'),
         'umich_sentiment': s('UMCSENT'),
-        'real_pce': quarterly_yoy('PCECC96'),
-        'real_pce_nondurable': quarterly_yoy('PCNDGC96'),
-        'real_pce_durable': quarterly_yoy('PCDGCC96'),
-        'real_pce_services': quarterly_yoy('PCESVC96'),
         'sticky_cpi': s('CORESTICKM159SFRBATL'),
         'trimmed_pce': s('PCETRIM12M159SFRBDAL'),
         'jp_real_gdp': quarterly_yoy('JPNRGDPEXP'),
