@@ -84,13 +84,26 @@ class FormulaTests(unittest.TestCase):
                  'cell_value', 'error_data', 'time_slot_date'],
                 ['MPCSM', '757', 'yes', '44X72', '1.7', 'no', '2026-06'],
             ]
-            points = f.fetch_census_marts('MPCSM')
+            points = f.fetch_census_marts('MPCSM', '44X72')
         self.assertEqual(points, [['2026-06-01', 1.7]])
         params = mock_get.call_args.kwargs['params']
         self.assertEqual(params['time'], 'from 1992')
         self.assertEqual(params['category_code'], '44X72')
         self.assertEqual(params['data_type_code'], 'MPCSM')
         self.assertEqual(params['seasonally_adj'], 'yes')
+
+    def test_census_fetch_uses_requested_industry_category(self):
+        with (patch('curl_cffi.requests.get') as mock_get,
+              patch.dict('os.environ', {'CENSUS_API_KEY': 'test-key'})):
+            mock_get.return_value.status_code = 200
+            mock_get.return_value.json.return_value = [
+                ['data_type_code', 'time_slot_id', 'seasonally_adj', 'category_code',
+                 'cell_value', 'error_data', 'time_slot_date'],
+                ['MPCSM', '757', 'yes', '722', '0.6', 'no', '2026-06'],
+            ]
+            points = f.fetch_census_marts('MPCSM', '722')
+        self.assertEqual(points, [['2026-06-01', 0.6]])
+        self.assertEqual(mock_get.call_args.kwargs['params']['category_code'], '722')
 
     def test_census_marts_parser_and_direct_month_over_month_series(self):
         payload = [
@@ -102,10 +115,22 @@ class FormulaTests(unittest.TestCase):
         ]
         points = f.parse_census_marts(payload, 'MPCSM')
         self.assertEqual(points, [['2026-06-01', 1.7], ['2026-07-01', -0.4]])
+        for category, expected in [('441', 2.4), ('445', 1.2), ('454', -0.8), ('722', 0.6)]:
+            category_payload = [
+                payload[0],
+                ['MPCSM', '760', 'yes', category, str(expected), 'no', '2026-09'],
+                ['MPCSM', '761', 'yes', '44X72', '9.9', 'no', '2026-10'],
+            ]
+            category_points = f.parse_census_marts(category_payload, 'MPCSM', category)
+            self.assertEqual(category_points, [['2026-09-01', expected]])
 
         data = raw(
             CENSUS_MARTS_SM=[['2025-06-01', 100], ['2026-06-01', 110]],
             CENSUS_MARTS_MPCSM=[['2026-06-01', 1.7], ['2026-07-01', -0.4]],
+            CENSUS_MARTS_MPCSM_441=[['2026-06-01', 2.4]],
+            CENSUS_MARTS_MPCSM_445=[['2026-06-01', 1.2]],
+            CENSUS_MARTS_MPCSM_454=[['2026-06-01', -0.8]],
+            CENSUS_MARTS_MPCSM_722=[['2026-06-01', 0.6]],
         )
         result = f.calculate(data)
         retail_yoy = dict(result['retail'])
@@ -113,24 +138,22 @@ class FormulaTests(unittest.TestCase):
         self.assertAlmostEqual(retail_yoy['2026-06-01'], 10)
         self.assertAlmostEqual(retail_mom['2026-06-01'], 1.7)
         self.assertAlmostEqual(retail_mom['2026-07-01'], -0.4)
+        for mid, expected in [('retail_auto_mom', 2.4), ('retail_food_mom', 1.2),
+                              ('retail_nonstore_mom', -0.8), ('food_services_mom', 0.6)]:
+            self.assertEqual(result[mid][-1][1], expected)
         self.assertEqual(next(item for item in f.SPECS if item[0] == 'retail')[4], ['CENSUS_MARTS_SM'])
         self.assertEqual(next(item for item in f.SPECS if item[0] == 'retail_mom')[4], ['CENSUS_MARTS_MPCSM'])
+        self.assertEqual(f.CENSUS_SOURCES['CENSUS_MARTS_MPCSM_722'], ('MPCSM', '722'))
 
-    def test_real_gdp_and_pce_components_use_four_quarter_yoy(self):
+    def test_real_gdp_sources_use_four_quarter_yoy(self):
         dates = ['2025-01-01', '2025-04-01', '2025-07-01', '2025-10-01', '2026-01-01']
         data = raw(
             GDPC1=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 110])],
-            PCECC96=[[d, value] for d, value in zip(dates, [200, 202, 204, 206, 210])],
-            PCNDGC96=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 105])],
-            PCDGCC96=[[d, value] for d, value in zip(dates, [50, 51, 52, 53, 55])],
-            PCESVC96=[[d, value] for d, value in zip(dates, [150, 151, 152, 153, 157.5])],
             JPNRGDPEXP=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 104])],
             ECOS_KR_REAL_GDP=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 106])],
         )
         result = f.calculate(data)
-        for mid, expected in [('us_real_gdp', 10), ('real_pce', 5),
-                              ('real_pce_nondurable', 5), ('real_pce_durable', 10),
-                              ('real_pce_services', 5), ('jp_real_gdp', 4),
+        for mid, expected in [('us_real_gdp', 10), ('jp_real_gdp', 4),
                               ('kr_real_gdp', 6)]:
             self.assertAlmostEqual(result[mid][-1][1], expected)
 

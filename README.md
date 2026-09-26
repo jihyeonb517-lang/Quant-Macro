@@ -3,14 +3,14 @@
 The original Korean dashboard, with its tabs, SVG charts, date filters and pointer
 tooltips preserved. The page now loads `./data.json` asynchronously and displays a
 clear message if loading fails. No build tool is required; data refresh uses free public
-APIs and a Census key for the U.S. retail-sales series.
+APIs and a Census key for U.S. retail and food-service sales by industry.
 
 ## Files
 
 ```text
 index.html                         Original interface, async JSON loading
 data.json                          Generated dashboard snapshot
-fetch_data.py                      FRED/Yahoo + Census MARTS (US retail) + official Korea APIs
+fetch_data.py                      FRED/Yahoo + Census MARTS retail and food-service MoM + official Korea APIs
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps
 .github/workflows/update-data.yml  Daily refresh, commit, and Pages deployment
