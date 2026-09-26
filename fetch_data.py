@@ -397,6 +397,18 @@ def parse_census_marts(payload, expected_data_type):
     return points
 
 
+def census_error_detail(response, api_key):
+    """Return a short Census error body with direct and URL-encoded keys redacted."""
+    try:
+        detail = str(response.text).strip()
+    except Exception:
+        return ''
+    for secret in (api_key, quote(api_key, safe='')):
+        if secret:
+            detail = detail.replace(secret, '[REDACTED]')
+    return detail[:240]
+
+
 def fetch_census_marts(data_type_code):
     api_key = os.environ.get('CENSUS_API_KEY', '').strip()
     if not api_key:
@@ -424,12 +436,20 @@ def fetch_census_marts(data_type_code):
             f'Census MARTS {data_type_code} request failed ({type(exc).__name__})'
         ) from None
     if response.status_code >= 400:
-        raise ValueError(f'Census MARTS {data_type_code} returned HTTP {response.status_code}')
+        detail = census_error_detail(response, api_key)
+        suffix = f': {detail}' if detail else ''
+        raise ValueError(
+            f'Census MARTS {data_type_code} returned HTTP {response.status_code}{suffix}'
+        )
     try:
         payload = response.json()
     except Exception:
         # Census can return an HTML activation/error page even with HTTP 200.
-        raise ValueError(f'Census MARTS {data_type_code} returned invalid JSON') from None
+        detail = census_error_detail(response, api_key)
+        suffix = f': {detail}' if detail else ''
+        raise ValueError(
+            f'Census MARTS {data_type_code} returned invalid JSON{suffix}'
+        ) from None
     return parse_census_marts(payload, data_type_code)
 
 
