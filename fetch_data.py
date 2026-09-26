@@ -421,7 +421,7 @@ def fetch_census_marts(data_type_code):
         'data_type_code': data_type_code,
         'seasonally_adj': 'yes',
         'error_data': 'no',
-        'time': 'from+1992',
+        'time': 'from 1992',
         'key': api_key,
     }
     try:
