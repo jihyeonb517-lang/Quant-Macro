@@ -158,6 +158,7 @@ SPECS = [
     ('jobs_private', 'economy', '비농업 고용 증가(민간)', '천 명', ['USPRIV'], 3, '직전 3개월 평균 대비'),
     ('jobs_government', 'economy', '비농업 고용 증가(정부)', '천 명', ['USGOVT'], 3, '직전 3개월 평균 대비'),
     ('claims_weekly', 'economy', '신규 실업수당 청구(주간)', '천 건', ['ICSA'], 1, '전주 대비'),
+    ('retail_mom', 'economy', '미국 소매판매 증가율 (MoM)', '%', ['RSAFS'], 1, '1개월 전 대비'),
     ('eurusd', 'fx', 'EUR/USD', '달러/유로', ['EURUSD=X'], 20, '20거래일 전 대비'),
     ('gbpusd', 'fx', 'GBP/USD', '달러/파운드', ['GBPUSD=X'], 20, '20거래일 전 대비'),
     ('eurgbp', 'fx', 'EUR/GBP', '파운드/유로', ['EURGBP=X'], 20, '20거래일 전 대비'),
@@ -182,6 +183,7 @@ FORMULAS = {
     'claims_weekly': 'ICSA / 1000; weekly initial claims, thousands',
     'claims': 'Mean of 4 consecutive calendar weeks of ICSA / 1000',
     'retail': '(RSAFS[t]/RSAFS[t−12 months]−1)×100; advance retail sales, seasonally adjusted, nominal',
+    'retail_mom': '(RSAFS[t]/RSAFS[t−1 month]−1)×100; Census monthly retail and food services sales, seasonally adjusted, nominal',
     'durable': '(DGORDER[t]/DGORDER[t−12 months]−1)×100; new orders for durable goods, nominal',
     'netliq': 'WALCL/1000 − WTREGEN/1000 − RRPONTSYD; exact same observation date, no forward fill',
     'reserves': 'WRESBAL (millions) / 1000 = billions',
@@ -251,6 +253,7 @@ FX_NOTE = 'Yahoo Finance 시장 종가 기준입니다. FRED 고시환율(뉴욕
 NOTES = {
     'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
     'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
+    'retail_mom': '미국 Census Bureau의 계절조정 소매·음식서비스 판매액(RSAFS)을 직전 월과 비교한 명목 증가율입니다. 발표 후 수정될 수 있습니다.',
     'usdjpy': FX_NOTE, 'usdkrw': FX_NOTE,
     'eurusd': FX_NOTE, 'gbpusd': FX_NOTE, 'eurgbp': FX_NOTE, 'usdcny': FX_NOTE,
     'gbpjpy': FX_NOTE, 'eurjpy': FX_NOTE, 'gbpkrw': FX_NOTE, 'eurkrw': FX_NOTE,
@@ -512,6 +515,7 @@ def calculate_base(raw):
     s = lambda sid: raw.get(sid, {}).get('points', [])
     m = lambda sid: calendar(s(sid))
     yoy = lambda sid: lagged(m(sid), 12, lambda a, b: (a/b-1)*100 if b > 0 else None)
+    mom = lambda sid: lagged(m(sid), 1, lambda a, b: (a/b-1)*100 if b > 0 else None)
     quarterly_yoy = lambda sid: lagged(s(sid), 4, lambda a, b: (a/b-1)*100 if b > 0 else None)
 
     def korea_gdp_yoy(sid):
@@ -548,7 +552,7 @@ def calculate_base(raw):
         'jobs_government': transform(lagged(m('USGOVT'), 3, lambda a, b: a-b), lambda v: v/3),
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
         'pce_headline': yoy('PCEPI'), 'cpi_headline': yoy('CPIAUCSL'),
-        'ppi_core': yoy('PPIFES'), 'retail': yoy('RSAFS'), 'durable': yoy('DGORDER'),
+        'ppi_core': yoy('PPIFES'), 'retail': yoy('RSAFS'), 'retail_mom': mom('RSAFS'), 'durable': yoy('DGORDER'),
         'claims_weekly': transform(calendar(s('ICSA'), weekly=True), lambda v: v/1000),
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
         'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),

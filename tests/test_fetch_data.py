@@ -67,6 +67,17 @@ class FormulaTests(unittest.TestCase):
         self.assertAlmostEqual(result['pce'][-1][1], 8)
         self.assertAlmostEqual(result['pce_secondary'][-1][1], ((108/104)**4-1)*100)
 
+    def test_retail_sales_mom_compares_adjacent_months_without_skipping_gaps(self):
+        data = raw(RSAFS=[
+            ['2026-05-01', 100], ['2026-06-01', 101], ['2026-08-01', 104],
+        ])
+        result = dict(f.calculate(data)['retail_mom'])
+        self.assertAlmostEqual(result['2026-06-01'], 1)
+        self.assertIsNone(result['2026-07-01'])
+        self.assertIsNone(result['2026-08-01'])
+        spec = next(item for item in f.SPECS if item[0] == 'retail_mom')
+        self.assertEqual(spec[6], '1개월 전 대비')
+
     def test_real_gdp_and_pce_components_use_four_quarter_yoy(self):
         dates = ['2025-01-01', '2025-04-01', '2025-07-01', '2025-10-01', '2026-01-01']
         data = raw(
