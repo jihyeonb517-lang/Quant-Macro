@@ -27,6 +27,8 @@ jobs:
       # written to the repository or public dashboard artifacts.
       ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
       KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
+      # Census Economic Indicators key; never emitted into dashboard files.
+      CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
     permissions:
       contents: write
       pages: write
