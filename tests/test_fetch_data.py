@@ -87,7 +87,7 @@ class FormulaTests(unittest.TestCase):
             points = f.fetch_census_marts('MPCSM')
         self.assertEqual(points, [['2026-06-01', 1.7]])
         params = mock_get.call_args.kwargs['params']
-        self.assertEqual(params['time'], 'from+1992')
+        self.assertEqual(params['time'], 'from 1992')
         self.assertEqual(params['category_code'], '44X72')
         self.assertEqual(params['data_type_code'], 'MPCSM')
         self.assertEqual(params['seasonally_adj'], 'yes')
