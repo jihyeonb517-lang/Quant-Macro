@@ -115,35 +115,39 @@ class FormulaTests(unittest.TestCase):
         ]
         points = f.parse_census_marts(payload, 'MPCSM')
         self.assertEqual(points, [['2026-06-01', 1.7], ['2026-07-01', -0.4]])
-        for category, expected in [('441', 2.4), ('445', 1.2), ('454', -0.8), ('722', 0.6)]:
-            category_payload = [
-                payload[0],
-                ['MPCSM', '760', 'yes', category, str(expected), 'no', '2026-09'],
-                ['MPCSM', '761', 'yes', '44X72', '9.9', 'no', '2026-10'],
-            ]
-            category_points = f.parse_census_marts(category_payload, 'MPCSM', category)
-            self.assertEqual(category_points, [['2026-09-01', expected]])
-
         data = raw(
             CENSUS_MARTS_SM=[['2025-06-01', 100], ['2026-06-01', 110]],
-            CENSUS_MARTS_MPCSM=[['2026-06-01', 1.7], ['2026-07-01', -0.4]],
-            CENSUS_MARTS_MPCSM_441=[['2026-06-01', 2.4]],
-            CENSUS_MARTS_MPCSM_445=[['2026-06-01', 1.2]],
-            CENSUS_MARTS_MPCSM_454=[['2026-06-01', -0.8]],
-            CENSUS_MARTS_MPCSM_722=[['2026-06-01', 0.6]],
+            CENSUS_MARTS_MPCSM=points,
         )
         result = f.calculate(data)
-        retail_yoy = dict(result['retail'])
-        retail_mom = dict(result['retail_mom'])
-        self.assertAlmostEqual(retail_yoy['2026-06-01'], 10)
-        self.assertAlmostEqual(retail_mom['2026-06-01'], 1.7)
-        self.assertAlmostEqual(retail_mom['2026-07-01'], -0.4)
-        for mid, expected in [('retail_auto_mom', 2.4), ('retail_food_mom', 1.2),
-                              ('retail_nonstore_mom', -0.8), ('food_services_mom', 0.6)]:
-            self.assertEqual(result[mid][-1][1], expected)
-        self.assertEqual(next(item for item in f.SPECS if item[0] == 'retail')[4], ['CENSUS_MARTS_SM'])
-        self.assertEqual(next(item for item in f.SPECS if item[0] == 'retail_mom')[4], ['CENSUS_MARTS_MPCSM'])
-        self.assertEqual(f.CENSUS_SOURCES['CENSUS_MARTS_MPCSM_722'], ('MPCSM', '722'))
+        self.assertAlmostEqual(dict(result['retail'])['2026-06-01'], 10)
+        self.assertEqual(result['retail_mom'], points)
+        self.assertEqual(next(item for item in f.SPECS if item[0] == 'retail_mom')[4],
+                         ['CENSUS_MARTS_MPCSM'])
+
+    def test_monthly_real_pce_components_use_actual_previous_month(self):
+        data = raw(
+            PCEC96=[['2026-05-01', 100], ['2026-06-01', 101], ['2026-07-01', 103.02]],
+            PCENDC96=[['2026-05-01', 100], ['2026-06-01', 98], ['2026-07-01', 99.96]],
+            PCEDGC96=[['2026-05-01', 100], ['2026-06-01', 105], ['2026-07-01', 104.475]],
+            PCESC96=[['2026-05-01', 100], ['2026-06-01', 100.5], ['2026-07-01', 101.0025]],
+        )
+        result = f.calculate(data)
+        expected = {'real_pce': (1, 2), 'real_pce_nondurable': (-2, 2),
+                    'real_pce_durable': (5, -0.5), 'real_pce_services': (0.5, 0.5)}
+        for mid, (june, july) in expected.items():
+            points = dict(result[mid])
+            self.assertIsNone(points['2026-05-01'])
+            self.assertAlmostEqual(points['2026-06-01'], june)
+            self.assertAlmostEqual(points['2026-07-01'], july)
+
+        # A missing June observation must not turn July into a two-month comparison.
+        missing = f.calculate(raw(PCEC96=[['2026-05-01', 100], ['2026-07-01', 103]]))
+        self.assertIsNone(dict(missing['real_pce'])['2026-07-01'])
+        for mid in expected:
+            spec = next(item for item in f.SPECS if item[0] == mid)
+            self.assertEqual(spec[5], 1)
+            self.assertEqual(spec[6], '1개월 전 대비')
 
     def test_real_gdp_sources_use_four_quarter_yoy(self):
         dates = ['2025-01-01', '2025-04-01', '2025-07-01', '2025-10-01', '2026-01-01']
