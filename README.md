@@ -2,14 +2,15 @@
 
 The original Korean dashboard, with its tabs, SVG charts, date filters and pointer
 tooltips preserved. The page now loads `./data.json` asynchronously and displays a
-clear message if loading fails. No build tool or API key is required.
+clear message if loading fails. No build tool is required; data refresh uses free public
+APIs and a Census key for the U.S. retail-sales series.
 
 ## Files
 
 ```text
 index.html                         Original interface, async JSON loading
 data.json                          Generated dashboard snapshot
-fetch_data.py                      FRED/Yahoo (US & markets) + domestic official APIs for Korea
+fetch_data.py                      FRED/Yahoo + Census MARTS (US retail) + official Korea APIs
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps
 .github/workflows/update-data.yml  Daily refresh, commit, and Pages deployment
@@ -43,9 +44,12 @@ provider, frequency and observation date.
 Additional US growth, consumption, inflation and survey indicators, Japan real
 GDP, and Korean exports, production, retail sales, CPI, jobs, policy rate,
 household credit, housing and sentiment series are refreshed by the same
-workflow. Korean indicators no longer rely on FRED-distributed or BIS series;
-they use ECOS and KOSIS adapters. Add the credentials
-as repository Actions secrets named `ECOS_API_KEY` and `KOSIS_API_KEY`; never put
+workflow. U.S. retail sales come directly from the Census Economic Indicators
+Time Series API (MARTS): its monthly percent change is used as published, while
+its sales level feeds the market-cycle year-over-year comparison. Korean
+indicators no longer rely on FRED-distributed or BIS series; they use ECOS and
+KOSIS adapters. Add the credentials as repository Actions secrets named
+`CENSUS_API_KEY`, `ECOS_API_KEY`, and `KOSIS_API_KEY`; never put
 the values in code or a public file. The workflow keeps the keys in its runtime
 environment and masks request failures so provider URLs cannot expose them in
 logs. If either provider is unavailable, the last good observation cache is used.
@@ -85,7 +89,8 @@ exists, inspect `git remote -v` before changing it.
 1. In the repository, open **Settings → Actions → General**. Ensure Actions are
    enabled and GitHub's `actions/*` actions are allowed.
 2. The workflow explicitly requests `contents: write`, `pages: write`, and
-   `id-token: write`. No repository secrets or FRED API key are needed. If an
+   `id-token: write`. The workflow expects `CENSUS_API_KEY`, `ECOS_API_KEY`, and
+   `KOSIS_API_KEY` as repository secrets; no FRED API key is needed. If an
    organization policy blocks those permissions, an administrator must allow them.
    A rule requiring pull requests for all changes to `main` also blocks the bot's
    daily commit; use a repository where this workflow can push to `main`.

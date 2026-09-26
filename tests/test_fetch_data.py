@@ -67,16 +67,29 @@ class FormulaTests(unittest.TestCase):
         self.assertAlmostEqual(result['pce'][-1][1], 8)
         self.assertAlmostEqual(result['pce_secondary'][-1][1], ((108/104)**4-1)*100)
 
-    def test_retail_sales_mom_compares_adjacent_months_without_skipping_gaps(self):
-        data = raw(RSAFS=[
-            ['2026-05-01', 100], ['2026-06-01', 101], ['2026-08-01', 104],
-        ])
-        result = dict(f.calculate(data)['retail_mom'])
-        self.assertAlmostEqual(result['2026-06-01'], 1)
-        self.assertIsNone(result['2026-07-01'])
-        self.assertIsNone(result['2026-08-01'])
-        spec = next(item for item in f.SPECS if item[0] == 'retail_mom')
-        self.assertEqual(spec[6], '1개월 전 대비')
+    def test_census_marts_parser_and_direct_month_over_month_series(self):
+        payload = [
+            ['data_type_code', 'time_slot_id', 'seasonally_adj', 'category_code',
+             'cell_value', 'error_data', 'time_slot_date'],
+            ['MPCSM', '757', 'yes', '44X72', '1.7', 'no', '2026-06'],
+            ['MPCSM', '758', 'yes', '44X72', '-0.4', 'no', '2026-07'],
+            ['SM', '759', 'yes', '44X72', '123', 'no', '2026-08'],
+        ]
+        points = f.parse_census_marts(payload, 'MPCSM')
+        self.assertEqual(points, [['2026-06-01', 1.7], ['2026-07-01', -0.4]])
+
+        data = raw(
+            CENSUS_MARTS_SM=[['2025-06-01', 100], ['2026-06-01', 110]],
+            CENSUS_MARTS_MPCSM=[['2026-06-01', 1.7], ['2026-07-01', -0.4]],
+        )
+        result = f.calculate(data)
+        retail_yoy = dict(result['retail'])
+        retail_mom = dict(result['retail_mom'])
+        self.assertAlmostEqual(retail_yoy['2026-06-01'], 10)
+        self.assertAlmostEqual(retail_mom['2026-06-01'], 1.7)
+        self.assertAlmostEqual(retail_mom['2026-07-01'], -0.4)
+        self.assertEqual(next(item for item in f.SPECS if item[0] == 'retail')[4], ['CENSUS_MARTS_SM'])
+        self.assertEqual(next(item for item in f.SPECS if item[0] == 'retail_mom')[4], ['CENSUS_MARTS_MPCSM'])
 
     def test_real_gdp_and_pce_components_use_four_quarter_yoy(self):
         dates = ['2025-01-01', '2025-04-01', '2025-07-01', '2025-10-01', '2026-01-01']

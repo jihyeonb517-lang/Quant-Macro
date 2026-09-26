@@ -34,6 +34,10 @@ DCF_INDEXES = (
     ('nikkei225', 'Nikkei 225', '^N225', 'JGB10'),
 )
 ROOT = Path(__file__).resolve().parent
+CENSUS_SOURCES = {
+    'CENSUS_MARTS_SM': 'SM',
+    'CENSUS_MARTS_MPCSM': 'MPCSM',
+}
 FREQUENCIES = {
     # --- existing FRED / Yahoo sources ---
     'PAYEMS': 'monthly', 'USPRIV': 'monthly', 'USGOVT': 'monthly', 'UNRATE': 'monthly', 'PCEPILFE': 'monthly',
@@ -44,8 +48,9 @@ FREQUENCIES = {
     'DGS10': 'daily', 'DGS2': 'daily', '^GSPC': 'daily',
     '^N225': 'daily',
     'RSP': 'daily', 'SPY': 'daily',
-    # --- phase 1: US (FRED) ---
-    'RSAFS': 'monthly', 'DGORDER': 'monthly', 'CPIAUCSL': 'monthly',
+    # --- phase 1: US macro sources ---
+    'DGORDER': 'monthly', 'CPIAUCSL': 'monthly',
+    'CENSUS_MARTS_SM': 'monthly', 'CENSUS_MARTS_MPCSM': 'monthly',
     'PCEPI': 'monthly', 'PPIFES': 'monthly',
     'NFCI': 'weekly', 'STLFSI4': 'weekly',
     'DFEDTARL': 'daily', 'DFEDTARU': 'daily',
@@ -112,7 +117,7 @@ SPECS = [
     ('pce_headline', 'economy', '헤드라인 PCE 상승률', '%', ['PCEPI'], 3, '3개월 전 대비'),
     ('cpi_headline', 'economy', '헤드라인 CPI 상승률', '%', ['CPIAUCSL'], 3, '3개월 전 대비'),
     ('ppi_core', 'economy', '근원 PPI 상승률', '%', ['PPIFES'], 3, '3개월 전 대비'),
-    ('retail', 'economy', '소매판매 증가율', '%', ['RSAFS'], 3, '3개월 전 대비'),
+    ('retail', 'economy', '소매판매 증가율', '%', ['CENSUS_MARTS_SM'], 3, '3개월 전 대비'),
     ('durable', 'economy', '내구재 수주 증가율', '%', ['DGORDER'], 3, '3개월 전 대비'),
     ('nfci', 'conditions', '시카고 연은 금융여건지수(NFCI)', '지수', ['NFCI'], 4, '4주 전 대비'),
     ('stlfsi', 'conditions', '세인트루이스 연은 금융스트레스지수', '지수', ['STLFSI4'], 4, '4주 전 대비'),
@@ -158,7 +163,7 @@ SPECS = [
     ('jobs_private', 'economy', '비농업 고용 증가(민간)', '천 명', ['USPRIV'], 3, '직전 3개월 평균 대비'),
     ('jobs_government', 'economy', '비농업 고용 증가(정부)', '천 명', ['USGOVT'], 3, '직전 3개월 평균 대비'),
     ('claims_weekly', 'economy', '신규 실업수당 청구(주간)', '천 건', ['ICSA'], 1, '전주 대비'),
-    ('retail_mom', 'economy', '미국 소매판매 증가율 (MoM)', '%', ['RSAFS'], 1, '1개월 전 대비'),
+    ('retail_mom', 'economy', '미국 소매판매 증가율 (MoM)', '%', ['CENSUS_MARTS_MPCSM'], 1, '1개월 전 대비'),
     ('eurusd', 'fx', 'EUR/USD', '달러/유로', ['EURUSD=X'], 20, '20거래일 전 대비'),
     ('gbpusd', 'fx', 'GBP/USD', '달러/파운드', ['GBPUSD=X'], 20, '20거래일 전 대비'),
     ('eurgbp', 'fx', 'EUR/GBP', '파운드/유로', ['EURGBP=X'], 20, '20거래일 전 대비'),
@@ -182,8 +187,8 @@ FORMULAS = {
     'ppi_core': '(PPIFES[t]/PPIFES[t−12 months]−1)×100; final demand less foods and energy, seasonally adjusted',
     'claims_weekly': 'ICSA / 1000; weekly initial claims, thousands',
     'claims': 'Mean of 4 consecutive calendar weeks of ICSA / 1000',
-    'retail': '(RSAFS[t]/RSAFS[t−12 months]−1)×100; advance retail sales, seasonally adjusted, nominal',
-    'retail_mom': '(RSAFS[t]/RSAFS[t−1 month]−1)×100; Census monthly retail and food services sales, seasonally adjusted, nominal',
+    'retail': '(CENSUS_MARTS_SM[t]/CENSUS_MARTS_SM[t−12 months]−1)×100; MARTS 44X72 retail and food services sales, seasonally adjusted, nominal',
+    'retail_mom': 'CENSUS_MARTS_MPCSM; official MARTS 44X72 monthly percent change (MPCSM), seasonally adjusted, nominal',
     'durable': '(DGORDER[t]/DGORDER[t−12 months]−1)×100; new orders for durable goods, nominal',
     'netliq': 'WALCL/1000 − WTREGEN/1000 − RRPONTSYD; exact same observation date, no forward fill',
     'reserves': 'WRESBAL (millions) / 1000 = billions',
@@ -253,7 +258,8 @@ FX_NOTE = 'Yahoo Finance 시장 종가 기준입니다. FRED 고시환율(뉴욕
 NOTES = {
     'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
     'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
-    'retail_mom': '미국 Census Bureau의 계절조정 소매·음식서비스 판매액(RSAFS)을 직전 월과 비교한 명목 증가율입니다. 발표 후 수정될 수 있습니다.',
+    'retail': '미국 Census Bureau MARTS의 소매·음식서비스 전체(44X72) 계절조정 판매액(SM) 전년 대비 증가율입니다. 명목 지표이며 개정될 수 있습니다.',
+    'retail_mom': '미국 Census Bureau MARTS의 소매·음식서비스 전체(44X72) 공식 전월 대비 증가율(MPCSM)입니다. 계절조정 명목 지표이며 개정될 수 있습니다.',
     'usdjpy': FX_NOTE, 'usdkrw': FX_NOTE,
     'eurusd': FX_NOTE, 'gbpusd': FX_NOTE, 'eurgbp': FX_NOTE, 'usdcny': FX_NOTE,
     'gbpjpy': FX_NOTE, 'eurjpy': FX_NOTE, 'gbpkrw': FX_NOTE, 'eurkrw': FX_NOTE,
@@ -293,11 +299,15 @@ NOTES = {
 
 SOURCE_ORIGINS = {
     'OECD_CLI_KR': 'OECD Composite Leading Indicator (OECD SDMX API)',
+    'CENSUS_MARTS_SM': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
+    'CENSUS_MARTS_MPCSM': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
     **{sid: 'Bank of Korea ECOS Open API' for sid in kr.ECOS},
     **{sid: 'Statistics Korea KOSIS Open API' for sid in kr.KOSIS},
 }
 SOURCE_URLS = {
     'OECD_CLI_KR': 'https://data-explorer.oecd.org/vis?df%5Bag%5D=OECD.SDD.STES&df%5Bds%5D=dsDisseminateFinalDMZ&df%5Bid%5D=DSD_STES%40DF_CLI',
+    'CENSUS_MARTS_SM': 'https://www.census.gov/retail/marts/',
+    'CENSUS_MARTS_MPCSM': 'https://www.census.gov/retail/marts/',
     **{sid: 'https://ecos.bok.or.kr/' for sid in kr.ECOS},
     **{sid: 'https://kosis.kr/' for sid in kr.KOSIS},
 }
@@ -346,6 +356,83 @@ def clean(rows, today=None):
     return [[d, v] for d, v in sorted(result.items())]
 
 
+def parse_census_marts(payload, expected_data_type):
+    """Parse a Census EITS/MARTS JSON table into clean monthly observations."""
+    if not isinstance(payload, list) or len(payload) < 2 or not isinstance(payload[0], list):
+        raise ValueError('Unexpected Census MARTS response')
+    headers = [str(item).strip().lower() for item in payload[0]]
+    required = {'cell_value', 'category_code', 'data_type_code',
+                'seasonally_adj', 'error_data'}
+    if not required.issubset(headers):
+        raise ValueError('Census MARTS response is missing required fields')
+    date_field = next((field for field in ('time_slot_date', 'time')
+                       if field in headers), None)
+    if date_field is None:
+        raise ValueError('Census MARTS response is missing a date field')
+    indexes = {name: headers.index(name) for name in required}
+    date_index = headers.index(date_field)
+    rows = []
+    for row in payload[1:]:
+        if not isinstance(row, list) or len(row) < len(headers):
+            continue
+        values = {name: str(row[index]).strip()
+                  for name, index in indexes.items()}
+        if (values['category_code'] != '44X72'
+                or values['data_type_code'].upper() != expected_data_type
+                or values['seasonally_adj'].lower() != 'yes'
+                or values['error_data'].lower() != 'no'):
+            continue
+        period = str(row[date_index]).strip()
+        # EITS time values are YYYY-MM; time_slot_date is usually ISO date.
+        if len(period) == 7 and period[4] == '-':
+            period += '-01'
+        try:
+            day = date.fromisoformat(period[:10]).replace(day=1).isoformat()
+        except (ValueError, TypeError):
+            continue
+        rows.append((day, row[indexes['cell_value']]))
+    points = clean(rows)
+    if not any(finite(value) for _, value in points):
+        raise ValueError('Census MARTS returned no usable observations')
+    return points
+
+
+def fetch_census_marts(data_type_code):
+    api_key = os.environ.get('CENSUS_API_KEY', '').strip()
+    if not api_key:
+        raise ValueError('CENSUS_API_KEY is not configured')
+    from curl_cffi import requests
+
+    params = {
+        'get': 'data_type_code,seasonally_adj,category_code,cell_value,error_data,time_slot_id,time_slot_date',
+        'category_code': '44X72',
+        'data_type_code': data_type_code,
+        'seasonally_adj': 'yes',
+        'error_data': 'no',
+        'time': 'from+1992-01',
+        'key': api_key,
+    }
+    try:
+        response = requests.get(
+            'https://api.census.gov/data/timeseries/eits/marts',
+            params=params, timeout=30,
+        )
+    except Exception as exc:
+        # Do not include the request exception: some HTTP libraries print the
+        # full request URL, which contains the API key.
+        raise ValueError(
+            f'Census MARTS {data_type_code} request failed ({type(exc).__name__})'
+        ) from None
+    if response.status_code >= 400:
+        raise ValueError(f'Census MARTS {data_type_code} returned HTTP {response.status_code}')
+    try:
+        payload = response.json()
+    except Exception:
+        # Census can return an HTML activation/error page even with HTTP 200.
+        raise ValueError(f'Census MARTS {data_type_code} returned invalid JSON') from None
+    return parse_census_marts(payload, data_type_code)
+
+
 def fetch_series(sid):
     if sid in YAHOO:
         import yfinance as yf
@@ -369,6 +456,8 @@ def fetch_series(sid):
             completed_day = datetime.now(timezone.utc).date() - timedelta(days=1)
         points = clean(((d.strftime('%Y-%m-%d'), v) for d, v in frame['Close'].items()),
                        today=completed_day)
+    elif sid in CENSUS_SOURCES:
+        points = fetch_census_marts(CENSUS_SOURCES[sid])
     elif sid in CLI_SOURCES:
         points = cli.fetch_points(CLI_SOURCES[sid])
     elif sid in es.SOURCES:
@@ -552,7 +641,8 @@ def calculate_base(raw):
         'jobs_government': transform(lagged(m('USGOVT'), 3, lambda a, b: a-b), lambda v: v/3),
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
         'pce_headline': yoy('PCEPI'), 'cpi_headline': yoy('CPIAUCSL'),
-        'ppi_core': yoy('PPIFES'), 'retail': yoy('RSAFS'), 'retail_mom': mom('RSAFS'), 'durable': yoy('DGORDER'),
+        'ppi_core': yoy('PPIFES'), 'retail': yoy('CENSUS_MARTS_SM'),
+        'retail_mom': m('CENSUS_MARTS_MPCSM'), 'durable': yoy('DGORDER'),
         'claims_weekly': transform(calendar(s('ICSA'), weekly=True), lambda v: v/1000),
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
         'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
