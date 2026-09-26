@@ -75,6 +75,23 @@ class FormulaTests(unittest.TestCase):
         self.assertNotIn('ABC123', detail)
         self.assertIn('[REDACTED]', detail)
 
+    def test_census_fetch_uses_documented_from_year_filter(self):
+        with (patch('curl_cffi.requests.get') as mock_get,
+              patch.dict('os.environ', {'CENSUS_API_KEY': 'test-key'})):
+            mock_get.return_value.status_code = 200
+            mock_get.return_value.json.return_value = [
+                ['data_type_code', 'time_slot_id', 'seasonally_adj', 'category_code',
+                 'cell_value', 'error_data', 'time_slot_date'],
+                ['MPCSM', '757', 'yes', '44X72', '1.7', 'no', '2026-06'],
+            ]
+            points = f.fetch_census_marts('MPCSM')
+        self.assertEqual(points, [['2026-06-01', 1.7]])
+        params = mock_get.call_args.kwargs['params']
+        self.assertEqual(params['time'], 'from+1992')
+        self.assertEqual(params['category_code'], '44X72')
+        self.assertEqual(params['data_type_code'], 'MPCSM')
+        self.assertEqual(params['seasonally_adj'], 'yes')
+
     def test_census_marts_parser_and_direct_month_over_month_series(self):
         payload = [
             ['data_type_code', 'time_slot_id', 'seasonally_adj', 'category_code',
