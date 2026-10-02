@@ -114,7 +114,7 @@ const ALL=GROUPS.flatMap(g=>g.tabs);
 const $=id=>document.getElementById(id);
 document.addEventListener('click',event=>{const control=event.target.closest('[data-scroll-target]');if(!control)return;const target=$(control.dataset.scrollTarget);if(!target)return;event.preventDefault();target.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});});
 (async () => {
-const response = await fetch('./data.json');
+const response = await fetch('./data.json', { cache: 'no-cache' });
 if (!response.ok) throw new Error('Data request failed: ' + response.status);
 const DATA = await response.json();
 if (!Array.isArray(DATA.metrics) || !DATA.metrics.length) throw new Error('Invalid dashboard data');
