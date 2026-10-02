@@ -84,12 +84,22 @@ class ArtifactTests(unittest.TestCase):
             sid for _mid, section, _title, _unit, deps, *_ in f.SPECS
             if section == 'korea' for sid in deps
         }
-        self.assertTrue(all(sid.startswith(('ECOS_', 'KOSIS_')) or sid == 'KRW=X'
+        self.assertTrue(all(sid.startswith('ECOS_') or sid == 'KRW=X'
                             for sid in korea_sources))
         self.assertFalse({'TRESEGKRM052N', 'CRDQKRAHABIS', 'QKRN628BIS',
                           'KORXTEXVA01GYSAM', 'KORPRMNTO01GYSAM',
                           'KORSLRTTO01GYSAM', 'LRUNTTTTKRM156S'} & korea_sources)
         self.assertTrue(data['regimes']['kr'])
+
+    def test_removed_kosis_data_is_absent_from_snapshot_and_cache(self):
+        data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))
+        cache = json.loads((f.ROOT/'cache'/'observations.json').read_text(encoding='utf-8'))
+        removed = {'kr_industrial_production', 'kr_retail', 'kr_unemployment'}
+        self.assertFalse(removed & {m['id'] for m in data['metrics']})
+        self.assertFalse({'KOSIS_KR_INDUSTRIAL_PRODUCTION', 'KOSIS_KR_RETAIL',
+                          'KOSIS_KR_UNEMPLOYMENT'} & set(cache))
+        self.assertTrue(data['dcfInputs']['nikkei225']['indexPoints'])
+        self.assertIn('^N225', cache)
 
     def test_fx_pairs_and_yen_quotation(self):
         raw = {

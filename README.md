@@ -34,25 +34,18 @@ the 1306.T TOPIX-linked ETF as an explicitly labelled market-price proxy.
 
 ## Korea macro indicators
 
-The Korea section uses Bank of Korea ECOS and Statistics Korea KOSIS for the
-country's domestic macro series: GDP, exchange reserves, household credit, BSI,
-CCSI, policy rate, exports, semiconductor exports, industrial production, retail
-sales, CPI, unemployment and housing prices. OECD Korea CLI remains a separate
-background regime indicator as previously requested. Each chart shows its data
-provider, frequency and observation date.
+The Korea section uses Bank of Korea ECOS for GDP, exchange reserves,
+household credit, BSI, CCSI, policy rate, exports, semiconductor exports,
+CPI and housing prices. The KOSIS industrial production, retail sales and
+unemployment series have been removed from collection, dashboard data and
+the observation cache. OECD Korea CLI remains a separate background regime
+indicator. Each chart shows its data provider, frequency and observation date.
 
-Additional US growth, consumption, inflation and survey indicators, Japan real
-GDP, and Korean exports, production, retail sales, CPI, jobs, policy rate,
-household credit, housing and sentiment series are refreshed by the same
-workflow. U.S. retail sales come directly from the Census Economic Indicators
-Time Series API (MARTS): its monthly percent change is used as published, while
-its sales level feeds the market-cycle year-over-year comparison. Korean
-indicators no longer rely on FRED-distributed or BIS series; they use ECOS and
-KOSIS adapters. Add the credentials as repository Actions secrets named
-`CENSUS_API_KEY`, `ECOS_API_KEY`, and `KOSIS_API_KEY`; never put
-the values in code or a public file. The workflow keeps the keys in its runtime
-environment and masks request failures so provider URLs cannot expose them in
-logs. If either provider is unavailable, the last good observation cache is used.
+U.S. retail sales still come directly from Census MARTS. Add the credentials as
+repository Actions secrets named `CENSUS_API_KEY` and `ECOS_API_KEY`; never put
+the values in code or a public file. The workflow keeps keys in its runtime
+environment and masks request failures. If a remaining provider is unavailable,
+the last good observation cache is used. No KOSIS key is required by the workflow.
 
 ## Connect this local folder to a new GitHub repository
 
@@ -89,8 +82,8 @@ exists, inspect `git remote -v` before changing it.
 1. In the repository, open **Settings → Actions → General**. Ensure Actions are
    enabled and GitHub's `actions/*` actions are allowed.
 2. The workflow explicitly requests `contents: write`, `pages: write`, and
-   `id-token: write`. The workflow expects `CENSUS_API_KEY`, `ECOS_API_KEY`, and
-   `KOSIS_API_KEY` as repository secrets; no FRED API key is needed. If an
+   `id-token: write`. The workflow expects `CENSUS_API_KEY` and `ECOS_API_KEY`
+   as repository secrets; no FRED API key is needed. If an
    organization policy blocks those permissions, an administrator must allow them.
    A rule requiring pull requests for all changes to `main` also blocks the bot's
    daily commit; use a repository where this workflow can push to `main`.

@@ -64,27 +64,9 @@ ECOS = {
     },
 }
 
-KOSIS = {
-    'KOSIS_KR_INDUSTRIAL_PRODUCTION': {
-        'search': '광공업생산지수', 'table_terms': ('광공업생산지수',),
-        'item_terms': ('광공업생산지수', '생산지수'),
-        'output_terms': ('광공업', '전산업', '전국', '총지수', '계', '전체'),
-        'cycle': 'M', 'start': '200001',
-    },
-    'KOSIS_KR_RETAIL': {
-        'search': '재별 및 상품군별 소매판매액지수',
-        'table_terms': ('재별및상품군별소매판매액지수', '소매판매액지수'),
-        'item_terms': ('소매판매액지수', '불변지수'),
-        'output_terms': ('전국', '총지수', '계', '전체'),
-        'cycle': 'M', 'start': '200001',
-    },
-    'KOSIS_KR_UNEMPLOYMENT': {
-        'search': '경제활동인구총괄 공식 실업률',
-        'table_terms': ('경제활동인구총괄', '실업률'),
-        'item_terms': ('실업률',), 'output_terms': ('전국', '계', '전체', '15세 이상 전체'),
-        'cycle': 'M', 'start': '199906',
-    },
-}
+# No KOSIS series are configured for the dashboard.
+# The generic adapter remains available for reuse.
+KOSIS = {}
 
 
 def _json(url: str, timeout: int = 20):

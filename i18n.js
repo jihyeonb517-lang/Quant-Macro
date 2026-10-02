@@ -294,41 +294,9 @@ const CATALOG = {
     "Japan Cabinet Office real GDP from the national accounts, distributed by FRED. Quarterly data subject to revision.",
     "日本内閣府の国民経済計算に基づく実質GDPをFRED経由で取得しています。四半期データで、改定される場合があります。"
   ],
-  "OECD의 상품수출 전년동월 대비 계열입니다. 반도체만의 수출은 별도 KOSIS 통계로 표시합니다.": [
-    "OECD merchandise export growth relative to the same month a year earlier. Semiconductor exports are shown separately using KOSIS data.",
-    "OECDの商品輸出前年比系列です。半導体輸出は別のKOSIS統計で表示します。"
-  ],
-  "OECD의 한국 제조업 생산 계절조정 전년동월 대비 증가율입니다. 국가데이터처 광공업 전체 증가율과 포괄범위가 같지 않습니다.": [
-    "OECD seasonally adjusted year-over-year manufacturing production growth for Korea. Coverage differs from the national industrial production measure.",
-    "OECDの韓国製造業生産の季節調整済み前年比です。韓国の鉱工業全体の生産指標とは対象範囲が異なります。"
-  ],
-  "OECD 한국 소매판매량의 전년동월 대비 계절조정 증가율입니다.": [
-    "OECD seasonally adjusted year-over-year growth in Korea retail sales volume.",
-    "OECDの韓国小売販売数量の季節調整済み前年比です。"
-  ],
-  "OECD가 제공하는 한국 15세 이상 계절조정 실업률입니다.": [
-    "OECD seasonally adjusted unemployment rate for Korea, ages 15 and over.",
-    "OECDの韓国15歳以上の季節調整済み失業率です。"
-  ],
-  "KOSIS 월간 수출액에서 반도체 품목을 선택합니다. 명목 금액이며 계절·조업일 효과가 포함됩니다.": [
-    "Semiconductor exports selected from KOSIS monthly export values. Nominal amounts include seasonal and working-day effects.",
-    "KOSIS月次輸出額の半導体品目を使用します。名目額であり、季節・操業日数の影響を含みます。"
-  ],
-  "국가데이터처 KOSIS 광공업생산지수의 전년 동월 대비 증가율입니다.": [
-    "Year-over-year growth in the national KOSIS industrial production index.",
-    "韓国KOSIS鉱工業生産指数の前年比増加率です。"
-  ],
   "한국은행 ECOS 수출금액지수 총지수의 전년 동월 대비 증가율입니다. 통관 수출액 자체와 단위가 다른 지수입니다.": [
     "Year-over-year growth in the Bank of Korea ECOS total export value index. This is an index, not the monetary value of customs exports.",
     "韓国銀行ECOSの総輸出金額指数の前年比増加率です。通関輸出額そのものとは単位の異なる指数です。"
-  ],
-  "국가데이터처 KOSIS 전국 소매판매액지수의 전년 동월 대비 증가율입니다.": [
-    "Year-over-year growth in the national KOSIS retail sales index.",
-    "韓国KOSIS全国小売販売額指数の前年比増加率です。"
-  ],
-  "국가데이터처 경제활동인구조사에서 공표하는 전국 실업률입니다.": [
-    "The nationwide unemployment rate published in the national Economically Active Population Survey.",
-    "韓国の経済活動人口調査で公表される全国失業率です。"
   ],
   "한국은행 ECOS 국민계정 실질 GDP의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.": [
     "Year-over-year real GDP growth from Bank of Korea ECOS national accounts. Quarterly data subject to revision.",
@@ -437,18 +405,6 @@ const CATALOG = {
   "(ECOS 월별 수출금액지수[t]/ECOS 월별 수출금액지수[t−12개월]−1)×100": [
     "(ECOS monthly export value index[t]/ECOS monthly export value index[t−12 months]−1)×100",
     "(ECOS月次輸出金額指数[t]/ECOS月次輸出金額指数[t−12か月]−1)×100"
-  ],
-  "(KOSIS 광공업생산지수[t]/KOSIS 광공업생산지수[t−12개월]−1)×100": [
-    "(KOSIS industrial production index[t]/KOSIS industrial production index[t−12 months]−1)×100",
-    "(KOSIS鉱工業生産指数[t]/KOSIS鉱工業生産指数[t−12か月]−1)×100"
-  ],
-  "(KOSIS 전국 소매판매액지수[t]/KOSIS 전국 소매판매액지수[t−12개월]−1)×100": [
-    "(KOSIS national retail sales index[t]/KOSIS national retail sales index[t−12 months]−1)×100",
-    "(KOSIS全国小売販売額指数[t]/KOSIS全国小売販売額指数[t−12か月]−1)×100"
-  ],
-  "국가데이터처 경제활동인구조사 전국 실업률(원계열)": [
-    "National Economically Active Population Survey unemployment rate (not seasonally adjusted)",
-    "全国経済活動人口調査の失業率（季節調整前）"
   ],
   "(ECOS 실질 GDP[t]/ECOS 실질 GDP[t−4분기]−1)×100; 정확히 4분기 전 관측값과 비교": [
     "(ECOS real GDP[t]/ECOS real GDP[t−4 quarters]−1)×100; compared with the observation exactly 4 quarters earlier",
@@ -689,18 +645,6 @@ const CATALOG = {
   "한국 수출금액지수 증가율(ECOS)": [
     "Korea export value index growth (ECOS)",
     "韓国輸出金額指数増加率（ECOS）"
-  ],
-  "한국 광공업 생산 증가율(KOSIS)": [
-    "Korea industrial production growth (KOSIS)",
-    "韓国鉱工業生産増加率（KOSIS）"
-  ],
-  "한국 소매판매 증가율(KOSIS)": [
-    "Korea retail sales growth (KOSIS)",
-    "韓国小売売上高増加率（KOSIS）"
-  ],
-  "한국 실업률(KOSIS)": [
-    "Korea unemployment rate (KOSIS)",
-    "韓国失業率（KOSIS）"
   ],
   "한국 실질 GDP 증가율(ECOS)": [
     "Korea real GDP growth (ECOS)",
@@ -1082,18 +1026,6 @@ const CATALOG = {
     "Track the external sector through Bank of Korea foreign reserves, total exports, and semiconductor exports.",
     "韓国銀行外貨準備高、総輸出、半導体輸出で対外部門を確認します。"
   ],
-  "경기·고용": [
-    "Activity & Employment",
-    "景気・雇用"
-  ],
-  "생산·소비·고용·GDP": [
-    "Production, Consumption, Employment and GDP",
-    "生産・消費・雇用・GDP"
-  ],
-  "실질 GDP, 산업생산, 소매판매와 실업률로 경기의 현재 상태를 살펴봅니다.": [
-    "Assess economic conditions through real GDP, industrial production, retail sales, and unemployment.",
-    "実質GDP、鉱工業生産、小売売上高、失業率で景気の現状を確認します。"
-  ],
   "물가·금리": [
     "Inflation & Rates",
     "物価・金利"
@@ -1193,10 +1125,6 @@ const CATALOG = {
   "일본 지표 보기": [
     "Explore Japan Indicators",
     "日本の指標を見る"
-  ],
-  "수출과 생산·고용, 물가·금리, 가계부채·주택시장 및 심리 지표를 살펴봅니다.": [
-    "Explore exports, production, employment, inflation, rates, household debt, housing, and sentiment.",
-    "輸出、生産、雇用、物価、金利、家計債務、住宅、心理指標を確認します。"
   ],
   "한국 지표 보기": [
     "Explore Korea Indicators",
@@ -2025,6 +1953,14 @@ const CATALOG = {
   "%p": [
     "pp",
     "ポイント"
+  ],
+  "한국은행 국민계정의 실질 GDP로 경기 흐름을 살펴봅니다.": [
+    "Track economic activity through Bank of Korea real GDP data.",
+    "韓国銀行の実質GDPデータで景気動向を確認します。"
+  ],
+  "수출과 성장, 물가·금리, 가계부채·주택시장 및 심리 지표를 살펴봅니다.": [
+    "Explore exports, growth, inflation, rates, household debt, housing, and sentiment.",
+    "輸出、成長、物価、金利、家計債務、住宅、心理指標を確認します。"
   ]
 };
 // Translate rendered text, including charts and live tooltips, without changing

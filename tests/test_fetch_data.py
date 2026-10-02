@@ -16,6 +16,15 @@ def raw(**series):
             for sid, points in series.items()}
 
 
+TEST_KOSIS = {
+    'TEST_RETAIL': {
+        'search': '소매판매액지수', 'table_terms': ('소매판매액지수',),
+        'item_terms': ('소매판매액지수',), 'output_terms': ('전국',),
+        'cycle': 'M', 'start': '200001',
+    },
+}
+
+
 class FormulaTests(unittest.TestCase):
     def test_payroll_total_private_and_government_use_comparable_three_month_changes(self):
         data = raw(
@@ -164,14 +173,13 @@ class FormulaTests(unittest.TestCase):
     def test_added_official_korea_series_are_registered(self):
         required = {
             'philly_fed', 'umich_sentiment', 'sticky_cpi', 'trimmed_pce',
-            'kr_exports', 'kr_industrial_production', 'kr_retail',
-            'kr_unemployment', 'kr_real_gdp', 'kr_semiconductor_exports',
+            'kr_exports', 'kr_real_gdp', 'kr_semiconductor_exports',
         }
         self.assertTrue(required.issubset({spec[0] for spec in f.SPECS}))
         korea_deps = {
             sid for spec in f.SPECS if spec[1] == 'korea' for sid in spec[4]
         }
-        self.assertTrue(all(sid.startswith(('ECOS_', 'KOSIS_')) or sid == 'KRW=X'
+        self.assertTrue(all(sid.startswith('ECOS_') or sid == 'KRW=X'
                             for sid in korea_deps))
         data = raw(
             GACDFSA066MSFRBPHI=[['2026-08-01', 12.5]],
@@ -179,17 +187,28 @@ class FormulaTests(unittest.TestCase):
             CORESTICKM159SFRBATL=[['2026-08-01', 2.8]],
             PCETRIM12M159SFRBDAL=[['2026-08-01', 2.6]],
             ECOS_KR_EXPORT_VALUE=[['2025-08-01', 100], ['2026-08-01', 104.1]],
-            KOSIS_KR_INDUSTRIAL_PRODUCTION=[['2025-08-01', 100], ['2026-08-01', 101.7]],
-            KOSIS_KR_RETAIL=[['2025-08-01', 100], ['2026-08-01', 102.2]],
-            KOSIS_KR_UNEMPLOYMENT=[['2026-08-01', 2.7]],
         )
         result = f.calculate(data)
         self.assertEqual(result['philly_fed'][-1][1], 12.5)
         self.assertEqual(result['umich_sentiment'][-1][1], 58.2)
         self.assertAlmostEqual(result['kr_exports'][-1][1], 4.1)
-        self.assertAlmostEqual(result['kr_industrial_production'][-1][1], 1.7)
-        self.assertAlmostEqual(result['kr_retail'][-1][1], 2.2)
-        self.assertEqual(result['kr_unemployment'][-1][1], 2.7)
+
+    def test_retired_kosis_sources_are_not_requested_or_rebuilt(self):
+        removed_sources = {'KOSIS_KR_INDUSTRIAL_PRODUCTION',
+                           'KOSIS_KR_RETAIL', 'KOSIS_KR_UNEMPLOYMENT'}
+        removed_metrics = {'kr_industrial_production', 'kr_retail', 'kr_unemployment'}
+        self.assertFalse(removed_sources & set(f.FREQUENCIES))
+        self.assertFalse(kr.KOSIS)
+        historical = {sid: {'points': [], 'error': 'old failure'}
+                      for sid in removed_sources}
+        historical['^N225'] = {'points': [['2026-09-30', 40000]],
+                               'error': 'Nikkei failure'}
+        self.assertEqual(f.active_source_errors(historical), ['^N225'])
+        previous = {'metrics': [{'id': mid, 'value': 1} for mid in removed_metrics]}
+        rebuilt = f.build(historical, previous, '2026-10-02T00:00:00+00:00')
+        self.assertFalse(removed_metrics & {m['id'] for m in rebuilt['metrics']})
+        self.assertEqual(rebuilt['dcfInputs']['nikkei225']['indexPoints'],
+                         historical['^N225']['points'])
 
     def test_korea_gdp_requires_same_quarter_and_filters_implausible_growth(self):
         data = raw(ECOS_KR_REAL_GDP=[
@@ -234,7 +253,8 @@ class FormulaTests(unittest.TestCase):
             {'PRD_DE': '202608', 'C1': '00', 'C1_NM': '전국', 'DT': '104.2'},
             {'PRD_DE': '202608', 'C1': '01', 'C1_NM': '서울', 'DT': '110.7'},
         ]
-        with patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
+        with patch.dict(kr.KOSIS, TEST_KOSIS), \
+             patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
              patch.object(kr, '_kosis_search', return_value=[
                  {'TBL_NM': '소매판매액지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
              patch.object(kr, '_kosis_meta', return_value=[
@@ -242,14 +262,15 @@ class FormulaTests(unittest.TestCase):
                  {'OBJ_ID': 'C1', 'ITM_NM': '전국', 'ITM_ID': '00'},
                  {'OBJ_ID': 'C1', 'ITM_NM': '서울', 'ITM_ID': '01'}]), \
              patch.object(kr, '_kosis_data', return_value=rows):
-            self.assertEqual(kr.fetch_kosis('KOSIS_KR_RETAIL'), [['2026-08-01', 104.2]])
+            self.assertEqual(kr.fetch_kosis('TEST_RETAIL'), [['2026-08-01', 104.2]])
 
     def test_kosis_rejects_conflicting_duplicate_periods(self):
         rows = [
             {'PRD_DE': '202608', 'C1': '00', 'C1_NM': '전국', 'DT': '104.2'},
             {'PRD_DE': '202608', 'C1': '00', 'C1_NM': '전국', 'DT': '110.7'},
         ]
-        with patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
+        with patch.dict(kr.KOSIS, TEST_KOSIS), \
+             patch.dict('os.environ', {'KOSIS_API_KEY': 'test'}), \
              patch.object(kr, '_kosis_search', return_value=[
                  {'TBL_NM': '소매판매액지수', 'TBL_ID': 'T', 'ORG_ID': '101'}]), \
              patch.object(kr, '_kosis_meta', return_value=[
@@ -257,7 +278,7 @@ class FormulaTests(unittest.TestCase):
                  {'OBJ_ID': 'C1', 'ITM_NM': '전국', 'ITM_ID': '00'}]), \
              patch.object(kr, '_kosis_data', return_value=rows):
             with self.assertRaisesRegex(ValueError, '하나로 좁혀지지 않았습니다'):
-                kr.fetch_kosis('KOSIS_KR_RETAIL')
+                kr.fetch_kosis('TEST_RETAIL')
 
     def test_claims_require_four_consecutive_weeks(self):
         days = ['2026-08-01', '2026-08-08', '2026-08-15', '2026-08-22']
