@@ -298,10 +298,6 @@ const CATALOG = {
     "Year-over-year growth in the Bank of Korea ECOS total export value index. This is an index, not the monetary value of customs exports.",
     "韓国銀行ECOSの総輸出金額指数の前年比増加率です。通関輸出額そのものとは単位の異なる指数です。"
   ],
-  "한국은행 ECOS 국민계정 실질 GDP의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.": [
-    "Year-over-year real GDP growth from Bank of Korea ECOS national accounts. Quarterly data subject to revision.",
-    "韓国銀行ECOS国民経済計算の実質GDP前年比成長率です。四半期データで、改定される場合があります。"
-  ],
   "한국은행 ECOS 반도체 수출금액지수의 전년 동월 대비 증가율입니다. 수출액 자체가 아닌 지수로 계산합니다.": [
     "Year-over-year growth in the Bank of Korea ECOS semiconductor export value index, calculated from an index rather than export amounts.",
     "韓国銀行ECOS半導体輸出金額指数の前年比増加率です。輸出額そのものではなく指数で計算します。"
@@ -405,10 +401,6 @@ const CATALOG = {
   "(ECOS 월별 수출금액지수[t]/ECOS 월별 수출금액지수[t−12개월]−1)×100": [
     "(ECOS monthly export value index[t]/ECOS monthly export value index[t−12 months]−1)×100",
     "(ECOS月次輸出金額指数[t]/ECOS月次輸出金額指数[t−12か月]−1)×100"
-  ],
-  "(ECOS 실질 GDP[t]/ECOS 실질 GDP[t−4분기]−1)×100; 정확히 4분기 전 관측값과 비교": [
-    "(ECOS real GDP[t]/ECOS real GDP[t−4 quarters]−1)×100; compared with the observation exactly 4 quarters earlier",
-    "(ECOS実質GDP[t]/ECOS実質GDP[t−4四半期]−1)×100；ちょうど4四半期前の観測値と比較"
   ],
   "(ECOS 반도체 수출금액지수[t]/12개월 전 지수−1)×100; 403Y001/3091AA": [
     "(ECOS semiconductor export value index[t]/index 12 months earlier−1)×100; 403Y001/3091AA",
@@ -645,10 +637,6 @@ const CATALOG = {
   "한국 수출금액지수 증가율(ECOS)": [
     "Korea export value index growth (ECOS)",
     "韓国輸出金額指数増加率（ECOS）"
-  ],
-  "한국 실질 GDP 증가율(ECOS)": [
-    "Korea real GDP growth (ECOS)",
-    "韓国実質GDP成長率（ECOS）"
   ],
   "한국 반도체 수출금액지수 증가율": [
     "Korea semiconductor export value index growth",
@@ -1954,13 +1942,9 @@ const CATALOG = {
     "pp",
     "ポイント"
   ],
-  "한국은행 국민계정의 실질 GDP로 경기 흐름을 살펴봅니다.": [
-    "Track economic activity through Bank of Korea real GDP data.",
-    "韓国銀行の実質GDPデータで景気動向を確認します。"
-  ],
-  "수출과 성장, 물가·금리, 가계부채·주택시장 및 심리 지표를 살펴봅니다.": [
-    "Explore exports, growth, inflation, rates, household debt, housing, and sentiment.",
-    "輸出、成長、物価、金利、家計債務、住宅、心理指標を確認します。"
+  "수출과 물가·금리, 가계부채·주택시장 및 심리 지표를 살펴봅니다.": [
+    "Explore exports, inflation, rates, household debt, housing, and sentiment.",
+    "輸出、物価、金利、家計債務、住宅、心理指標を確認します。"
   ]
 };
 // Translate rendered text, including charts and live tooltips, without changing

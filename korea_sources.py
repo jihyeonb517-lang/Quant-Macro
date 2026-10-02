@@ -20,11 +20,6 @@ ECOS = {
         'cycle': 'D', 'stat': '722Y001', 'item_codes': ['0101000'],
         'start': '19990101',
     },
-    'ECOS_KR_REAL_GDP': {
-        'title': ('국내총생산',), 'item': ('국내총생산', '실질'),
-        'cycle': 'Q', 'stat': '200Y102', 'item_codes': ['10111'],
-        'start': '1960Q1',
-    },
     'ECOS_KR_HOUSEHOLD_CREDIT': {
         'title': ('가계신용',), 'item': ('가계신용',),
         'cycle': 'Q', 'start': '2002Q1',

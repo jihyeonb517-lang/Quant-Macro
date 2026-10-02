@@ -91,13 +91,13 @@ class ArtifactTests(unittest.TestCase):
                           'KORSLRTTO01GYSAM', 'LRUNTTTTKRM156S'} & korea_sources)
         self.assertTrue(data['regimes']['kr'])
 
-    def test_removed_kosis_data_is_absent_from_snapshot_and_cache(self):
+    def test_removed_korea_data_is_absent_from_snapshot_and_cache(self):
         data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))
         cache = json.loads((f.ROOT/'cache'/'observations.json').read_text(encoding='utf-8'))
-        removed = {'kr_industrial_production', 'kr_retail', 'kr_unemployment'}
+        removed = {'kr_industrial_production', 'kr_retail', 'kr_unemployment', 'kr_real_gdp'}
         self.assertFalse(removed & {m['id'] for m in data['metrics']})
         self.assertFalse({'KOSIS_KR_INDUSTRIAL_PRODUCTION', 'KOSIS_KR_RETAIL',
-                          'KOSIS_KR_UNEMPLOYMENT'} & set(cache))
+                          'KOSIS_KR_UNEMPLOYMENT', 'ECOS_KR_REAL_GDP'} & set(cache))
         self.assertTrue(data['dcfInputs']['nikkei225']['indexPoints'])
         self.assertIn('^N225', cache)
 

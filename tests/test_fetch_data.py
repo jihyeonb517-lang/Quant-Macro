@@ -163,17 +163,15 @@ class FormulaTests(unittest.TestCase):
         data = raw(
             GDPC1=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 110])],
             JPNRGDPEXP=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 104])],
-            ECOS_KR_REAL_GDP=[[d, value] for d, value in zip(dates, [100, 101, 102, 103, 106])],
         )
         result = f.calculate(data)
-        for mid, expected in [('us_real_gdp', 10), ('jp_real_gdp', 4),
-                              ('kr_real_gdp', 6)]:
+        for mid, expected in [('us_real_gdp', 10), ('jp_real_gdp', 4)]:
             self.assertAlmostEqual(result[mid][-1][1], expected)
 
     def test_added_official_korea_series_are_registered(self):
         required = {
             'philly_fed', 'umich_sentiment', 'sticky_cpi', 'trimmed_pce',
-            'kr_exports', 'kr_real_gdp', 'kr_semiconductor_exports',
+            'kr_exports', 'kr_semiconductor_exports',
         }
         self.assertTrue(required.issubset({spec[0] for spec in f.SPECS}))
         korea_deps = {
@@ -193,10 +191,10 @@ class FormulaTests(unittest.TestCase):
         self.assertEqual(result['umich_sentiment'][-1][1], 58.2)
         self.assertAlmostEqual(result['kr_exports'][-1][1], 4.1)
 
-    def test_retired_kosis_sources_are_not_requested_or_rebuilt(self):
+    def test_retired_korea_sources_are_not_requested_or_rebuilt(self):
         removed_sources = {'KOSIS_KR_INDUSTRIAL_PRODUCTION',
-                           'KOSIS_KR_RETAIL', 'KOSIS_KR_UNEMPLOYMENT'}
-        removed_metrics = {'kr_industrial_production', 'kr_retail', 'kr_unemployment'}
+                           'KOSIS_KR_RETAIL', 'KOSIS_KR_UNEMPLOYMENT', 'ECOS_KR_REAL_GDP'}
+        removed_metrics = {'kr_industrial_production', 'kr_retail', 'kr_unemployment', 'kr_real_gdp'}
         self.assertFalse(removed_sources & set(f.FREQUENCIES))
         self.assertFalse(kr.KOSIS)
         historical = {sid: {'points': [], 'error': 'old failure'}
@@ -209,17 +207,6 @@ class FormulaTests(unittest.TestCase):
         self.assertFalse(removed_metrics & {m['id'] for m in rebuilt['metrics']})
         self.assertEqual(rebuilt['dcfInputs']['nikkei225']['indexPoints'],
                          historical['^N225']['points'])
-
-    def test_korea_gdp_requires_same_quarter_and_filters_implausible_growth(self):
-        data = raw(ECOS_KR_REAL_GDP=[
-            ['2024-01-01', 100], ['2024-04-01', 101],
-            ['2025-01-01', 102], ['2025-04-01', 10000],
-            ['2026-04-01', 103],
-        ])
-        points = dict(f.calculate(data)['kr_real_gdp'])
-        self.assertAlmostEqual(points['2025-01-01'], 2)
-        self.assertIsNone(points['2025-04-01'])
-        self.assertIsNone(points['2026-04-01'])
 
     def test_official_api_helper_parsing_and_item_selection(self):
         self.assertEqual(kr._points([
@@ -237,7 +224,6 @@ class FormulaTests(unittest.TestCase):
 
     def test_korean_api_sources_have_frequency_and_no_embedded_keys(self):
         self.assertEqual(f.FREQUENCIES['ECOS_KR_BASE_RATE'], 'daily')
-        self.assertEqual(f.FREQUENCIES['ECOS_KR_REAL_GDP'], 'quarterly')
         self.assertEqual(f.FREQUENCIES['ECOS_KR_CPI'], 'monthly')
         self.assertNotIn('ECOS_API_KEY =', Path(f.__file__).read_text(encoding='utf-8'))
 

@@ -34,10 +34,11 @@ the 1306.T TOPIX-linked ETF as an explicitly labelled market-price proxy.
 
 ## Korea macro indicators
 
-The Korea section uses Bank of Korea ECOS for GDP, exchange reserves,
+The Korea section uses Bank of Korea ECOS for exchange reserves,
 household credit, BSI, CCSI, policy rate, exports, semiconductor exports,
 CPI and housing prices. The KOSIS industrial production, retail sales and
-unemployment series have been removed from collection, dashboard data and
+unemployment series, as well as the Korean real GDP series, have been
+removed from collection, dashboard data and
 the observation cache. OECD Korea CLI remains a separate background regime
 indicator. Each chart shows its data provider, frequency and observation date.
 

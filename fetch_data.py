@@ -144,7 +144,6 @@ SPECS = [
     ('trimmed_pce', 'economy', '댈러스 연은 절사평균 PCE', '%', ['PCETRIM12M159SFRBDAL'], 3, '3개월 전 대비'),
     ('jp_real_gdp', 'japan', '일본 실질 GDP 증가율', '%', ['JPNRGDPEXP'], 4, '1년 전 대비'),
     ('kr_exports', 'korea', '한국 수출금액지수 증가율(ECOS)', '%', ['ECOS_KR_EXPORT_VALUE'], 12, '1년 전 대비'),
-    ('kr_real_gdp', 'korea', '한국 실질 GDP 증가율(ECOS)', '%', ['ECOS_KR_REAL_GDP'], 4, '1년 전 대비'),
     ('kr_semiconductor_exports', 'korea', '한국 반도체 수출금액지수 증가율', '%', ['ECOS_KR_SEMICONDUCTOR_EXPORT_VALUE'], 12, '1년 전 대비'),
     ('kr_cpi_ecos', 'korea', '한국 소비자물가 상승률(ECOS)', '%', ['ECOS_KR_CPI'], 12, '1년 전 대비'),
     ('kr_core_cpi_ecos', 'korea', '한국 근원물가 상승률(ECOS)', '%', ['ECOS_KR_CORE_CPI'], 12, '1년 전 대비'),
@@ -236,7 +235,6 @@ FORMULAS = {
     'trimmed_pce': 'PCETRIM12M159SFRBDAL; 댈러스 연은 Trimmed Mean PCE 전년 대비 상승률(원자료)',
     'jp_real_gdp': '(JPNRGDPEXP[t]/JPNRGDPEXP[t−4 quarters]−1)×100; Cabinet Office real GDP, FRED 배포 계열의 전년동기 대비',
     'kr_exports': '(ECOS 월별 수출금액지수[t]/ECOS 월별 수출금액지수[t−12개월]−1)×100',
-    'kr_real_gdp': '(ECOS 실질 GDP[t]/ECOS 실질 GDP[t−4분기]−1)×100; 정확히 4분기 전 관측값과 비교',
     'kr_semiconductor_exports': '(ECOS 반도체 수출금액지수[t]/12개월 전 지수−1)×100; 403Y001/3091AA',
     'kr_cpi_ecos': 'ECOS 소비자물가지수 총지수 전년동월 대비 상승률',
     'kr_core_cpi_ecos': 'ECOS 농산물·석유류 제외 소비자물가지수 전년동월 대비 상승률',
@@ -277,7 +275,6 @@ NOTES = {
     'trimmed_pce': '댈러스 연은이 월별 극단값을 절사해 계산한 근원 PCE 물가의 전년 대비 상승률입니다.',
     'jp_real_gdp': '일본 내각부 국민계정 기반 실질 GDP의 FRED 배포 계열입니다. 분기 자료이며 개정될 수 있습니다.',
     'kr_exports': '한국은행 ECOS 수출금액지수 총지수의 전년 동월 대비 증가율입니다. 통관 수출액 자체와 단위가 다른 지수입니다.',
-    'kr_real_gdp': '한국은행 ECOS 국민계정 실질 GDP의 전년동기 대비 증가율입니다. 분기 자료이며 개정될 수 있습니다.',
     'kr_semiconductor_exports': '한국은행 ECOS 반도체 수출금액지수의 전년 동월 대비 증가율입니다. 수출액 자체가 아닌 지수로 계산합니다.',
     'kr_cpi_ecos': '한국은행 ECOS에 수록된 총 CPI로 계산한 전년동월 대비 상승률입니다.',
     'kr_core_cpi_ecos': '한국은행 ECOS의 농산물·석유류 제외 CPI를 사용합니다.',
@@ -619,25 +616,6 @@ def calculate_base(raw):
     mom = lambda sid: lagged(m(sid), 1, lambda a, b: (a/b-1)*100 if b > 0 else None)
     quarterly_yoy = lambda sid: lagged(s(sid), 4, lambda a, b: (a/b-1)*100 if b > 0 else None)
 
-    def korea_gdp_yoy(sid):
-        """Compare only the same calendar quarter one year apart; reject bad API spikes."""
-        points = s(sid)
-        by_quarter = {}
-        for day, value in points:
-            year, month = map(int, day[:7].split('-'))
-            quarter = (month - 1) // 3
-            by_quarter[(year, quarter)] = value
-        output = []
-        for day, value in points:
-            year, month = map(int, day[:7].split('-'))
-            quarter = (month - 1) // 3
-            prior = by_quarter.get((year - 1, quarter))
-            growth = ((value / prior - 1) * 100
-                      if finite(value) and finite(prior) and prior > 0 else None)
-            if growth is not None and abs(growth) > 35:
-                growth = None
-            output.append([day, growth])
-        return output
     ratio = aligned([s('RSP'), s('SPY')], lambda a, b: a/b if b > 0 else None)
 
     # Keep only common trading dates, retaining explicit nulls on common dates.
@@ -698,7 +676,6 @@ def calculate_base(raw):
         'trimmed_pce': s('PCETRIM12M159SFRBDAL'),
         'jp_real_gdp': quarterly_yoy('JPNRGDPEXP'),
         'kr_exports': yoy('ECOS_KR_EXPORT_VALUE'),
-        'kr_real_gdp': korea_gdp_yoy('ECOS_KR_REAL_GDP'),
         'kr_semiconductor_exports': yoy('ECOS_KR_SEMICONDUCTOR_EXPORT_VALUE'),
         'kr_cpi_ecos': yoy('ECOS_KR_CPI'),
         'kr_core_cpi_ecos': yoy('ECOS_KR_CORE_CPI'),
