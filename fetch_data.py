@@ -1,4 +1,4 @@
-"""Refresh dashboard observations. No API keys, interpolation, or forward filling.
+"""Refresh dashboard observations. No interpolation or forward filling.
 
 Run: python fetch_data.py. --offline recomputes from the local observation cache.
 Dates are observation dates, NOT historical release/vintage dates.
@@ -28,6 +28,7 @@ import estat_sources as es
 import shunto_source as sh
 import oecd_cli_source as cli
 import korea_sources as kr
+import bls_sources as bls
 
 DCF_INDEXES = (
     ('sp500', 'S&P 500', '^GSPC', 'DGS10'),
@@ -99,8 +100,8 @@ YAHOO = {'^GSPC', '^N225', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB', 'EURUSD=X
 # id, section, title, unit, dependencies, delta lag, comparison label
 SPECS = [
     # First 16 keep their original positions (tests index metrics by position); new metrics are appended.
-    ('jobs', 'economy', '비농업 고용 증가(전체)', '천 명', ['PAYEMS'], 3, '직전 3개월 평균 대비'),
-    ('unemployment', 'economy', '실업률', '%', ['UNRATE'], 3, '3개월 전 대비'),
+    ('jobs', 'economy', '비농업 고용 증가(전체·월간)', '천 명', ['PAYEMS'], 1, '전월 대비'),
+    ('unemployment', 'economy', '실업률', '%', ['UNRATE'], 1, '전월 대비'),
     ('pce', 'economy', '근원 PCE 상승률', '%', ['PCEPILFE'], 3, '3개월 전 대비'),
     ('cpi', 'economy', '근원 CPI 상승률', '%', ['CPILFESL'], 3, '3개월 전 대비'),
     ('claims', 'economy', '신규 실업수당 청구(4주 평균)', '천 건', ['ICSA'], 4, '4주 전 대비'),
@@ -153,8 +154,8 @@ SPECS = [
     ('kr_household_credit_bok', 'korea', '한국은행 가계신용 잔액', '조 원', ['ECOS_KR_HOUSEHOLD_CREDIT'], 4, '1년 전 대비'),
     ('kr_bsi_bok', 'korea', '한국은행 기업경기실사지수(BSI)', '지수', ['ECOS_KR_BSI'], 1, '전월 대비'),
     ('kr_ccsi', 'korea', '한국은행 소비자심리지수(CCSI)', '지수', ['ECOS_KR_CCSI'], 1, '전월 대비'),
-    ('jobs_private', 'economy', '비농업 고용 증가(민간)', '천 명', ['USPRIV'], 3, '직전 3개월 평균 대비'),
-    ('jobs_government', 'economy', '비농업 고용 증가(정부)', '천 명', ['USGOVT'], 3, '직전 3개월 평균 대비'),
+    ('jobs_private', 'economy', '비농업 고용 증가(민간·월간)', '천 명', ['USPRIV'], 1, '전월 대비'),
+    ('jobs_government', 'economy', '비농업 고용 증가(정부·월간)', '천 명', ['USGOVT'], 1, '전월 대비'),
     ('claims_weekly', 'economy', '신규 실업수당 청구(주간)', '천 건', ['ICSA'], 1, '전주 대비'),
     ('retail_mom', 'economy', '소매·음식서비스 판매 증가율 (MoM)', '%', ['CENSUS_MARTS_MPCSM'], 1, '1개월 전 대비'),
     ('real_pce', 'economy', '실질 개인소비지출 증가율 (MoM)', '%', ['PCEC96'], 1, '1개월 전 대비'),
@@ -173,10 +174,10 @@ SPECS = [
     ('cnykrw', 'fx', 'CNY/KRW', '원/위안', ['KRW=X', 'CNY=X'], 20, '20거래일 전 대비'),
 ]
 FORMULAS = {
-    'jobs': '(PAYEMS[t] − PAYEMS[t−3 calendar months]) / 3; thousands',
-    'jobs_private': '(USPRIV[t] − USPRIV[t−3 calendar months]) / 3; thousands',
-    'jobs_government': '(USGOVT[t] − USGOVT[t−3 calendar months]) / 3; thousands',
-    'unemployment': 'UNRATE (%)',
+    'jobs': 'BLS CES0000000001[t] − CES0000000001[t−1 calendar month]; seasonally adjusted, thousands',
+    'jobs_private': 'BLS CES0500000001[t] − CES0500000001[t−1 calendar month]; seasonally adjusted, thousands',
+    'jobs_government': 'BLS CES9000000001[t] − CES9000000001[t−1 calendar month]; seasonally adjusted, thousands',
+    'unemployment': 'BLS LNS14000000 (%); seasonally adjusted; delta = change from previous calendar month in percentage points',
     'pce': '(PCEPILFE[t]/PCEPILFE[t−12 months]−1)×100; secondary: ((PCEPILFE[t]/PCEPILFE[t−3 months])^4−1)×100',
     'pce_headline': '(PCEPI[t]/PCEPI[t−12 months]−1)×100; no interpolation',
     'cpi': '(CPILFESL[t]/CPILFESL[t−12 months]−1)×100; no interpolation',
@@ -249,6 +250,7 @@ FORMULAS = {
 FUTURES_NOTE = '선물 근월물 연속 시세이며 현물이 아닙니다. 만기 교체 시점에 가격이 불연속으로 움직일 수 있습니다.'
 FX_NOTE = 'Yahoo Finance 시장 종가 기준입니다. FRED 고시환율(뉴욕 정오)과 값이 다를 수 있습니다.'
 NOTES = {
+    'jobs': bls.NOTE, 'jobs_private': bls.NOTE, 'jobs_government': bls.NOTE,
     'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
     'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
     'retail': '미국 Census Bureau MARTS의 소매·음식서비스 전체(44X72) 계절조정 판매액(SM) 전년 대비 증가율입니다. 명목 지표이며 개정될 수 있습니다.',
@@ -465,6 +467,8 @@ def fetch_series(sid):
             completed_day = datetime.now(timezone.utc).date() - timedelta(days=1)
         points = clean(((d.strftime('%Y-%m-%d'), v) for d, v in frame['Close'].items()),
                        today=completed_day)
+    elif sid in bls.SERIES:
+        points = clean(bls.fetch_points(sid))
     elif sid in CENSUS_SOURCES:
         points = fetch_census_marts(*CENSUS_SOURCES[sid])
     elif sid in CLI_SOURCES:
@@ -497,7 +501,8 @@ def fetch_series(sid):
         points = clean(row for row in rows[1:] if len(row) == 2)
     if not any(finite(v) for _, v in points):
         raise ValueError('No finite observations')
-    return {'points': points, 'retrieved': utcnow(), 'error': None}
+    return {'points': points, 'retrieved': utcnow(), 'error': None,
+            **({'origin': 'BLS'} if sid in bls.SERIES else {})}
 
 
 def fetch_retry(sid):
@@ -626,9 +631,9 @@ def calculate_base(raw):
     # The market-cap series is in millions of dollars and GDP is in billions.
     gdp_points = s('GDP')
     return {
-        'jobs': transform(lagged(m('PAYEMS'), 3, lambda a, b: a-b), lambda v: v/3),
-        'jobs_private': transform(lagged(m('USPRIV'), 3, lambda a, b: a-b), lambda v: v/3),
-        'jobs_government': transform(lagged(m('USGOVT'), 3, lambda a, b: a-b), lambda v: v/3),
+        'jobs': lagged(m('PAYEMS'), 1, lambda a, b: a-b),
+        'jobs_private': lagged(m('USPRIV'), 1, lambda a, b: a-b),
+        'jobs_government': lagged(m('USGOVT'), 1, lambda a, b: a-b),
         'unemployment': m('UNRATE'), 'pce': yoy('PCEPILFE'), 'cpi': yoy('CPILFESL'),
         'pce_headline': yoy('PCEPI'), 'cpi_headline': yoy('CPIAUCSL'),
         'ppi_core': yoy('PPIFES'), 'retail': yoy('CENSUS_MARTS_SM'),
@@ -711,6 +716,8 @@ def source_metadata(sid, raw, today):
         if sid in YAHOO else ('FRED', f'https://fred.stlouisfed.org/series/{sid}')))
     origin = SOURCE_ORIGINS.get(sid, origin)
     url = SOURCE_URLS.get(sid, url)
+    if sid in bls.SERIES and entry.get('origin') == 'BLS':
+        origin, url = 'BLS', f'https://data.bls.gov/timeseries/{bls.SERIES[sid]}'
     return dict(id=sid, url=url,
                 observed=observed, retrieved=entry.get('retrieved'),
                 origin=origin, frequency=frequency,
@@ -746,7 +753,8 @@ def build(raw, previous, generated_at, today=None):
         # Preserve a whole previously calculated metric if a dependency download fails.
         # This avoids combining revised fresh inputs with an unavailable source's cache.
         dependency_failed = any(raw.get(sid, {}).get('error') for sid in deps)
-        use_old = finite(old.get('value')) and (dependency_failed or not usable or
+        same_definition = old.get('formula') == FORMULAS[mid] and old.get('period') == period
+        use_old = same_definition and finite(old.get('value')) and (dependency_failed or not usable or
                   (old.get('date') and old['date'] > usable[-1][0]))
         if use_old:
             metric = copy.deepcopy(old)
@@ -787,7 +795,8 @@ def build(raw, previous, generated_at, today=None):
             text = f'{low:.2f}~{last[1]:.2f}' if finite(low) else None
         metrics.append(dict(id=mid, section=section, title=title, unit=unit,
                             points=points, date=last[0], value=last[1], delta=delta,
-                            period=period, note=old.get('note') or NOTES.get(mid, ''),
+                            period=period, note=(NOTES[mid] if mid in {'jobs', 'jobs_private', 'jobs_government'}
+                                               else old.get('note') or NOTES.get(mid, '')),
                             formula=FORMULAS[mid],
                             status='missing' if not usable else 'stale' if stale or
                             any(s['status'] != 'ok' for s in sources) else 'ok',

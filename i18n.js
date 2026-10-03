@@ -146,9 +146,9 @@ const CATALOG = {
     "Lower bound",
     "下限"
   ],
-  "월별 변동을 줄인 고용 증가 속도입니다. 고용 증가와 주가 상승은 같은 뜻이 아닙니다.": [
-    "Payroll growth smoothed to reduce monthly fluctuations. Employment growth does not imply rising stock prices.",
-    "月ごとの変動を平滑化した雇用増加ペースです。雇用増加は株価上昇と同義ではありません。"
+  "BLS 계절조정 월간 고용 증가분입니다. 비교값은 지난달 증가분과의 차이이며 과거 수치는 수정될 수 있습니다.": [
+    "BLS seasonally adjusted monthly payroll change. The comparison shows the difference from last month's change. Historical data may be revised.",
+    "BLSの季節調整済み月間雇用増加数です。比較値は前月の増加数との差を示し、過去の数値は改定される場合があります。"
   ],
   "노동시장 여유를 확인합니다. 고용 증가와 함께 읽습니다.": [
     "Measures labor market slack. Read alongside payroll growth.",
@@ -478,9 +478,9 @@ const CATALOG = {
     "Charts use observation dates and currently available revised data, not a backtest using information available at the time. OECD business cycle phases also use currently available revisions rather than historical vintages. Retrieval times differ from release times. Missing values are not interpolated; the actual observation date of the last valid value is retained.",
     "チャートは観測日と現在提供されている改定データを使用します。当時の公開情報を復元したバックテストではありません。OECD景気局面も現在の改定データで判定します。取得時刻は発表時刻とは異なります。欠測値は補間せず、最後の有効値の実際の観測日を保持します。"
   ],
-  "비농업 고용 증가(전체)": [
-    "Nonfarm payroll growth (total)",
-    "非農業部門雇用増加数（全体）"
+  "비농업 고용 증가(전체·월간)": [
+    "Monthly nonfarm payroll change (total)",
+    "月間非農業部門雇用増加数（全体）"
   ],
   "실업률": [
     "Unemployment rate",
@@ -674,13 +674,13 @@ const CATALOG = {
     "Bank of Korea Consumer Sentiment Index (CCSI)",
     "韓国銀行消費者心理指数（CCSI）"
   ],
-  "비농업 고용 증가(민간)": [
-    "Nonfarm payroll growth (private)",
-    "非農業部門雇用増加数（民間）"
+  "비농업 고용 증가(민간·월간)": [
+    "Monthly nonfarm payroll change (private)",
+    "月間非農業部門雇用増加数（民間）"
   ],
-  "비농업 고용 증가(정부)": [
-    "Nonfarm payroll growth (government)",
-    "非農業部門雇用増加数（政府）"
+  "비농업 고용 증가(정부·월간)": [
+    "Monthly nonfarm payroll change (government)",
+    "月間非農業部門雇用増加数（政府）"
   ],
   "신규 실업수당 청구(주간)": [
     "Initial jobless claims (weekly)",

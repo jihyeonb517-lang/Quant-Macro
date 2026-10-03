@@ -10,7 +10,8 @@ APIs and a Census key for U.S. retail and food-service sales by industry.
 ```text
 index.html                         Original interface, async JSON loading
 data.json                          Generated dashboard snapshot
-fetch_data.py                      FRED/Yahoo + Census MARTS retail and food-service MoM + official Korea APIs
+fetch_data.py                      BLS employment + FRED/Yahoo + Census MARTS + official Korea APIs
+bls_sources.py                     Direct BLS monthly payroll and unemployment adapter
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps
 .github/workflows/update-data.yml  Daily refresh, commit, and Pages deployment
@@ -48,6 +49,22 @@ the values in code or a public file. The workflow keeps keys in its runtime
 environment and masks request failures. If a remaining provider is unavailable,
 the last good observation cache is used. No KOSIS key is required by the workflow.
 
+## U.S. employment indicators
+
+Payroll employment and unemployment now download directly from the BLS Public
+Data API. Add `BLS_API_KEY` as a repository Actions secret. Total, private and
+government payroll series are seasonally adjusted employment levels in thousands;
+the dashboard displays the change from the previous calendar month, not a
+three-month average. Unemployment remains a monthly percentage level with a
+month-over-month change in percentage points. Initial unemployment claims retain
+their separate weekly Department of Labor/FRED source.
+
+Internal aliases `PAYEMS`, `USPRIV`, `USGOVT`, and `UNRATE` preserve the existing
+cache history. New BLS responses replace revised observations within their query
+window (20 years with a key; 10 without), while older history is retained. Source
+links identify the BLS series and retrieval timestamps; retained legacy FRED
+observations keep their original provenance until a BLS download succeeds.
+
 ## Connect this local folder to a new GitHub repository
 
 1. Sign in at https://github.com/new.
@@ -84,7 +101,7 @@ exists, inspect `git remote -v` before changing it.
    enabled and GitHub's `actions/*` actions are allowed.
 2. The workflow explicitly requests `contents: write`, `pages: write`, and
    `id-token: write`. The workflow expects `CENSUS_API_KEY` and `ECOS_API_KEY`
-   as repository secrets; no FRED API key is needed. If an
+   and `BLS_API_KEY` as repository secrets; no FRED API key is needed. If an
    organization policy blocks those permissions, an administrator must allow them.
    A rule requiring pull requests for all changes to `main` also blocks the bot's
    daily commit; use a repository where this workflow can push to `main`.
