@@ -914,9 +914,9 @@ const CATALOG = {
     "Scroll down",
     "下にスクロール"
   ],
-  "세 나라의 경제를 함께 읽습니다.": [
-    "Three economies. One perspective.",
-    "3か国の経済を、一つの視点で。"
+  "경제 지표": [
+    "Economic Indicators",
+    "経済指標"
   ],
   "실제 관측 데이터의 흐름을 국가별로 살펴보세요.": [
     "Explore observed economic trends across countries.",
@@ -938,9 +938,9 @@ const CATALOG = {
     "Explore Japan Indicators",
     "日本の指標を見る"
   ],
-  "데이터를 비교하고 시나리오를 살펴봅니다.": [
-    "Compare data. Explore scenarios.",
-    "データを比較し、シナリオを検討。"
+  "데이터 분석": [
+    "Data Analysis",
+    "データ分析"
   ],
   "각 도구를 눌러 해당 화면으로 바로 이동할 수 있습니다.": [
     "Choose a tool to open its workspace.",
