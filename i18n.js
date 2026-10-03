@@ -294,50 +294,6 @@ const CATALOG = {
     "Japan Cabinet Office real GDP from the national accounts, distributed by FRED. Quarterly data subject to revision.",
     "日本内閣府の国民経済計算に基づく実質GDPをFRED経由で取得しています。四半期データで、改定される場合があります。"
   ],
-  "한국은행 ECOS 수출금액지수 총지수의 전년 동월 대비 증가율입니다. 통관 수출액 자체와 단위가 다른 지수입니다.": [
-    "Year-over-year growth in the Bank of Korea ECOS total export value index. This is an index, not the monetary value of customs exports.",
-    "韓国銀行ECOSの総輸出金額指数の前年比増加率です。通関輸出額そのものとは単位の異なる指数です。"
-  ],
-  "한국은행 ECOS 반도체 수출금액지수의 전년 동월 대비 증가율입니다. 수출액 자체가 아닌 지수로 계산합니다.": [
-    "Year-over-year growth in the Bank of Korea ECOS semiconductor export value index, calculated from an index rather than export amounts.",
-    "韓国銀行ECOS半導体輸出金額指数の前年比増加率です。輸出額そのものではなく指数で計算します。"
-  ],
-  "한국은행 ECOS에 수록된 총 CPI로 계산한 전년동월 대비 상승률입니다.": [
-    "Year-over-year inflation calculated from the all-items CPI in Bank of Korea ECOS.",
-    "韓国銀行ECOSの総合CPIから計算した前年比上昇率です。"
-  ],
-  "한국은행 ECOS의 농산물·석유류 제외 CPI를 사용합니다.": [
-    "Uses the Bank of Korea ECOS CPI excluding agricultural products and petroleum.",
-    "韓国銀行ECOSの農産物・石油類を除くCPIを使用します。"
-  ],
-  "한국은행 ECOS가 제공하는 KB 전국 주택매매가격지수입니다. 기준연도 개편 시 과거 값이 수정될 수 있습니다.": [
-    "The KB nationwide house sale price index provided by Bank of Korea ECOS. Historical values may change when the base year is revised.",
-    "韓国銀行ECOSが提供するKB全国住宅売買価格指数です。基準年変更に伴い過去値が改定される場合があります。"
-  ],
-  "한국은행이 결정·공표하는 정책 기준금리의 일별 계열입니다.": [
-    "The daily series of the policy Base Rate set and announced by the Bank of Korea.",
-    "韓国銀行が決定・公表する政策金利の日次系列です。"
-  ],
-  "한국은행 기준 월말 외환보유액(금 포함)입니다. 기존 IMF/FRED 금 제외 계열과 정의가 다릅니다.": [
-    "Bank of Korea end-of-month foreign reserves including gold. The definition differs from the previous IMF/FRED series excluding gold.",
-    "韓国銀行の月末外貨準備高で、金を含みます。従来の金を除くIMF/FRED系列とは定義が異なります。"
-  ],
-  "한국은행 ECOS에서 제공하는 월말 외환보유액입니다.": [
-    "End-of-month foreign reserves provided by Bank of Korea ECOS.",
-    "韓国銀行ECOSが提供する月末外貨準備高です。"
-  ],
-  "한국은행 가계신용 분기 잔액으로, 가계대출과 판매신용을 포함합니다.": [
-    "Quarterly Bank of Korea household credit outstanding, including household loans and merchandise credit.",
-    "韓国銀行の四半期家計信用残高で、家計融資と販売信用を含みます。"
-  ],
-  "한국은행 기업경기실사지수(BSI)입니다. 통상 100을 중심으로 경기 판단을 읽습니다.": [
-    "The Bank of Korea Business Survey Index (BSI). Business assessments are usually interpreted around 100.",
-    "韓国銀行企業景況指数（BSI）です。通常は100を基準に景況判断を読みます。"
-  ],
-  "한국은행 소비자심리지수(CCSI)입니다. 통상 100을 장기 평균 기준으로 해석합니다.": [
-    "The Bank of Korea Consumer Sentiment Index (CCSI). A value of 100 usually represents the long-run average.",
-    "韓国銀行消費者心理指数（CCSI）です。通常は100を長期平均として解釈します。"
-  ],
   "미국과 일본의 휴장일이 달라, 일본 휴장일에는 최대 5일 이전의 일본 금리를 사용합니다.": [
     "U.S. and Japanese market holidays differ. On Japanese holidays, a Japanese yield from up to 5 days earlier may be used.",
     "米国と日本では休場日が異なるため、日本の休場日には最大5日前の日本金利を使用する場合があります。"
@@ -397,46 +353,6 @@ const CATALOG = {
   "(JPNRGDPEXP[t]/JPNRGDPEXP[t−4 quarters]−1)×100; Cabinet Office real GDP, FRED 배포 계열의 전년동기 대비": [
     "(JPNRGDPEXP[t]/JPNRGDPEXP[t−4 quarters]−1)×100; Cabinet Office real GDP distributed by FRED, year-over-year growth",
     "(JPNRGDPEXP[t]/JPNRGDPEXP[t−4 quarters]−1)×100；内閣府実質GDPのFRED配信系列、前年比成長率"
-  ],
-  "(ECOS 월별 수출금액지수[t]/ECOS 월별 수출금액지수[t−12개월]−1)×100": [
-    "(ECOS monthly export value index[t]/ECOS monthly export value index[t−12 months]−1)×100",
-    "(ECOS月次輸出金額指数[t]/ECOS月次輸出金額指数[t−12か月]−1)×100"
-  ],
-  "(ECOS 반도체 수출금액지수[t]/12개월 전 지수−1)×100; 403Y001/3091AA": [
-    "(ECOS semiconductor export value index[t]/index 12 months earlier−1)×100; 403Y001/3091AA",
-    "(ECOS半導体輸出金額指数[t]/12か月前の指数−1)×100；403Y001/3091AA"
-  ],
-  "ECOS 소비자물가지수 총지수 전년동월 대비 상승률": [
-    "ECOS all-items CPI year-over-year inflation",
-    "ECOS消費者物価指数・総合の前年同月比上昇率"
-  ],
-  "ECOS 농산물·석유류 제외 소비자물가지수 전년동월 대비 상승률": [
-    "ECOS CPI excluding agricultural products and petroleum, year-over-year inflation",
-    "ECOS消費者物価指数・農産物と石油類を除く総合の前年同月比上昇率"
-  ],
-  "ECOS 901Y062 전국 주택매매가격지수(KB); 월간 명목 지수": [
-    "ECOS 901Y062 KB nationwide house sale price index; monthly nominal index",
-    "ECOS 901Y062・KB全国住宅売買価格指数；月次名目指数"
-  ],
-  "ECOS 722Y001 / 0101000; 한국은행 기준금리, 일별": [
-    "ECOS 722Y001 / 0101000; daily Bank of Korea Base Rate",
-    "ECOS 722Y001 / 0101000；韓国銀行政策金利、日次"
-  ],
-  "한국은행 ECOS 외환보유액 월말 금 포함 잔액": [
-    "Bank of Korea ECOS end-of-month foreign reserves including gold",
-    "韓国銀行ECOS・月末外貨準備高（金を含む）"
-  ],
-  "한국은행 ECOS 가계신용 분기 잔액": [
-    "Bank of Korea ECOS quarterly household credit outstanding",
-    "韓国銀行ECOS・四半期家計信用残高"
-  ],
-  "한국은행 ECOS 기업경기조사 제조업 업황 BSI": [
-    "Bank of Korea ECOS manufacturing business conditions BSI",
-    "韓国銀行ECOS・企業景況調査の製造業業況BSI"
-  ],
-  "한국은행 ECOS 소비자동향조사 소비자심리지수(CCSI)": [
-    "Bank of Korea ECOS Consumer Sentiment Index (CCSI)",
-    "韓国銀行ECOS・消費者動向調査の消費者心理指数（CCSI）"
   ],
   "BOGZ1FL883164113Q / (GDP × 1000) × 100; 미국 국내 상장주식 시가총액의 분기말 시장가치를 명목 GDP로 나눈 대용 지표": [
     "BOGZ1FL883164113Q / (GDP × 1000) × 100; proxy using quarter-end U.S. domestic listed equity market value divided by nominal GDP",
@@ -633,46 +549,6 @@ const CATALOG = {
   "일본 실질 GDP 증가율": [
     "Japan real GDP growth",
     "日本実質GDP成長率"
-  ],
-  "한국 수출금액지수 증가율(ECOS)": [
-    "Korea export value index growth (ECOS)",
-    "韓国輸出金額指数増加率（ECOS）"
-  ],
-  "한국 반도체 수출금액지수 증가율": [
-    "Korea semiconductor export value index growth",
-    "韓国半導体輸出金額指数増加率"
-  ],
-  "한국 소비자물가 상승률(ECOS)": [
-    "Korea CPI inflation (ECOS)",
-    "韓国消費者物価上昇率（ECOS）"
-  ],
-  "한국 근원물가 상승률(ECOS)": [
-    "Korea core inflation (ECOS)",
-    "韓国コア物価上昇率（ECOS）"
-  ],
-  "한국 주택매매가격지수(ECOS·KB)": [
-    "Korea house sale price index (ECOS · KB)",
-    "韓国住宅売買価格指数（ECOS・KB）"
-  ],
-  "한국은행 기준금리": [
-    "Bank of Korea Base Rate",
-    "韓国銀行政策金利"
-  ],
-  "한국은행 외환보유액(금 포함)": [
-    "Bank of Korea foreign reserves (including gold)",
-    "韓国銀行外貨準備高（金を含む）"
-  ],
-  "한국은행 가계신용 잔액": [
-    "Bank of Korea household credit outstanding",
-    "韓国銀行家計信用残高"
-  ],
-  "한국은행 기업경기실사지수(BSI)": [
-    "Bank of Korea Business Survey Index (BSI)",
-    "韓国銀行企業景況指数（BSI）"
-  ],
-  "한국은행 소비자심리지수(CCSI)": [
-    "Bank of Korea Consumer Sentiment Index (CCSI)",
-    "韓国銀行消費者心理指数（CCSI）"
   ],
   "비농업 고용 증가(민간·월간)": [
     "Monthly nonfarm payroll change (private)",
@@ -998,58 +874,6 @@ const CATALOG = {
     "Explore CFTC JPY net positions in the distinct Legacy and TFF classifications.",
     "分類の異なるCFTC円ネットポジション（Legacy・TFF）を確認します。"
   ],
-  "한국 매크로": [
-    "Korea Macro",
-    "韓国マクロ"
-  ],
-  "대외·수출": [
-    "External Sector & Exports",
-    "対外部門・輸出"
-  ],
-  "대외 건전성과 수출": [
-    "External Stability and Exports",
-    "対外健全性と輸出"
-  ],
-  "한국은행 외환보유액과 전체·반도체 수출로 대외 부문을 확인합니다.": [
-    "Track the external sector through Bank of Korea foreign reserves, total exports, and semiconductor exports.",
-    "韓国銀行外貨準備高、総輸出、半導体輸出で対外部門を確認します。"
-  ],
-  "물가·금리": [
-    "Inflation & Rates",
-    "物価・金利"
-  ],
-  "소비자물가와 기준금리": [
-    "Consumer Prices and the Base Rate",
-    "消費者物価と政策金利"
-  ],
-  "헤드라인·근원 물가와 한국은행 기준금리를 함께 봅니다.": [
-    "Compare headline and core inflation with the Bank of Korea Base Rate.",
-    "総合・コア物価と韓国銀行政策金利を併せて確認します。"
-  ],
-  "가계·부동산": [
-    "Households & Housing",
-    "家計・住宅"
-  ],
-  "가계부채와 주택시장": [
-    "Household Debt and Housing",
-    "家計債務と住宅市場"
-  ],
-  "한국은행 가계신용과 ECOS의 KB 주택매매가격지수를 확인합니다.": [
-    "Track Bank of Korea household credit and the KB house sale price index in ECOS.",
-    "韓国銀行家計信用とECOSのKB住宅売買価格指数を確認します。"
-  ],
-  "심리·설문": [
-    "Sentiment & Surveys",
-    "心理・調査"
-  ],
-  "기업과 소비자 심리": [
-    "Business and Consumer Sentiment",
-    "企業・消費者心理"
-  ],
-  "한국은행 기업경기실사지수(BSI)와 소비자심리지수(CCSI)를 확인합니다.": [
-    "Explore the Bank of Korea Business Survey Index (BSI) and Consumer Sentiment Index (CCSI).",
-    "韓国銀行企業景況指数（BSI）と消費者心理指数（CCSI）を確認します。"
-  ],
   "주요 통화쌍": [
     "Major Currency Pairs",
     "主要通貨ペア"
@@ -1113,10 +937,6 @@ const CATALOG = {
   "일본 지표 보기": [
     "Explore Japan Indicators",
     "日本の指標を見る"
-  ],
-  "한국 지표 보기": [
-    "Explore Korea Indicators",
-    "韓国の指標を見る"
   ],
   "데이터를 비교하고 시나리오를 살펴봅니다.": [
     "Compare data. Explore scenarios.",
@@ -1870,10 +1690,6 @@ const CATALOG = {
     "Japan",
     "日本"
   ],
-  "한국": [
-    "Korea",
-    "韓国"
-  ],
   "지표": [
     "Indicator",
     "指標"
@@ -1942,10 +1758,6 @@ const CATALOG = {
     "pp",
     "ポイント"
   ],
-  "수출과 물가·금리, 가계부채·주택시장 및 심리 지표를 살펴봅니다.": [
-    "Explore exports, inflation, rates, household debt, housing, and sentiment.",
-    "輸出、物価、金利、家計債務、住宅、心理指標を確認します。"
-  ]
 };
 // Translate rendered text, including charts and live tooltips, without changing
 // numeric data, calculation code, input values, or navigation state.

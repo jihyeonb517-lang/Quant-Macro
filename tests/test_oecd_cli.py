@@ -74,8 +74,8 @@ class OECDCLITests(unittest.TestCase):
             ],
         )
 
-    def test_korea_cli_series_is_available(self):
-        self.assertEqual(cli.SERIES['kr'], 'KOR')
+    def test_active_cli_countries_match_dashboard(self):
+        self.assertEqual(cli.SERIES, {'us': 'USA', 'jp': 'JPN'})
 
 
 if __name__ == '__main__':

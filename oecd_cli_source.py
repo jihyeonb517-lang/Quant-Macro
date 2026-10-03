@@ -12,7 +12,6 @@ from urllib.request import Request, urlopen
 SERIES = {
     'us': 'USA',
     'jp': 'JPN',
-    'kr': 'KOR',
 }
 
 OECD_DATA_URL = (

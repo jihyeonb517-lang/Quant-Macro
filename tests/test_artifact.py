@@ -15,7 +15,7 @@ class ArtifactTests(unittest.TestCase):
         )
         self.assertIsNotNone(datetime.fromisoformat(data['generatedAt']).tzinfo)
 
-        self.assertEqual(set(data['regimes']), {'us', 'jp', 'kr'})
+        self.assertEqual(set(data['regimes']), {'us', 'jp'})
         self.assertTrue({'sp500', 'nikkei225'}.issubset(data['dcfInputs']))
         self.assertLessEqual(set(data['dcfInputs']), {'sp500', 'nasdaq100', 'nikkei225', 'topix'})
         for item in data['dcfInputs'].values():
@@ -29,7 +29,7 @@ class ArtifactTests(unittest.TestCase):
             'expansion',
             'slowdown',
         }
-        for country in ('us', 'jp', 'kr'):
+        for country in ('us', 'jp'):
             intervals = data['regimes'][country]
             self.assertIsInstance(intervals, list)
             previous_end = None
@@ -51,8 +51,7 @@ class ArtifactTests(unittest.TestCase):
         # full set before publishing, while this validation still permits the
         # preserved snapshot to deploy as a fallback.
         self.assertEqual(len(metric_ids), len(set(metric_ids)))
-        retired = {'kr_reserves', 'kr_household_credit', 'kr_house_prices'}
-        self.assertTrue(set(metric_ids).issubset(set(expected_ids) | retired))
+        self.assertTrue(set(metric_ids).issubset(set(expected_ids)))
         required = {'id', 'section', 'title', 'unit', 'points', 'date', 'value', 'delta',
                     'period', 'note', 'formula', 'status', 'sources', 'secondary'}
         source_keys = {'id', 'url', 'observed', 'retrieved', 'origin', 'frequency', 'age',
@@ -78,18 +77,20 @@ class ArtifactTests(unittest.TestCase):
         self.assertIn('if (!response.ok)', html)
         self.assertIn('})().catch(error =>', html)
 
-    def test_korea_metrics_use_domestic_providers_and_cli_has_seeded_history(self):
+    def test_korea_macro_is_removed_from_collection_and_navigation(self):
         data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))
-        korea_sources = {
-            sid for _mid, section, _title, _unit, deps, *_ in f.SPECS
-            if section == 'korea' for sid in deps
-        }
-        self.assertTrue(all(sid.startswith('ECOS_') or sid == 'KRW=X'
-                            for sid in korea_sources))
-        self.assertFalse({'TRESEGKRM052N', 'CRDQKRAHABIS', 'QKRN628BIS',
-                          'KORXTEXVA01GYSAM', 'KORPRMNTO01GYSAM',
-                          'KORSLRTTO01GYSAM', 'LRUNTTTTKRM156S'} & korea_sources)
-        self.assertTrue(data['regimes']['kr'])
+        cache = json.loads((f.ROOT/'cache'/'observations.json').read_text(encoding='utf-8'))
+        html = (f.ROOT/'index.html').read_text(encoding='utf-8')
+        self.assertFalse(any(s[1] == 'korea' for s in f.SPECS))
+        self.assertFalse(any(k.startswith(('ECOS_KR_', 'KOSIS_KR_')) or k == 'OECD_CLI_KR'
+                             for k in set(f.FREQUENCIES) | set(cache)))
+        self.assertFalse(any(m['id'].startswith('kr_') for m in data['metrics']))
+        self.assertNotIn('kr', data['regimes'])
+        self.assertNotIn("key:'kr'", html)
+        self.assertNotIn('#kr/', html)
+        self.assertNotIn('regimes.kr', html)
+        self.assertIn("key:'us'", html)
+        self.assertIn("key:'jp'", html)
 
     def test_removed_korea_data_is_absent_from_snapshot_and_cache(self):
         data = json.loads((f.ROOT/'data.json').read_text(encoding='utf-8'))

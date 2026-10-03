@@ -27,7 +27,6 @@ import japan_sources as jp
 import estat_sources as es
 import shunto_source as sh
 import oecd_cli_source as cli
-import korea_sources as kr
 import bls_sources as bls
 
 DCF_INDEXES = (
@@ -63,7 +62,6 @@ FREQUENCIES = {
     'CORESTICKM159SFRBATL': 'monthly', 'PCETRIM12M159SFRBDAL': 'monthly',
     # --- Japan real GDP (Cabinet Office series distributed by FRED) ---
     'JPNRGDPEXP': 'quarterly',
-    # --- Korea official sources (Bank of Korea ECOS / Statistics Korea KOSIS) ---
     # --- phase 1: FX, dollar index, commodity futures (Yahoo) ---
     'JPY=X': 'daily', 'KRW=X': 'daily', 'DX-Y.NYB': 'daily',
     'EURUSD=X': 'daily', 'GBPUSD=X': 'daily', 'EURGBP=X': 'daily', 'CNY=X': 'daily',
@@ -79,19 +77,12 @@ FREQUENCIES = {
 CLI_SOURCES = {
     'OECD_CLI_US': 'us',
     'OECD_CLI_JP': 'jp',
-    'OECD_CLI_KR': 'kr',
 }
 
 FREQUENCIES.update({
     sid: 'monthly'
     for sid in CLI_SOURCES
 })
-FREQUENCIES.update({
-    sid: ('daily' if kr.ECOS[sid]['cycle'] == 'D' else
-          'quarterly' if kr.ECOS[sid]['cycle'] == 'Q' else 'monthly')
-    for sid in kr.ECOS
-})
-FREQUENCIES.update({sid: 'monthly' for sid in kr.KOSIS})
 
 MAX_AGE = {'daily': 7, 'weekly': 18, 'monthly': 75, 'quarterly': 310}
 YAHOO = {'^GSPC', '^N225', 'RSP', 'SPY', 'JPY=X', 'KRW=X', 'DX-Y.NYB', 'EURUSD=X', 'GBPUSD=X', 'EURGBP=X', 'CNY=X',
@@ -144,16 +135,6 @@ SPECS = [
     ('sticky_cpi', 'economy', '애틀랜타 연은 Sticky CPI', '%', ['CORESTICKM159SFRBATL'], 3, '3개월 전 대비'),
     ('trimmed_pce', 'economy', '댈러스 연은 절사평균 PCE', '%', ['PCETRIM12M159SFRBDAL'], 3, '3개월 전 대비'),
     ('jp_real_gdp', 'japan', '일본 실질 GDP 증가율', '%', ['JPNRGDPEXP'], 4, '1년 전 대비'),
-    ('kr_exports', 'korea', '한국 수출금액지수 증가율(ECOS)', '%', ['ECOS_KR_EXPORT_VALUE'], 12, '1년 전 대비'),
-    ('kr_semiconductor_exports', 'korea', '한국 반도체 수출금액지수 증가율', '%', ['ECOS_KR_SEMICONDUCTOR_EXPORT_VALUE'], 12, '1년 전 대비'),
-    ('kr_cpi_ecos', 'korea', '한국 소비자물가 상승률(ECOS)', '%', ['ECOS_KR_CPI'], 12, '1년 전 대비'),
-    ('kr_core_cpi_ecos', 'korea', '한국 근원물가 상승률(ECOS)', '%', ['ECOS_KR_CORE_CPI'], 12, '1년 전 대비'),
-    ('kr_house_prices_ecos', 'korea', '한국 주택매매가격지수(ECOS·KB)', '지수', ['ECOS_KR_HOUSE_PRICES'], 12, '1년 전 대비'),
-    ('kr_base_rate', 'korea', '한국은행 기준금리', '%', ['ECOS_KR_BASE_RATE'], 20, '20관측일 전 대비'),
-    ('kr_reserves_bok', 'korea', '한국은행 외환보유액(금 포함)', '억 달러', ['ECOS_KR_RESERVES'], 3, '3개월 전 대비'),
-    ('kr_household_credit_bok', 'korea', '한국은행 가계신용 잔액', '조 원', ['ECOS_KR_HOUSEHOLD_CREDIT'], 4, '1년 전 대비'),
-    ('kr_bsi_bok', 'korea', '한국은행 기업경기실사지수(BSI)', '지수', ['ECOS_KR_BSI'], 1, '전월 대비'),
-    ('kr_ccsi', 'korea', '한국은행 소비자심리지수(CCSI)', '지수', ['ECOS_KR_CCSI'], 1, '전월 대비'),
     ('jobs_private', 'economy', '비농업 고용 증가(민간·월간)', '천 명', ['USPRIV'], 1, '전월 대비'),
     ('jobs_government', 'economy', '비농업 고용 증가(정부·월간)', '천 명', ['USGOVT'], 1, '전월 대비'),
     ('claims_weekly', 'economy', '신규 실업수당 청구(주간)', '천 건', ['ICSA'], 1, '전주 대비'),
@@ -235,16 +216,6 @@ FORMULAS = {
     'sticky_cpi': 'CORESTICKM159SFRBATL; 애틀랜타 연은 Sticky Price CPI 전년 대비 상승률(원자료)',
     'trimmed_pce': 'PCETRIM12M159SFRBDAL; 댈러스 연은 Trimmed Mean PCE 전년 대비 상승률(원자료)',
     'jp_real_gdp': '(JPNRGDPEXP[t]/JPNRGDPEXP[t−4 quarters]−1)×100; Cabinet Office real GDP, FRED 배포 계열의 전년동기 대비',
-    'kr_exports': '(ECOS 월별 수출금액지수[t]/ECOS 월별 수출금액지수[t−12개월]−1)×100',
-    'kr_semiconductor_exports': '(ECOS 반도체 수출금액지수[t]/12개월 전 지수−1)×100; 403Y001/3091AA',
-    'kr_cpi_ecos': 'ECOS 소비자물가지수 총지수 전년동월 대비 상승률',
-    'kr_core_cpi_ecos': 'ECOS 농산물·석유류 제외 소비자물가지수 전년동월 대비 상승률',
-    'kr_house_prices_ecos': 'ECOS 901Y062 전국 주택매매가격지수(KB); 월간 명목 지수',
-    'kr_base_rate': 'ECOS 722Y001 / 0101000; 한국은행 기준금리, 일별',
-    'kr_reserves_bok': '한국은행 ECOS 외환보유액 월말 금 포함 잔액',
-    'kr_household_credit_bok': '한국은행 ECOS 가계신용 분기 잔액',
-    'kr_bsi_bok': '한국은행 ECOS 기업경기조사 제조업 업황 BSI',
-    'kr_ccsi': '한국은행 ECOS 소비자동향조사 소비자심리지수(CCSI)',
 }
 # Shown under the chart for metrics that have no stored note yet.
 FUTURES_NOTE = '선물 근월물 연속 시세이며 현물이 아닙니다. 만기 교체 시점에 가격이 불연속으로 움직일 수 있습니다.'
@@ -276,31 +247,15 @@ NOTES = {
     'sticky_cpi': '애틀랜타 연은이 가격 조정 빈도가 낮은 항목을 묶은 물가지수의 전년 대비 상승률입니다.',
     'trimmed_pce': '댈러스 연은이 월별 극단값을 절사해 계산한 근원 PCE 물가의 전년 대비 상승률입니다.',
     'jp_real_gdp': '일본 내각부 국민계정 기반 실질 GDP의 FRED 배포 계열입니다. 분기 자료이며 개정될 수 있습니다.',
-    'kr_exports': '한국은행 ECOS 수출금액지수 총지수의 전년 동월 대비 증가율입니다. 통관 수출액 자체와 단위가 다른 지수입니다.',
-    'kr_semiconductor_exports': '한국은행 ECOS 반도체 수출금액지수의 전년 동월 대비 증가율입니다. 수출액 자체가 아닌 지수로 계산합니다.',
-    'kr_cpi_ecos': '한국은행 ECOS에 수록된 총 CPI로 계산한 전년동월 대비 상승률입니다.',
-    'kr_core_cpi_ecos': '한국은행 ECOS의 농산물·석유류 제외 CPI를 사용합니다.',
-    'kr_house_prices_ecos': '한국은행 ECOS가 제공하는 KB 전국 주택매매가격지수입니다. 기준연도 개편 시 과거 값이 수정될 수 있습니다.',
-    'kr_base_rate': '한국은행이 결정·공표하는 정책 기준금리의 일별 계열입니다.',
-    'kr_reserves_bok': '한국은행 ECOS에서 제공하는 월말 외환보유액입니다.',
-    'kr_household_credit_bok': '한국은행 가계신용 분기 잔액으로, 가계대출과 판매신용을 포함합니다.',
-    'kr_bsi_bok': '한국은행 기업경기실사지수(BSI)입니다. 통상 100을 중심으로 경기 판단을 읽습니다.',
-    'kr_ccsi': '한국은행 소비자심리지수(CCSI)입니다. 통상 100을 장기 평균 기준으로 해석합니다.',
 }
 
 SOURCE_ORIGINS = {
-    'OECD_CLI_KR': 'OECD Composite Leading Indicator (OECD SDMX API)',
     'CENSUS_MARTS_SM': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
     'CENSUS_MARTS_MPCSM': 'U.S. Census Bureau Economic Indicators Time Series API (MARTS)',
-    **{sid: 'Bank of Korea ECOS Open API' for sid in kr.ECOS},
-    **{sid: 'Statistics Korea KOSIS Open API' for sid in kr.KOSIS},
 }
 SOURCE_URLS = {
-    'OECD_CLI_KR': 'https://data-explorer.oecd.org/vis?df%5Bag%5D=OECD.SDD.STES&df%5Bds%5D=dsDisseminateFinalDMZ&df%5Bid%5D=DSD_STES%40DF_CLI',
     'CENSUS_MARTS_SM': 'https://www.census.gov/retail/marts/',
     'CENSUS_MARTS_MPCSM': 'https://www.census.gov/retail/marts/',
-    **{sid: 'https://ecos.bok.or.kr/' for sid in kr.ECOS},
-    **{sid: 'https://kosis.kr/' for sid in kr.KOSIS},
 }
 
 FREQUENCIES.update(jp.FREQUENCIES)
@@ -479,8 +434,6 @@ def fetch_series(sid):
         points = jp.fetch_points(sid)
     elif sid in sh.SOURCES:
         points = sh.fetch_points(sid)
-    elif sid in kr.ECOS or sid in kr.KOSIS:
-        points = kr.fetch_points(sid)
     else:
         url = f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}'
         # Bound connection setup separately and avoid unusable IPv6 routes on
@@ -516,17 +469,15 @@ def fetch_retry(sid):
     return sid, None, error
 
 
-KOSIS_DOWNLOAD_SLOTS = Semaphore(2)
 OECD_DOWNLOAD_SLOTS = Semaphore(1)
 
 
 def fetch_bounded(sid, timeout=60):
     """A separate process makes the entire provider download deadline enforceable."""
-    if sid.startswith(('KOSIS_', 'OECD_CLI_')) and timeout == 60:
+    if sid.startswith('OECD_CLI_') and timeout == 60:
         timeout = 100
     logging.info('%s: starting download (maximum %ss)', sid, timeout)
-    slot = (KOSIS_DOWNLOAD_SLOTS if sid.startswith('KOSIS_') else
-            OECD_DOWNLOAD_SLOTS if sid.startswith('OECD_CLI_') else None)
+    slot = OECD_DOWNLOAD_SLOTS if sid.startswith('OECD_CLI_') else None
     if slot:
         slot.acquire()
     try:
@@ -680,16 +631,6 @@ def calculate_base(raw):
         'sticky_cpi': s('CORESTICKM159SFRBATL'),
         'trimmed_pce': s('PCETRIM12M159SFRBDAL'),
         'jp_real_gdp': quarterly_yoy('JPNRGDPEXP'),
-        'kr_exports': yoy('ECOS_KR_EXPORT_VALUE'),
-        'kr_semiconductor_exports': yoy('ECOS_KR_SEMICONDUCTOR_EXPORT_VALUE'),
-        'kr_cpi_ecos': yoy('ECOS_KR_CPI'),
-        'kr_core_cpi_ecos': yoy('ECOS_KR_CORE_CPI'),
-        'kr_house_prices_ecos': s('ECOS_KR_HOUSE_PRICES'),
-        'kr_base_rate': s('ECOS_KR_BASE_RATE'),
-        'kr_reserves_bok': s('ECOS_KR_RESERVES'),
-        'kr_household_credit_bok': transform(s('ECOS_KR_HOUSEHOLD_CREDIT'), lambda v: v/1000),
-        'kr_bsi_bok': s('ECOS_KR_BSI'),
-        'kr_ccsi': s('ECOS_KR_CCSI'),
     }
 
 

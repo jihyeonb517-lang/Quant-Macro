@@ -10,7 +10,7 @@ APIs and a Census key for U.S. retail and food-service sales by industry.
 ```text
 index.html                         Original interface, async JSON loading
 data.json                          Generated dashboard snapshot
-fetch_data.py                      BLS employment + FRED/Yahoo + Census MARTS + official Korea APIs
+fetch_data.py                      BLS employment + FRED/Yahoo + Census MARTS
 bls_sources.py                     Direct BLS monthly payroll and unemployment adapter
 requirements.txt                   Python dependencies
 cache/observations.json            Durable source history and retrieval timestamps
@@ -33,21 +33,12 @@ NASDAQ-100, Nikkei 225, and TOPIX, three ERP modes, and a sensitivity grid.
 Because Yahoo's global feed does not publish the TOPIX index series, TOPIX uses
 the 1306.T TOPIX-linked ETF as an explicitly labelled market-price proxy.
 
-## Korea macro indicators
+## Macro coverage
 
-The Korea section uses Bank of Korea ECOS for exchange reserves,
-household credit, BSI, CCSI, policy rate, exports, semiconductor exports,
-CPI and housing prices. The KOSIS industrial production, retail sales and
-unemployment series, as well as the Korean real GDP series, have been
-removed from collection, dashboard data and
-the observation cache. OECD Korea CLI remains a separate background regime
-indicator. Each chart shows its data provider, frequency and observation date.
-
-U.S. retail sales still come directly from Census MARTS. Add the credentials as
-repository Actions secrets named `CENSUS_API_KEY` and `ECOS_API_KEY`; never put
-the values in code or a public file. The workflow keeps keys in its runtime
-environment and masks request failures. If a remaining provider is unavailable,
-the last good observation cache is used. No KOSIS key is required by the workflow.
+The dashboard covers U.S. and Japan macro indicators. Korea macro indicators,
+their ECOS/KOSIS collection and the Korea OECD CLI background have been removed
+from the interface, generated data and observation cache. The separate FX
+dashboard still includes KRW currency pairs sourced from Yahoo Finance.
 
 ## U.S. employment indicators
 
@@ -100,7 +91,7 @@ exists, inspect `git remote -v` before changing it.
 1. In the repository, open **Settings → Actions → General**. Ensure Actions are
    enabled and GitHub's `actions/*` actions are allowed.
 2. The workflow explicitly requests `contents: write`, `pages: write`, and
-   `id-token: write`. The workflow expects `CENSUS_API_KEY` and `ECOS_API_KEY`
+   `id-token: write`. The workflow expects `CENSUS_API_KEY`
    and `BLS_API_KEY` as repository secrets; no FRED API key is needed. If an
    organization policy blocks those permissions, an administrator must allow them.
    A rule requiring pull requests for all changes to `main` also blocks the bot's
