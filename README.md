@@ -140,10 +140,18 @@ without downloading data. After the bot has updated the repository, run
   also present in every metric's `formula` field.
 - Monthly lags mean **calendar months**, not “12 available rows.” Absent months
   become nulls and are never interpolated. Claims require four consecutive weeks.
-- Net liquidity uses WALCL dates and only exactly matching WTREGEN and RRP dates.
-  No as-of join or forward fill is used. WTREGEN is the requested **weekly average**
-  series, whereas WALCL is a Wednesday level; this proxy preserves that requested
-  source choice and does not turn WTREGEN into a daily closing balance.
+- TGA uses the U.S. Treasury Fiscal Data DTS API's **daily closing balance**,
+  with no API key required. Modern closing rows use `open_today_bal`; older
+  Federal Reserve Account/TGA rows use `close_today_bal`. All amounts are in
+  millions of USD and divided by 1,000 for the dashboard's billions of USD.
+  The complete daily history starts in October 2005. The old FRED `WTREGEN`
+  weekly average is retired and never spliced into the daily series.
+  The workflow also runs at 20:17 and 21:17 UTC on weekdays, after Treasury's
+  16:00 ET publication target in daylight/standard time respectively. GitHub
+  scheduling and provider publication can still be delayed.
+- Net liquidity uses WALCL dates and exactly matching Treasury TGA and RRP dates.
+  No as-of join or forward fill is used. WALCL still limits this proxy to weekly
+  observations; switching TGA to daily does not make net liquidity daily.
 - SOFR/IORB and Treasury curve inputs must have identical observation dates.
 - Yahoo uses `Close` with `auto_adjust=False` explicitly. The RSP/SPY ratio is a
   price-relative measure, not dividend-adjusted total return. Rolling windows use
@@ -156,7 +164,8 @@ without downloading data. After the bot has updated the repository, run
 - `delta` retains the original comparison: 3 months for monthly indicators,
   4 weeks for weekly indicators, and 20 observations/trading sessions for daily
   indicators. It is a difference in the metric's displayed unit, not a percentage
-  change. For net liquidity, those rows remain weekly anchor dates.
+  change. TGA instead compares with the preceding observed business day;
+  weekends/holidays are not filled. Net liquidity keeps weekly anchor dates.
 - `generatedAt` is the latest successful source retrieval timestamp in UTC, not
   the observation date. Individual sources show their own `retrieved` timestamp.
   A partial refresh updates the top-level timestamp while failed metrics retain

@@ -2,6 +2,18 @@
 (() => {
 'use strict';
 const CATALOG = {
+  "전 관측 영업일 대비": [
+    "vs. previous observed business day",
+    "前観測営業日比"
+  ],
+  "미국 재무부 DTS의 일별 TGA 마감 잔고입니다. 전 관측 영업일과 비교하며 휴일은 보간하지 않습니다. 기존 FRED 주간 평균과는 기준이 다릅니다.": [
+    "Daily TGA closing balance from the U.S. Treasury DTS, compared with the preceding observed business day. Holidays are not interpolated. This differs from the previous FRED weekly average.",
+    "米国財務省DTSの日次TGA終了残高です。前観測営業日と比較し、休日は補間しません。従来のFRED週平均とは基準が異なります。"
+  ],
+  "연준 자산에서 재무부 일별 TGA 마감 잔고와 역레포를 차감한 참고치입니다. 세 자료의 관측일이 같은 경우만 계산하므로 주간 주기를 유지합니다.": [
+    "A proxy subtracting the Treasury daily TGA closing balance and reverse repos from Fed assets. It remains weekly, using only dates shared by all three inputs.",
+    "FRB資産から財務省の日次TGA終了残高とリバースレポを差し引いた参考値です。3系列の観測日が一致する場合のみ計算するため、週次のままです。"
+  ],
   "천 명": [
     "thousand people",
     "千人"

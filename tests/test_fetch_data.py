@@ -200,7 +200,7 @@ class FormulaTests(unittest.TestCase):
 
     def test_netliq_no_fill_or_future_input(self):
         data = raw(WALCL=[['2026-08-26', 8000000], ['2026-09-02', 8100000]],
-                   WTREGEN=[['2026-08-26', 500000], ['2026-09-03', 600000]],
+                   TREASURY_TGA=[['2026-08-26', 500000], ['2026-09-03', 600000]],
                    RRPONTSYD=[['2026-08-26', 200], ['2026-09-01', 210]])
         self.assertEqual(f.calculate(data)['netliq'], [['2026-08-26', 7300], ['2026-09-02', None]])
 

@@ -28,6 +28,7 @@ import estat_sources as es
 import shunto_source as sh
 import oecd_cli_source as cli
 import bls_sources as bls
+import treasury_sources as treasury
 
 DCF_INDEXES = (
     ('sp500', 'S&P 500', '^GSPC', 'DGS10'),
@@ -42,7 +43,7 @@ FREQUENCIES = {
     # --- existing FRED / Yahoo sources ---
     'PAYEMS': 'monthly', 'USPRIV': 'monthly', 'USGOVT': 'monthly', 'UNRATE': 'monthly', 'PCEPILFE': 'monthly',
     'CPILFESL': 'monthly', 'ICSA': 'weekly', 'WALCL': 'weekly',
-    'WTREGEN': 'weekly', 'WRESBAL': 'weekly', 'RRPONTSYD': 'daily',
+    'TREASURY_TGA': 'daily', 'WRESBAL': 'weekly', 'RRPONTSYD': 'daily',
     'M2SL': 'monthly', 'SOFR': 'daily', 'IORB': 'daily',
     'BAMLH0A0HYM2': 'daily', 'VIXCLS': 'daily', 'DFII10': 'daily',
     'DGS10': 'daily', 'DGS2': 'daily', '^GSPC': 'daily',
@@ -96,9 +97,9 @@ SPECS = [
     ('pce', 'economy', '근원 PCE 상승률', '%', ['PCEPILFE'], 3, '3개월 전 대비'),
     ('cpi', 'economy', '근원 CPI 상승률', '%', ['CPILFESL'], 3, '3개월 전 대비'),
     ('claims', 'economy', '신규 실업수당 청구(4주 평균)', '천 건', ['ICSA'], 4, '4주 전 대비'),
-    ('netliq', 'conditions', '연준 순유동성 참고치', '십억 달러', ['WALCL', 'WTREGEN', 'RRPONTSYD'], 4, '4주 전 대비'),
+    ('netliq', 'conditions', '연준 순유동성 참고치', '십억 달러', ['WALCL', 'TREASURY_TGA', 'RRPONTSYD'], 4, '4주 전 대비'),
     ('reserves', 'conditions', '은행 지준금', '십억 달러', ['WRESBAL'], 4, '4주 전 대비'),
-    ('tga', 'conditions', '재무부 일반계좌(TGA) 잔고', '십억 달러', ['WTREGEN'], 4, '4주 전 대비'),
+    ('tga', 'conditions', '재무부 일반계좌(TGA) 잔고', '십억 달러', ['TREASURY_TGA'], 1, '전 관측 영업일 대비'),
     ('m2', 'conditions', 'M2 증가율', '%', ['M2SL'], 3, '3개월 전 대비'),
     ('repo', 'conditions', 'SOFR − IORB', 'bp', ['SOFR', 'IORB'], 20, '20관측일 전 대비'),
     ('credit', 'conditions', '하이일드 신용 스프레드', 'bp', ['BAMLH0A0HYM2'], 20, '20관측일 전 대비'),
@@ -173,9 +174,9 @@ FORMULAS = {
     'real_pce_durable': '(PCEDGC96[t]/PCEDGC96[t−1 month]−1)×100; BEA monthly real durable goods PCE',
     'real_pce_services': '(PCESC96[t]/PCESC96[t−1 month]−1)×100; BEA monthly real services PCE',
     'durable': '(DGORDER[t]/DGORDER[t−12 months]−1)×100; new orders for durable goods, nominal',
-    'netliq': 'WALCL/1000 − WTREGEN/1000 − RRPONTSYD; exact same observation date, no forward fill',
+    'netliq': 'WALCL/1000 − TREASURY_TGA/1000 − RRPONTSYD; exact same observation date, no forward fill',
     'reserves': 'WRESBAL (millions) / 1000 = billions',
-    'tga': 'WTREGEN (millions) / 1000 = billions; Wednesday level',
+    'tga': 'Treasury DTS TGA closing balance (millions) / 1000 = billions; daily observation date',
     'm2': '(M2SL[t]/M2SL[t−12 months]−1)×100',
     'repo': '(SOFR−IORB)×100; exact same observation date; bp',
     'credit': 'BAMLH0A0HYM2 (%) × 100 = bp',
@@ -221,6 +222,8 @@ FORMULAS = {
 FUTURES_NOTE = '선물 근월물 연속 시세이며 현물이 아닙니다. 만기 교체 시점에 가격이 불연속으로 움직일 수 있습니다.'
 FX_NOTE = 'Yahoo Finance 시장 종가 기준입니다. FRED 고시환율(뉴욕 정오)과 값이 다를 수 있습니다.'
 NOTES = {
+    'tga': treasury.NOTE,
+    'netliq': treasury.NETLIQ_NOTE,
     'jobs': bls.NOTE, 'jobs_private': bls.NOTE, 'jobs_government': bls.NOTE,
     'ppi_core': '식품·에너지를 제외한 최종수요 생산자물가(계절조정)의 전년 대비 상승률입니다.',
     'durable': '항공기 등 대형 수주의 영향으로 월별 변동이 큽니다.',
@@ -424,6 +427,8 @@ def fetch_series(sid):
                        today=completed_day)
     elif sid in bls.SERIES:
         points = clean(bls.fetch_points(sid))
+    elif sid == treasury.SERIES_ID:
+        points = clean(treasury.fetch_points())
     elif sid in CENSUS_SOURCES:
         points = fetch_census_marts(*CENSUS_SOURCES[sid])
     elif sid in CLI_SOURCES:
@@ -596,9 +601,9 @@ def calculate_base(raw):
         'durable': yoy('DGORDER'),
         'claims_weekly': transform(calendar(s('ICSA'), weekly=True), lambda v: v/1000),
         'claims': transform(average(calendar(s('ICSA'), weekly=True), 4), lambda v: v/1000),
-        'netliq': aligned([s('WALCL'), s('WTREGEN'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
+        'netliq': aligned([s('WALCL'), s('TREASURY_TGA'), s('RRPONTSYD')], lambda a, t, r: a/1000-t/1000-r),
         'reserves': transform(calendar(s('WRESBAL'), weekly=True), lambda v: v/1000),
-        'tga': transform(calendar(s('WTREGEN'), weekly=True), lambda v: v/1000),
+        'tga': transform(s('TREASURY_TGA'), lambda v: v/1000),
         'm2': yoy('M2SL'),
         'repo': aligned([s('SOFR'), s('IORB')], lambda a, b: (a-b)*100),
         'credit': transform(s('BAMLH0A0HYM2'), lambda v: v*100),
@@ -659,6 +664,8 @@ def source_metadata(sid, raw, today):
     url = SOURCE_URLS.get(sid, url)
     if sid in bls.SERIES and entry.get('origin') == 'BLS':
         origin, url = 'BLS', f'https://data.bls.gov/timeseries/{bls.SERIES[sid]}'
+    if sid == treasury.SERIES_ID:
+        origin, url = 'U.S. Treasury Fiscal Data', treasury.DATASET_URL
     return dict(id=sid, url=url,
                 observed=observed, retrieved=entry.get('retrieved'),
                 origin=origin, frequency=frequency,
@@ -736,7 +743,7 @@ def build(raw, previous, generated_at, today=None):
             text = f'{low:.2f}~{last[1]:.2f}' if finite(low) else None
         metrics.append(dict(id=mid, section=section, title=title, unit=unit,
                             points=points, date=last[0], value=last[1], delta=delta,
-                            period=period, note=(NOTES[mid] if mid in {'jobs', 'jobs_private', 'jobs_government'}
+                            period=period, note=(NOTES[mid] if mid in {'jobs', 'jobs_private', 'jobs_government', 'tga', 'netliq'}
                                                else old.get('note') or NOTES.get(mid, '')),
                             formula=FORMULAS[mid],
                             status='missing' if not usable else 'stale' if stale or

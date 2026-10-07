@@ -4,6 +4,9 @@ on:
   schedule:
     # Every 6 hours: 02:17, 08:17, 14:17, 20:17 Korea time (UTC+9).
     - cron: '17 5,11,17,23 * * *'
+    # DTS is published by 16:00 ET the following business day. These runs
+    # follow that release in both daylight and standard time (05:17/06:17 KST).
+    - cron: '17 20,21 * * 1-5'
   workflow_dispatch:
   push:
     branches: [main]
@@ -50,6 +53,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_fetch_data.py' -v
           python -m unittest discover -s tests -p 'test_bls_sources.py' -v
+          python -m unittest discover -s tests -p 'test_treasury_sources.py' -v
           python -m unittest discover -s tests -p 'test_estat.py' -v
           python -m unittest discover -s tests -p 'test_oecd_cli.py' -v
       - name: Refresh observations
