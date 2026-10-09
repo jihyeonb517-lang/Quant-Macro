@@ -672,6 +672,40 @@ $('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleStrin
 window.addEventListener('qm:languagechange',()=>{$('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString(QMI18N.locale());render();renderFooterNav();});
 window.addEventListener('hashchange',apply);renderFooterNav();
 apply();
+// Live snapshot refresh: keep an open dashboard current without resetting its view.
+let refreshInFlight=false,lastRefreshAttempt=Date.now();
+async function refreshDashboardData(){
+ if(document.visibilityState==='hidden'||refreshInFlight||Date.now()-lastRefreshAttempt<60000)return;
+ refreshInFlight=true;lastRefreshAttempt=Date.now();
+ try{
+  const response=await fetch('./data.json',{cache:'no-cache',signal:AbortSignal.timeout(15000)});
+  if(!response.ok)throw new Error('Data refresh failed: '+response.status);
+  const next=await response.json();
+  if(!Array.isArray(next.metrics)||!next.metrics.length||
+     !next.metrics.every(m=>m&&typeof m.id==='string'&&Array.isArray(m.points)&&Array.isArray(m.sources))||
+     !Number.isFinite(Date.parse(next.generatedAt))||
+     !Array.isArray(next.regimes?.us)||!Array.isArray(next.regimes?.jp))throw new Error('Invalid refreshed dashboard data');
+  // A delayed cache response must never move an open dashboard backwards.
+  if(Date.parse(next.generatedAt)<=Date.parse(DATA.generatedAt))return;
+  const sourcesOpen=document.querySelector('#panel details.sources')?.open;
+  // The comparison view also references this array; retain its identity.
+  const metrics=DATA.metrics;
+  metrics.splice(0,metrics.length,...next.metrics);
+  Object.assign(DATA,next,{metrics});
+  Object.assign(REGIMES,next.regimes);
+  $('stamp').textContent='최근 수집 '+new Date(DATA.generatedAt).toLocaleString(QMI18N.locale());
+  render();renderFooterNav();
+  const sources=document.querySelector('#panel details.sources');
+  if(sources&&sourcesOpen)sources.open=true;
+ }catch(error){
+  console.warn('Dashboard refresh failed; retaining displayed data.',error);
+ }finally{refreshInFlight=false;}
+}
+window.setInterval(refreshDashboardData,5*60*1000);
+window.addEventListener('focus',refreshDashboardData);
+window.addEventListener('pageshow',event=>{if(event.persisted)refreshDashboardData();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshDashboardData();});
+// End live snapshot refresh.
 })().catch(error => {
  console.error(error);
  document.getElementById('stamp').textContent = '자료를 불러오지 못했습니다.';

@@ -5,6 +5,14 @@ tooltips preserved. The page now loads `./data.json` asynchronously and displays
 clear message if loading fails. No build tool is required; data refresh uses free public
 APIs and a Census key for U.S. retail and food-service sales by industry.
 
+Open dashboard tabs revalidate the published snapshot every five minutes while
+visible and when returning to the tab (at most once per minute). Updated cards,
+charts, comparison data and collection timestamps are rendered in place, keeping
+the selected indicator, chart range and zoom. Hidden tabs do not poll; network
+errors retain the displayed snapshot, and older snapshots cannot replace newer
+ones. This checks published data, not the provider directly: the workflow still
+controls source collection and deployment.
+
 ## Files
 
 ```text
