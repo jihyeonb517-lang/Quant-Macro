@@ -811,13 +811,19 @@ def refresh(output=ROOT/'data.json', cache=ROOT/'cache'/'observations.json', off
         for sid, entry, error in download_all():
             if entry:
                 existing = raw.get(sid, {}).get('points', [])
+                # Yahoo can list the latest session with a null close shortly after the close;
+                # that row is unfinished, so it must not erase a close retained from an earlier run.
+                while sid in YAHOO and entry['points'] and not finite(entry['points'][-1][1]):
+                    entry['points'].pop()
                 # Preserve older history when providers limit their downloadable window.
                 # New observations (including nulls/revisions) are authoritative within it.
                 if entry['points']:
                     first, last = entry['points'][0][0], entry['points'][-1][0]
                     old_valid = [d for d, v in existing if finite(v)]
                     new_valid = [d for d, v in entry['points'] if finite(v)]
-                    if old_valid and new_valid[-1] < old_valid[-1]:
+                    lag = (datetime.now(timezone.utc).date()-date.fromisoformat(new_valid[-1])).days
+                    # A still-fresh Yahoo response a session behind the cache is provider lag, not an outage.
+                    if old_valid and new_valid[-1] < old_valid[-1] and not (sid in YAHOO and lag <= max_age(sid)):
                         entry['error'] = 'Provider response ends before retained observations'
                     merged = {d: v for d, v in existing if d < first or d > last}
                     merged.update(dict(entry['points']))

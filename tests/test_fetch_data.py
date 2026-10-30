@@ -307,6 +307,19 @@ class FallbackTests(unittest.TestCase):
             self.assertEqual(stored['INDEX_DCF_SP500_VALUE']['points'], [])
             self.assertIsNone(stored['INDEX_DCF_SP500_VALUE']['error'])
 
+    def test_refresh_keeps_retained_yahoo_close_when_latest_row_is_null(self):
+        today = date.today()
+        days = [(today-timedelta(days=n)).isoformat() for n in (2, 1)]
+        with tempfile.TemporaryDirectory() as directory:
+            output, cache = Path(directory)/'data.json', Path(directory)/'raw.json'
+            f.atomic_json(cache, raw(SPY=[[days[0], 770.0], [days[1], 772.0]]))
+            lagging = {'points': [[days[0], 771.0], [days[1], None]], 'retrieved': None, 'error': None}
+            with patch.object(f, 'download_all', return_value=[('SPY', lagging, None)]):
+                self.assertEqual(f.refresh(output, cache), 1)
+            stored = json.loads(cache.read_text(encoding='utf-8'))['SPY']
+            self.assertEqual(stored['points'], [[days[0], 771.0], [days[1], 772.0]])
+            self.assertIsNone(stored['error'])
+
     def test_stale_daily_source_and_empty_bootstrap(self):
         data = raw(VIXCLS=[['2026-01-01', 18]])
         result = f.build(data, {}, None, date(2026, 9, 7))
