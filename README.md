@@ -116,7 +116,7 @@ exists, inspect `git remote -v` before changing it.
 The initial push may start a run before you enable Pages. If that run fails at
 Pages configuration, complete step 3 and manually run the workflow again.
 
-The workflow runs every six hours at **02:17, 08:17, 14:17, and 20:17 Korea
+The workflow runs twice a day at **00:00 and 12:00 Korea
 time**, on manual dispatch, and on pushes to `main`. Bot commits made with
 `GITHUB_TOKEN` do not trigger a
 second push workflow; deployment happens in the same run. GitHub schedules can
