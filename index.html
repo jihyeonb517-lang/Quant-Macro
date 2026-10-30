@@ -338,9 +338,36 @@ function renderCycle(){
   return '<td style="text-align:right;font-variant-numeric:tabular-nums">'+r[key].toFixed(1)+'%'+sub+'</td>';
  };
  const weightCell=r=>!r||r.weight==null?'<td style="text-align:right;color:var(--muted)">—</td>':'<td style="text-align:right;font-variant-numeric:tabular-nums">'+(r.weight*100).toFixed(1)+'%</td>';
+ // Rows that open a chart of the raw series around each peak and over the latest year.
+ const chartIds=new Set([...featureIds,'credit_block']);
+ function cycleChart(id,heading){
+  const m=metricById.get(id),day=86400000,BEFORE=365,AFTER=365,ts=d=>Date.parse(d+'T00:00:00Z');
+  const pts=(m?.points||[]).filter(p=>Array.isArray(p)&&p[1]!=null&&Number.isFinite(Number(p[1]))).slice().sort((a,b)=>a[0].localeCompare(b[0]));
+  if(pts.length<2)return '<div class="empty">'+esc(m?.title||id)+' · 표시할 자료가 없습니다.</div>';
+  const last=pts[pts.length-1][0];
+  const cases=[
+   {label:'2000년형 · 고점 '+profiles[0].anchor,anchor:profiles[0].anchor,color:'#a36c22',width:2},
+   {label:'2008년형 · 고점 '+profiles[1].anchor,anchor:profiles[1].anchor,color:'#007d83',width:2},
+   {label:'현재 · 최근 관측 '+last,anchor:last,color:'#201f1c',width:2.6}
+  ].map(c=>{const a=ts(c.anchor);const s=pts.map(p=>[(ts(p[0])-a)/day,Number(p[1])]).filter(([x])=>x>=-BEFORE&&x<=AFTER);return {...c,pts:s,at:s.filter(([x])=>x<=0).at(-1)?.[1]??null};});
+  const missing=cases.filter(c=>c.pts.length<2),shown=cases.filter(c=>c.pts.length>1);
+  const vals=shown.flatMap(c=>c.pts.map(p=>p[1])),lo=Math.min(...vals),hi=Math.max(...vals),pad=(hi-lo)*.06||1,min=lo-pad,max=hi+pad;
+  const W=850,H=320,L=48,R=18,T=18,B=38,x=v=>L+(v+BEFORE)/(BEFORE+AFTER)*(W-L-R),y=v=>T+(max-v)/(max-min)*(H-T-B);
+  const unit=m.unit?' '+m.unit:'',fmt=v=>num(v,Math.abs(max)>100?0:1);
+  let svg='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(m.title)+' 2000년·2008년 고점 부근과 현재 비교 차트">';
+  for(let i=0;i<5;i++){const v=min+(max-min)*i/4,yy=y(v);svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="#e2e9ee"/><text x="'+(L-8)+'" y="'+(yy+4)+'" text-anchor="end" fill="#5e7080" font-size="12">'+fmt(v)+'</text>';}
+  [[-365,'-12개월'],[-182,'-6개월'],[0,'고점 · 현재'],[182,'+6개월'],[365,'+12개월']].forEach(([d,l],i)=>{svg+='<text x="'+x(d)+'" y="'+(H-12)+'" text-anchor="'+(i===0?'start':i===4?'end':'middle')+'" fill="#5e7080" font-size="12">'+l+'</text>';});
+  svg+='<line x1="'+x(0)+'" x2="'+x(0)+'" y1="'+T+'" y2="'+(H-B)+'" stroke="#9a621c" stroke-dasharray="4 4"/>';
+  shown.forEach(c=>{svg+='<path d="'+c.pts.map(([d,v],i)=>(i?'L':'M')+x(d).toFixed(1)+','+y(v).toFixed(1)).join(' ')+'" stroke="'+c.color+'" fill="none" stroke-width="'+c.width+'" vector-effect="non-scaling-stroke"/>';});
+  svg+='</svg>';
+  const legend=shown.map(c=>'<span style="display:inline-flex;align-items:center;gap:6px;margin-right:18px"><i style="display:inline-block;width:18px;height:3px;background:'+c.color+'"></i>'+esc(c.label)+' · 기준일 값 <b>'+(c.at==null?'—':fmt(c.at)+esc(unit))+'</b></span>').join('')+missing.map(c=>'<span style="color:var(--muted);margin-right:18px">'+esc(c.label)+' · 그 시기 자료 없음</span>').join('');
+  return '<div style="padding:14px 4px 6px">'+(heading?'<div style="font-weight:700;font-size:14px;margin-bottom:6px">'+esc(m.title)+'</div>':'')+'<div style="font-size:13px;margin-bottom:6px">'+legend+'</div>'+svg+
+   '<p style="color:var(--muted);font-size:12px;margin:6px 0 0">가로축은 각 고점(현재는 최근 관측일)으로부터의 날짜입니다. 2000년형·2008년형은 고점 전후 1년, 현재는 최근 1년을 같은 축에 겹쳤습니다. 원자료 값 그대로이며 퍼센타일이 아닙니다.</p></div>';
+ }
  const tableRows=ordered.map(meta=>{
   const a=get(results[0],meta.id),b=get(results[1],meta.id);
-  return '<tr><th scope="row" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">'+esc(meta.label)+'</th>'+pctCell(a,'anchor')+pctCell(a,'current')+weightCell(a)+pctCell(b,'anchor')+pctCell(b,'current')+weightCell(b)+'</tr>';
+  const chart=chartIds.has(meta.id);
+  return '<tr'+(chart?' data-cycle-chart="'+esc(meta.id)+'" tabindex="0" aria-expanded="false" title="눌러서 2000년·2008년 고점 부근과 현재 차트 비교" style="cursor:pointer"':'')+'><th scope="row" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">'+esc(meta.label)+(chart?' <span class="cycle-chart-toggle" style="color:var(--accent);font-size:12px;font-weight:400;white-space:nowrap">▸ 차트</span>':'')+'</th>'+pctCell(a,'anchor')+pctCell(a,'current')+weightCell(a)+pctCell(b,'anchor')+pctCell(b,'current')+weightCell(b)+'</tr>';
  }).join('');
  const table='<div style="overflow-x:auto;margin-top:18px"><table style="width:100%;border-collapse:collapse;min-width:800px;font-size:13px"><thead><tr><th rowspan="2" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지표</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2000년형 지문</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2008년형 지문</th></tr><tr><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">최근 관측 퍼센타일</th><th style="padding:7px">가중치</th><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">현재 퍼센타일</th><th style="padding:7px">가중치</th></tr></thead><tbody>'+tableRows+'</tbody></table></div>';
  wrap.innerHTML='<div style="padding:22px 0 0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap"><button id="cycle-back" style="background:none;border:0;padding:0;color:var(--accent);font-weight:700;font-size:14px">← 전체</button><span style="font-size:22px;font-weight:700">마켓 사이클</span></div>'+
@@ -350,6 +377,17 @@ function renderCycle(){
   '<p style="color:var(--muted);font-size:13px;margin:16px 0 0">퍼센타일은 각 관측일까지의 과거 분포로 계산합니다. 가중치는 앵커 극단성 × 이론적 관련성으로 산출해 지문별로 정규화했습니다. 각 지표의 가장 최근 유효 관측값을 비교에 사용하고 실제 관측일을 표에 표시합니다. 신용 블록은 두 신호의 최근 관측 퍼센타일 평균입니다. 원자료의 발표 시차와 사후 수정 이력을 복원하지 않으므로 당시 공개정보 기준 백테스트는 아닙니다.</p>'+
   '<p style="background:#f4f7fa;border-left:3px solid var(--warn);padding:14px 16px;margin-top:14px;font-size:13px">이 점수는 과거 두 사례와의 유사도를 나타낼 뿐 예측이 아닙니다. 표본이 2개뿐이라 통계적 신뢰도가 낮고, 각 위기는 서로 다른 원인으로 발생했습니다. 투자 판단의 근거로 단독 사용하지 마세요.</p>';
  $('cycle-back').onclick=()=>{location.hash='home';};
+ wrap.querySelectorAll('tr[data-cycle-chart]').forEach(row=>{
+  const toggle=()=>{
+   const open=row.nextElementSibling?.classList.contains('cycle-chart-row');
+   if(open){row.nextElementSibling.remove();}
+   else{row.insertAdjacentHTML('afterend','<tr class="cycle-chart-row"><td colspan="7" style="border-bottom:1px solid var(--line)">'+(row.dataset.cycleChart==='credit_block'?['bank_lending','household_debt_service'].map(id=>cycleChart(id,true)).join(''):cycleChart(row.dataset.cycleChart))+'</td></tr>');}
+   row.setAttribute('aria-expanded',String(!open));
+   row.querySelector('.cycle-chart-toggle').textContent=open?'▸ 차트':'▾ 차트';
+  };
+  row.onclick=toggle;
+  row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}};
+ });
 }
 
 function renderCompare(){
