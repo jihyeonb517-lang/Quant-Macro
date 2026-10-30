@@ -29,6 +29,9 @@ CONFIG = {
     'jp_inventory': ('광공업 재고 증가율', '0004052183', {'cat01': '0001000'}, True),
 }
 SOURCES = {'ESTAT_' + key: key for key in CONFIG}
+# Monthly wage, retail and household surveys are published about 1-2 months after
+# the reference month, so the generic 75-day monthly window flags the latest release.
+MAX_AGE = {'ESTAT_' + key: 105 for key in ('jp_wage_sched', 'jp_real_wage', 'jp_retail', 'jp_hh_consumption')}
 FREQUENCIES = {sid: 'monthly' for sid in SOURCES}
 SPECS = [(key, 'japan', item[0], '%', ['ESTAT_' + key], 3, '3개월 전 대비')
          for key, item in CONFIG.items()]

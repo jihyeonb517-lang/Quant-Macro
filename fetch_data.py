@@ -56,7 +56,7 @@ FREQUENCIES = {
     'PCEDGC96': 'monthly', 'PCESC96': 'monthly',
     'PCEPI': 'monthly', 'PPIFES': 'monthly',
     'NFCI': 'weekly', 'STLFSI4': 'weekly',
-    'DFEDTARL': 'daily', 'DFEDTARU': 'daily',
+    'DFEDTARL': 'daily', 'DFEDTARU': 'daily', 'DFEDTAR': 'daily',
     # --- additional US growth, demand, inflation and survey indicators ---
     'GDPC1': 'quarterly', 'GACDFSA066MSFRBPHI': 'monthly',
     'UMCSENT': 'monthly',
@@ -189,7 +189,7 @@ FORMULAS = {
     'curve': 'DGS10−DGS2; exact same observation date; percentage points',
     'ust2': 'FRED DGS2 (%)',
     'ust10': 'FRED DGS10 (%)',
-    'fedtarget': 'FRED DFEDTARL~DFEDTARU (%); target range shown as lower~upper, chart uses the upper bound (secondary line = lower bound)',
+    'fedtarget': 'FRED DFEDTARL~DFEDTARU (%); target range shown as lower~upper, chart uses the upper bound (secondary line = lower bound); before 2008-12-16 both bounds use the single target DFEDTAR',
     'usdjpy': 'Yahoo JPY=X Close (yen per US dollar); auto_adjust=False',
     'usdkrw': 'Yahoo KRW=X Close (won per US dollar); auto_adjust=False',
     'dxy': 'Yahoo DX-Y.NYB Close (ICE US Dollar Index); auto_adjust=False',
@@ -274,6 +274,11 @@ SPECS.extend(sh.SPECS)
 FORMULAS.update(sh.FORMULAS)
 NOTES.update(sh.NOTES)
 MAX_AGE.setdefault('annual', 430)
+SOURCE_MAX_AGE = dict(es.MAX_AGE)
+
+
+def max_age(sid):
+    return SOURCE_MAX_AGE.get(sid, MAX_AGE[FREQUENCIES[sid]])
 
 
 
@@ -579,6 +584,12 @@ def calculate_base(raw):
 
     ratio = aligned([s('RSP'), s('SPY')], lambda a, b: a/b if b > 0 else None)
 
+    # The target range starts 2008-12-16; before that the single target (DFEDTAR) is both bounds.
+    def fed_target(sid):
+        points = s(sid)
+        first = points[0][0] if points else None
+        return [p for p in s('DFEDTAR') if first is None or p[0] < first] + points
+
     # Keep only common trading dates, retaining explicit nulls on common dates.
     spy_dates = dict(s('SPY'))
     ratio = [p for p in ratio if p[0] in spy_dates]
@@ -613,8 +624,8 @@ def calculate_base(raw):
         'participation': aligned([ratio, average(ratio, 125)], lambda v, ma: (v/ma-1)*100 if ma > 0 else None),
         'real': s('DFII10'), 'curve': aligned([s('DGS10'), s('DGS2')], lambda a, b: a-b),
         'ust2': s('DGS2'), 'ust10': s('DGS10'),
-        'fedtarget': aligned([s('DFEDTARU'), s('DFEDTARL')], lambda u, l: u),
-        'fedtarget_low': aligned([s('DFEDTARU'), s('DFEDTARL')], lambda u, l: l),
+        'fedtarget': aligned([fed_target('DFEDTARU'), fed_target('DFEDTARL')], lambda u, l: u),
+        'fedtarget_low': aligned([fed_target('DFEDTARU'), fed_target('DFEDTARL')], lambda u, l: l),
         'usdjpy': s('JPY=X'), 'usdkrw': s('KRW=X'), 'dxy': s('DX-Y.NYB'),
         'eurusd': s('EURUSD=X'), 'gbpusd': s('GBPUSD=X'), 'eurgbp': s('EURGBP=X'),
         'usdcny': s('CNY=X'), 'gbpjpy': s('GBPJPY=X'), 'eurjpy': s('EURJPY=X'),
@@ -654,7 +665,7 @@ def source_metadata(sid, raw, today):
     observed = usable[-1][0] if usable else None
     frequency = FREQUENCIES[sid]
     age = (today-date.fromisoformat(observed)).days if observed else None
-    stale = bool(observed and (age > MAX_AGE[frequency] or points[-1][0] > observed))
+    stale = bool(observed and (age > max_age(sid) or points[-1][0] > observed))
     failed = bool(entry.get('error'))
     origin, url = (es.ORIGINS.get(sid) or jp.ORIGINS.get(sid) or
                    sh.ORIGINS.get(sid) or (
@@ -669,7 +680,7 @@ def source_metadata(sid, raw, today):
     return dict(id=sid, url=url,
                 observed=observed, retrieved=entry.get('retrieved'),
                 origin=origin, frequency=frequency,
-                age=age, maxAge=MAX_AGE[frequency],
+                age=age, maxAge=max_age(sid),
                 status='missing' if not observed else 'stale' if failed or stale else 'ok',
                 fallback=bool(observed and (failed or stale)))
 
@@ -726,7 +737,7 @@ def build(raw, previous, generated_at, today=None):
         missing_tail = bool(usable and points[-1][0] > last[0])
         # Joint series may lag even when each individual dependency is current.
         joint_age = (today-date.fromisoformat(last[0])).days if last[0] else None
-        joint_limit = max(MAX_AGE[FREQUENCIES[sid]] for sid in deps)
+        joint_limit = max(max_age(sid) for sid in deps)
         stale = missing_tail or (joint_age is not None and joint_age > joint_limit)
         if stale:
             for source in sources:
