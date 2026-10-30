@@ -337,6 +337,17 @@ function renderCycle(){
   const sub=key==='current'&&r.currentDate?'<small style="display:block;color:var(--muted)">관측 '+esc(r.currentDate)+'</small>':r.id==='credit_block'?'<small style="display:block;color:var(--muted)">'+r.creditCount+'/2 신호</small>':'';
   return '<td style="text-align:right;font-variant-numeric:tabular-nums">'+r[key].toFixed(1)+'%'+sub+'</td>';
  };
+ // Per-indicator signal: percentile gap between the peak window and now (0-15p same, 15-35p similar, over 35p different).
+ const signal=r=>{
+  if(!r||r.anchor==null||r.current==null)return null;
+  const gap=Math.abs(r.current-r.anchor);
+  return gap<=15?{gap,label:'같음',color:'#d64545'}:gap<=35?{gap,label:'비슷',color:'#e0a800'}:{gap,label:'다름',color:'#2e9e5b'};
+ };
+ const signalCell=r=>{
+  const s=signal(r);
+  if(!s)return '<td style="text-align:center;color:var(--muted)">—</td>';
+  return '<td style="text-align:center;white-space:nowrap" title="퍼센타일 차이 '+s.gap.toFixed(1)+'p"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:'+s.color+';vertical-align:-1px;margin-right:5px"></span>'+s.label+'<small style="display:block;color:var(--muted)">차이 '+s.gap.toFixed(1)+'p</small></td>';
+ };
  const weightCell=r=>!r||r.weight==null?'<td style="text-align:right;color:var(--muted)">—</td>':'<td style="text-align:right;font-variant-numeric:tabular-nums">'+(r.weight*100).toFixed(1)+'%</td>';
  // Rows that open a chart of the raw series around each peak and over the latest year.
  const chartIds=new Set([...featureIds,'credit_block']);
@@ -367,13 +378,14 @@ function renderCycle(){
  const tableRows=ordered.map(meta=>{
   const a=get(results[0],meta.id),b=get(results[1],meta.id);
   const chart=chartIds.has(meta.id);
-  return '<tr'+(chart?' data-cycle-chart="'+esc(meta.id)+'" tabindex="0" aria-expanded="false" title="눌러서 2000년·2008년 고점 부근과 현재 차트 비교" style="cursor:pointer"':'')+'><th scope="row" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">'+esc(meta.label)+(chart?' <span class="cycle-chart-toggle" style="color:var(--accent);font-size:12px;font-weight:400;white-space:nowrap">▸ 차트</span>':'')+'</th>'+pctCell(a,'anchor')+pctCell(a,'current')+weightCell(a)+pctCell(b,'anchor')+pctCell(b,'current')+weightCell(b)+'</tr>';
+  return '<tr'+(chart?' data-cycle-chart="'+esc(meta.id)+'" tabindex="0" aria-expanded="false" title="눌러서 2000년·2008년 고점 부근과 현재 차트 비교" style="cursor:pointer"':'')+'><th scope="row" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">'+esc(meta.label)+(chart?' <span class="cycle-chart-toggle" style="color:var(--accent);font-size:12px;font-weight:400;white-space:nowrap">▸ 차트</span>':'')+'</th>'+pctCell(a,'anchor')+pctCell(a,'current')+signalCell(a)+weightCell(a)+pctCell(b,'anchor')+pctCell(b,'current')+signalCell(b)+weightCell(b)+'</tr>';
  }).join('');
- const table='<div style="overflow-x:auto;margin-top:18px"><table style="width:100%;border-collapse:collapse;min-width:800px;font-size:13px"><thead><tr><th rowspan="2" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지표</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2000년형 지문</th><th colspan="3" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2008년형 지문</th></tr><tr><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">최근 관측 퍼센타일</th><th style="padding:7px">가중치</th><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">현재 퍼센타일</th><th style="padding:7px">가중치</th></tr></thead><tbody>'+tableRows+'</tbody></table></div>';
+ const table='<div style="overflow-x:auto;margin-top:18px"><table style="width:100%;border-collapse:collapse;min-width:960px;font-size:13px"><thead><tr><th rowspan="2" style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지표</th><th colspan="4" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2000년형 지문</th><th colspan="4" style="text-align:center;padding:9px;border-bottom:1px solid var(--line)">2008년형 지문</th></tr><tr><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">최근 관측 퍼센타일</th><th style="padding:7px">유사도</th><th style="padding:7px">가중치</th><th style="padding:7px">그때 퍼센타일</th><th style="padding:7px">현재 퍼센타일</th><th style="padding:7px">유사도</th><th style="padding:7px">가중치</th></tr></thead><tbody>'+tableRows+'</tbody></table></div>';
  wrap.innerHTML='<div style="padding:22px 0 0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap"><button id="cycle-back" style="background:none;border:0;padding:0;color:var(--accent);font-weight:700;font-size:14px">← 전체</button><span style="font-size:22px;font-weight:700">마켓 사이클</span></div>'+
   '<p style="color:var(--muted);margin:8px 0 20px"><b>현재가 고점이라면</b>이라는 가정 아래, 2000년 3월과 2007년 10월의 시장 고점 부근 지문을 지금과 각각 비교합니다. 점수가 높을수록 지금이 고점 직전 상태와 닮았다는 뜻이며, 고점이 언제 올지는 알려주지 않습니다. 두 점수는 하나로 합치지 않습니다.</p>'+
   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px">'+results.map(scoreCard).join('')+'</div>'+
   '<h3 style="font-size:18px;margin:24px 0 0">그때와 지금의 지표 비교</h3>'+table+
+  '<p style="font-size:13px;margin:14px 0 0">유사도 신호: <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d64545"></span> 같음(그때와 지금의 퍼센타일 차이 15p 이하) · <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e0a800"></span> 비슷(15~35p) · <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2e9e5b"></span> 다름(35p 초과). 빨간색일수록 고점 직전과 닮았다는 뜻입니다.</p>'+
   '<p style="color:var(--muted);font-size:13px;margin:16px 0 0">퍼센타일은 각 관측일까지의 과거 분포로 계산합니다. 가중치는 앵커 극단성 × 이론적 관련성으로 산출해 지문별로 정규화했습니다. 각 지표의 가장 최근 유효 관측값을 비교에 사용하고 실제 관측일을 표에 표시합니다. 신용 블록은 두 신호의 최근 관측 퍼센타일 평균입니다. 원자료의 발표 시차와 사후 수정 이력을 복원하지 않으므로 당시 공개정보 기준 백테스트는 아닙니다.</p>'+
   '<p style="background:#f4f7fa;border-left:3px solid var(--warn);padding:14px 16px;margin-top:14px;font-size:13px">이 점수는 과거 두 사례와의 유사도를 나타낼 뿐 예측이 아닙니다. 표본이 2개뿐이라 통계적 신뢰도가 낮고, 각 위기는 서로 다른 원인으로 발생했습니다. 투자 판단의 근거로 단독 사용하지 마세요.</p>';
  $('cycle-back').onclick=()=>{location.hash='home';};
@@ -381,7 +393,7 @@ function renderCycle(){
   const toggle=()=>{
    const open=row.nextElementSibling?.classList.contains('cycle-chart-row');
    if(open){row.nextElementSibling.remove();}
-   else{row.insertAdjacentHTML('afterend','<tr class="cycle-chart-row"><td colspan="7" style="border-bottom:1px solid var(--line)">'+(row.dataset.cycleChart==='credit_block'?['bank_lending','household_debt_service'].map(id=>cycleChart(id,true)).join(''):cycleChart(row.dataset.cycleChart))+'</td></tr>');}
+   else{row.insertAdjacentHTML('afterend','<tr class="cycle-chart-row"><td colspan="9" style="border-bottom:1px solid var(--line)">'+(row.dataset.cycleChart==='credit_block'?['bank_lending','household_debt_service'].map(id=>cycleChart(id,true)).join(''):cycleChart(row.dataset.cycleChart))+'</td></tr>');}
    row.setAttribute('aria-expanded',String(!open));
    row.querySelector('.cycle-chart-toggle').textContent=open?'▸ 차트':'▾ 차트';
   };
